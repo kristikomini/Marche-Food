@@ -129,7 +129,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -143,7 +143,7 @@ const props = defineProps({
   fornitore: Object,
 });
 
-const isEdit = computed(() => !!props.fornitore);
+const isEdit = computed(() => !!props.fornitore?.id);
 
 const form = useForm({
   codice:              props.fornitore?.codice              ?? '',
@@ -162,6 +162,31 @@ const form = useForm({
   note:                props.fornitore?.note                ?? '',
 });
 
+form.transform(data => ({
+  ...data,
+  haccp_scadenza: data.haccp_scadenza instanceof Date
+    ? data.haccp_scadenza.toISOString().slice(0, 10)
+    : (data.haccp_scadenza ?? null),
+}));
+
+watch(() => props.fornitore, (f) => {
+  form.codice              = f?.codice              ?? '';
+  form.ragione_sociale     = f?.ragione_sociale     ?? '';
+  form.tipo                = f?.tipo                ?? '';
+  form.piva                = f?.piva                ?? '';
+  form.indirizzo           = f?.indirizzo           ?? '';
+  form.email               = f?.email               ?? '';
+  form.telefono            = f?.telefono            ?? '';
+  form.haccp_certificato   = f?.haccp_certificato   ?? false;
+  form.haccp_scadenza      = f?.haccp_scadenza ? new Date(f.haccp_scadenza) : null;
+  form.certificazioni_note = f?.certificazioni_note ?? '';
+  form.moca_certificato    = f?.moca_certificato    ?? false;
+  form.moca_numero         = f?.moca_numero         ?? '';
+  form.attivo              = f?.attivo              ?? true;
+  form.note                = f?.note                ?? '';
+  form.clearErrors();
+});
+
 const tipoOptions = [
   { label: 'Alimentare',                    value: 'alimentare' },
   { label: 'Imballaggio Primario (MOCA)',   value: 'imballaggio_primario' },
@@ -169,14 +194,10 @@ const tipoOptions = [
 ];
 
 function submit() {
-  const payload = {
-    ...form.data(),
-    haccp_scadenza: form.haccp_scadenza ? form.haccp_scadenza.toISOString().slice(0, 10) : null,
-  };
   if (isEdit.value) {
-    form.transform(() => payload).put(`/fornitori/${props.fornitore.id}`);
+    form.put(`/fornitori/${props.fornitore.id}`);
   } else {
-    form.transform(() => payload).post('/fornitori');
+    form.post('/fornitori');
   }
 }
 </script>

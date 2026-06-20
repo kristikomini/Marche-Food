@@ -45,7 +45,23 @@ class FornitoreController extends Controller
     public function edit(Fornitore $fornitore): Response
     {
         return Inertia::render('Fornitori/Form', [
-            'fornitore' => $fornitore,
+            'fornitore' => [
+                'id'                  => $fornitore->id,
+                'codice'              => $fornitore->codice,
+                'ragione_sociale'     => $fornitore->ragione_sociale,
+                'tipo'                => $fornitore->tipo,
+                'piva'                => $fornitore->piva,
+                'indirizzo'           => $fornitore->indirizzo,
+                'email'               => $fornitore->email,
+                'telefono'            => $fornitore->telefono,
+                'haccp_certificato'   => (bool) $fornitore->haccp_certificato,
+                'haccp_scadenza'      => $fornitore->haccp_scadenza?->toDateString(),
+                'certificazioni_note' => $fornitore->certificazioni_note,
+                'moca_certificato'    => (bool) $fornitore->moca_certificato,
+                'moca_numero'         => $fornitore->moca_numero,
+                'attivo'              => (bool) $fornitore->attivo,
+                'note'                => $fornitore->note,
+            ],
         ]);
     }
 

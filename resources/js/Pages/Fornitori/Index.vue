@@ -136,7 +136,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { Link, router, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage, useForm } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DataTable from 'primevue/datatable';
@@ -154,6 +154,7 @@ const props = defineProps({
 
 const confirm = useConfirm();
 const page = usePage();
+const deleteForm = useForm({});
 const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
 
 const filters = ref({
@@ -196,7 +197,10 @@ function confirmDelete(fornitore) {
     acceptLabel: 'Elimina',
     rejectLabel: 'Annulla',
     acceptClass: 'p-button-danger',
-    accept: () => router.delete(`/fornitori/${fornitore.id}`),
+    accept: () => {
+      if (deleteForm.processing) return;
+      deleteForm.delete(`/fornitori/${fornitore.id}`);
+    },
   });
 }
 </script>
