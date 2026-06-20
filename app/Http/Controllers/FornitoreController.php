@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Fornitore;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -68,7 +69,7 @@ class FornitoreController extends Controller
     private function validated(Request $request, ?int $ignoreId = null): array
     {
         return $request->validate([
-            'codice'               => "nullable|string|max:20|unique:fornitori,codice,{$ignoreId}",
+            'codice'               => ['nullable', 'string', 'max:20', Rule::unique('fornitori', 'codice')->ignore($ignoreId)],
             'ragione_sociale'      => 'required|string|max:200',
             'tipo'                 => 'required|in:alimentare,imballaggio_primario,detergente_secondario',
             'piva'                 => 'nullable|string|max:20',
