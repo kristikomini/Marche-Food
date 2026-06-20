@@ -1,4 +1,17 @@
 #!/bin/bash
-set -e
+echo "=== Starting Marche Food ==="
+echo "PHP version: $(php -v | head -1)"
+echo "APP_ENV: ${APP_ENV}"
+echo "DB_CONNECTION: ${DB_CONNECTION}"
+echo "DB_HOST: ${DB_HOST}"
+echo "DB_DATABASE: ${DB_DATABASE}"
+
 php /var/www/html/artisan migrate --force
+if [ $? -ne 0 ]; then
+    echo "=== MIGRATION FAILED ==="
+    cat /var/www/html/storage/logs/laravel.log 2>/dev/null | tail -30
+    exit 1
+fi
+
+echo "=== Migration complete, starting Apache ==="
 exec apache2-foreground
