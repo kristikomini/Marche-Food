@@ -154,7 +154,7 @@ const form = useForm({
   email:               props.fornitore?.email               ?? '',
   telefono:            props.fornitore?.telefono            ?? '',
   haccp_certificato:   props.fornitore?.haccp_certificato   ?? false,
-  haccp_scadenza:      props.fornitore?.haccp_scadenza      ?? null,
+  haccp_scadenza:      props.fornitore?.haccp_scadenza ? new Date(props.fornitore.haccp_scadenza) : null,
   certificazioni_note: props.fornitore?.certificazioni_note ?? '',
   moca_certificato:    props.fornitore?.moca_certificato    ?? false,
   moca_numero:         props.fornitore?.moca_numero         ?? '',
@@ -169,10 +169,14 @@ const tipoOptions = [
 ];
 
 function submit() {
+  const payload = {
+    ...form.data(),
+    haccp_scadenza: form.haccp_scadenza ? form.haccp_scadenza.toISOString().slice(0, 10) : null,
+  };
   if (isEdit.value) {
-    form.put(`/fornitori/${props.fornitore.id}`);
+    form.transform(() => payload).put(`/fornitori/${props.fornitore.id}`);
   } else {
-    form.post('/fornitori');
+    form.transform(() => payload).post('/fornitori');
   }
 }
 </script>
