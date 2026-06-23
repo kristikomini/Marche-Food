@@ -68,6 +68,10 @@ class UtenteController extends Controller
             return back()->with('error', 'Non puoi eliminare il tuo account.');
         }
 
+        if ($utente->role === 'admin' && User::where('role', 'admin')->count() === 1) {
+            return back()->with('error', 'Impossibile eliminare: è l\'ultimo amministratore del sistema.');
+        }
+
         $utente->delete();
 
         return redirect()->route('utenti.index')

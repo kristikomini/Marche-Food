@@ -32,7 +32,7 @@
     </div>
 
     <!-- No results -->
-    <div v-if="risultati && righeAcquisto.length === 0 && produzioni.length === 0" class="no-results">
+    <div v-if="risultati && righeAcquisto.length === 0 && produzioni.length === 0 && venditeRighe.length === 0" class="no-results">
       <i class="pi pi-search" style="font-size:2rem;color:#94a3b8" />
       <p>Nessun risultato per <strong>"{{ query }}"</strong></p>
       <p class="no-results-sub">Prova con un lotto diverso o verifica che i dati siano stati registrati.</p>
@@ -44,8 +44,11 @@
       <template v-if="righeAcquisto.length > 0">
         <div class="section-header">
           <i class="pi pi-download" />
-          <span>Lotti di acquisto trovati ({{ righeAcquisto.length }})</span>
+          <span>Lotti di acquisto trovati ({{ righeAcquisto.length }}<template v-if="truncatedRighe"> di {{ risultati.total_righe }}</template>)</span>
           <span class="section-hint">→ Mostra quali produzioni hanno usato questi lotti</span>
+        </div>
+        <div v-if="truncatedRighe" class="truncation-warning">
+          <i class="pi pi-exclamation-triangle" /> Mostrati i primi {{ risultati.limit_righe }} di {{ risultati.total_righe }} risultati. Affina la ricerca per vedere tutti i lotti.
         </div>
 
         <div v-for="riga in righeAcquisto" :key="riga.id" class="trace-block">
@@ -116,8 +119,11 @@
       <template v-if="produzioni.length > 0">
         <div class="section-header" :style="righeAcquisto.length > 0 ? 'margin-top:2rem' : ''">
           <i class="pi pi-cog" />
-          <span>Lotti di produzione trovati ({{ produzioni.length }})</span>
+          <span>Lotti di produzione trovati ({{ produzioni.length }}<template v-if="truncatedProd"> di {{ risultati.total_produzioni }}</template>)</span>
           <span class="section-hint">→ Mostra le materie prime usate (tracciabilità a ritroso)</span>
+        </div>
+        <div v-if="truncatedProd" class="truncation-warning">
+          <i class="pi pi-exclamation-triangle" /> Mostrati i primi {{ risultati.limit_produzioni }} di {{ risultati.total_produzioni }} risultati. Affina la ricerca.
         </div>
 
         <div v-for="prod in produzioni" :key="prod.id" class="trace-block">
@@ -181,6 +187,45 @@
         </div>
       </template>
 
+      <!-- ── GAP-D6: SALES LEG — finished lots delivered to customers ──── -->
+      <template v-if="venditeRighe.length > 0">
+        <div class="section-header" :style="(righeAcquisto.length > 0 || produzioni.length > 0) ? 'margin-top:2rem' : ''">
+          <i class="pi pi-send" />
+          <span>Righe di vendita trovate ({{ venditeRighe.length }}<template v-if="truncatedVendite"> di {{ risultati.total_vendite }}</template>)</span>
+          <span class="section-hint">→ Mostra a quali clienti è stato consegnato questo lotto</span>
+        </div>
+        <div v-if="truncatedVendite" class="truncation-warning">
+          <i class="pi pi-exclamation-triangle" /> Mostrati i primi {{ risultati.limit_vendite }} di {{ risultati.total_vendite }} risultati. Affina la ricerca.
+        </div>
+
+        <div v-for="vr in venditeRighe" :key="vr.id" class="trace-block">
+          <div class="trace-node trace-sale">
+            <div class="node-icon"><i class="pi pi-send" /></div>
+            <div class="node-body">
+              <div class="node-title">{{ vr.nome_prodotto }}</div>
+              <div class="node-meta">
+                <span class="badge badge-customer">{{ vr.vendita?.cliente?.ragione_sociale ?? '—' }}</span>
+                <span class="meta-sep">·</span>
+                <span>Doc N° <strong>{{ vr.vendita?.numero_documento }}</strong></span>
+                <span class="meta-sep">·</span>
+                <span>{{ formatDate(vr.vendita?.data_documento) }}</span>
+              </div>
+              <div class="node-lots">
+                <span v-if="vr.lotto" class="lot-chip lot-internal">Int: {{ vr.lotto }}</span>
+                <span v-if="vr.lotto_esterno" class="lot-chip lot-external">Est: {{ vr.lotto_esterno }}</span>
+                <span class="lot-chip lot-qty">{{ vr.quantita_kg != null ? Number(vr.quantita_kg).toFixed(3) + ' kg' : '' }}</span>
+                <span v-if="vr.scadenza" class="lot-chip" :class="isScaduto(vr.scadenza) ? 'lot-expired' : 'lot-expiry'">
+                  Scad: {{ formatDate(vr.scadenza) }}
+                </span>
+              </div>
+            </div>
+            <div class="node-actions">
+              <Link :href="`/vendite/${vr.vendita_id}/edit`" class="node-link">Vedi vendita</Link>
+            </div>
+          </div>
+        </div>
+      </template>
+
     </template>
 
     <!-- Empty state (before first search) -->
@@ -216,6 +261,11 @@ const loading = ref(false);
 
 const righeAcquisto = computed(() => props.risultati?.righe_acquisto ?? []);
 const produzioni    = computed(() => props.risultati?.produzioni ?? []);
+const venditeRighe  = computed(() => props.risultati?.vendite_righe ?? []);
+
+const truncatedRighe    = computed(() => props.risultati && props.risultati.total_righe > props.risultati.limit_righe);
+const truncatedProd     = computed(() => props.risultati && props.risultati.total_produzioni > props.risultati.limit_produzioni);
+const truncatedVendite  = computed(() => props.risultati && props.risultati.total_vendite > props.risultati.limit_vendite);
 
 function doSearch() {
   if (!term.value.trim()) return;
@@ -269,8 +319,9 @@ function isScaduto(d) {
   background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
   padding: 0.85rem 1rem;
 }
-.trace-purchase  { border-left: 3px solid #2a6941; }
+.trace-purchase   { border-left: 3px solid #2a6941; }
 .trace-production { border-left: 3px solid #7c3aed; }
+.trace-sale       { border-left: 3px solid #0369a1; }
 .trace-prod-main  { border-left-width: 4px; }
 
 .node-icon {
@@ -278,8 +329,9 @@ function isScaduto(d) {
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   font-size: 0.9rem;
 }
-.trace-purchase  .node-icon { background: #dcfce7; color: #16a34a; }
+.trace-purchase   .node-icon { background: #dcfce7; color: #16a34a; }
 .trace-production .node-icon { background: #ede9fe; color: #7c3aed; }
+.trace-sale       .node-icon { background: #e0f2fe; color: #0369a1; }
 
 .node-body  { flex: 1; min-width: 0; }
 .node-title { font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 0.3rem; }
@@ -293,8 +345,11 @@ function isScaduto(d) {
 
 /* ── Badges & chips ─────────────────────────────────────────────── */
 .badge         { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 99px; font-size: 0.72rem; font-weight: 700; }
-.badge-supplier { background: #dcfce7; color: #166534; }
-.badge-product  { background: #ede9fe; color: #5b21b6; }
+.badge-supplier  { background: #dcfce7; color: #166534; }
+.badge-product   { background: #ede9fe; color: #5b21b6; }
+.badge-customer  { background: #e0f2fe; color: #0369a1; }
+
+.truncation-warning { background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 0.5rem 0.85rem; font-size: 0.78rem; color: #92400e; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
 
 .lot-chip     { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.72rem; font-weight: 600; }
 .lot-internal { background: #dbeafe; color: #1d4ed8; }

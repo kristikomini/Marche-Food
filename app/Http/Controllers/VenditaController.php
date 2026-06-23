@@ -95,18 +95,52 @@ class VenditaController extends Controller
     {
         $data = $this->validateRequest($request);
 
-        $vendita->update([
-            'cliente_id'      => $data['cliente_id'],
-            'numero_documento' => $data['numero_documento'],
-            'data_documento'  => $data['data_documento'],
-            'tipo_documento'  => $data['tipo_documento'],
-            'note'            => $data['note'] ?? null,
-        ]);
+        $existingIds  = $vendita->righe()->pluck('id')->all();
+        $submittedIds = collect($data['righe'])->pluck('id')->filter()->values()->all();
+        $toDeleteIds  = array_diff($existingIds, $submittedIds);
 
-        $vendita->righe()->delete();
-        foreach ($data['righe'] as $riga) {
-            $vendita->righe()->create($riga);
+        // GAP-T1: refuse deletion of lines that have bolle di reso linked to them
+        if (!empty($toDeleteIds)) {
+            $linkedCount = $vendita->righe()
+                ->whereIn('id', $toDeleteIds)
+                ->whereHas('bolleReso')
+                ->count();
+
+            if ($linkedCount > 0) {
+                return back()->withErrors([
+                    'righe' => "Impossibile eliminare {$linkedCount} riga/e: sono già collegate a bolle di reso. Rimuovere prima le bolle di reso collegate.",
+                ])->withInput();
+            }
         }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($vendita, $data, $toDeleteIds) {
+            $vendita->update([
+                'cliente_id'       => $data['cliente_id'],
+                'numero_documento' => $data['numero_documento'],
+                'data_documento'   => $data['data_documento'],
+                'tipo_documento'   => $data['tipo_documento'],
+                'note'             => $data['note'] ?? null,
+            ]);
+
+            if (!empty($toDeleteIds)) {
+                $vendita->righe()->whereIn('id', $toDeleteIds)->delete();
+            }
+
+            // GAP-T4: upsert remaining rows preserving IDs
+            foreach ($data['righe'] as $rigaData) {
+                $id = $rigaData['id'] ?? null;
+                unset($rigaData['id']);
+
+                if ($id) {
+                    $riga = \App\Models\VenditaRiga::where('id', $id)->where('vendita_id', $vendita->id)->first();
+                    if ($riga) {
+                        $riga->update($rigaData);
+                    }
+                } else {
+                    $vendita->righe()->create($rigaData);
+                }
+            }
+        });
 
         return redirect()->route('vendite.index')
             ->with('success', 'Vendita aggiornata.');
@@ -129,6 +163,7 @@ class VenditaController extends Controller
             'tipo_documento'     => ['required', 'in:DDT,FI,NC'],
             'note'               => ['nullable', 'string'],
             'righe'              => ['required', 'array', 'min:1'],
+            'righe.*.id'         => ['nullable', 'integer'],
             'righe.*.nome_prodotto' => ['required', 'string', 'max:200'],
             'righe.*.pezzatura_gr'  => ['nullable', 'numeric', 'min:0'],
             'righe.*.um'         => ['nullable', 'string', 'max:10'],

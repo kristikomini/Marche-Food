@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class Acquisto extends Model
 {
+    use Auditable;
+
     protected $table = 'acquisti';
 
     protected $fillable = [

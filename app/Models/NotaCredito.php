@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class NotaCredito extends Model
 {
+    use Auditable;
+
     protected $table = 'note_credito';
 
     protected $fillable = [

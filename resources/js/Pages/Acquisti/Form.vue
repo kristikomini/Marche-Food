@@ -241,6 +241,7 @@ const umOptions = [
 
 function emptyRiga(dataIn = null) {
   return {
+    id: null,
     nome_prodotto: '',
     um: 'kg',
     quantita_pz: null,
@@ -266,10 +267,11 @@ const form = useForm({
   note:            props.acquisto?.note            ?? '',
   righe: props.acquisto?.righe?.length
     ? props.acquisto.righe.map(r => ({
-        nome_prodotto: r.nome_prodotto ?? '',
-        um:            r.um            ?? 'kg',
-        quantita_pz:   r.quantita_pz   ? Number(r.quantita_pz)  : null,
-        quantita_kg:   r.quantita_kg   ? Number(r.quantita_kg)  : null,
+        id:               r.id           ?? null,
+        nome_prodotto:    r.nome_prodotto ?? '',
+        um:               r.um            ?? 'kg',
+        quantita_pz:      r.quantita_pz   ? Number(r.quantita_pz)  : null,
+        quantita_kg:      r.quantita_kg   ? Number(r.quantita_kg)  : null,
         lotto:            r.lotto            ?? '',
         lotto_esterno:    r.lotto_esterno    ?? '',
         scadenza:         parseDate(r.scadenza),

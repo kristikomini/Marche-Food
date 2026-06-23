@@ -47,6 +47,13 @@ class SchedaProduzioneController extends Controller
     {
         $data = $this->validateRequest($request);
 
+        // GAP-D7: when creating a new active revision, deactivate all prior revisions for the same product
+        if (!empty($data['attiva'])) {
+            SchedaProduzione::where('prodotto_id', $data['prodotto_id'])
+                ->where('attiva', true)
+                ->update(['attiva' => false]);
+        }
+
         $scheda = SchedaProduzione::create([
             'prodotto_id'    => $data['prodotto_id'],
             'modello'        => $data['modello'],

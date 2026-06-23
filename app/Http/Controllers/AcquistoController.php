@@ -95,18 +95,54 @@ class AcquistoController extends Controller
     {
         $data = $this->validateRequest($request);
 
-        $acquisto->update([
-            'fornitore_id'    => $data['fornitore_id'],
-            'numero_documento' => $data['numero_documento'],
-            'data_documento'  => $data['data_documento'],
-            'tipo_documento'  => $data['tipo_documento'],
-            'note'            => $data['note'] ?? null,
-        ]);
+        // Determine which existing righe the user is removing
+        $existingIds   = $acquisto->righe()->pluck('id')->all();
+        $submittedIds  = collect($data['righe'])->pluck('id')->filter()->values()->all();
+        $toDeleteIds   = array_diff($existingIds, $submittedIds);
 
-        $acquisto->righe()->delete();
-        foreach ($data['righe'] as $riga) {
-            $acquisto->righe()->create($riga);
+        // GAP-T1: refuse deletion of lines that are already linked to a production run
+        if (!empty($toDeleteIds)) {
+            $linkedCount = $acquisto->righe()
+                ->whereIn('id', $toDeleteIds)
+                ->whereHas('produzioniMateriePrime')
+                ->count();
+
+            if ($linkedCount > 0) {
+                return back()->withErrors([
+                    'righe' => "Impossibile eliminare {$linkedCount} riga/e: sono già collegate a produzioni registrate. Rimuovere prima le produzioni collegate.",
+                ])->withInput();
+            }
         }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($acquisto, $data, $toDeleteIds) {
+            $acquisto->update([
+                'fornitore_id'     => $data['fornitore_id'],
+                'numero_documento' => $data['numero_documento'],
+                'data_documento'   => $data['data_documento'],
+                'tipo_documento'   => $data['tipo_documento'],
+                'note'             => $data['note'] ?? null,
+            ]);
+
+            // Delete only rows that were removed and are safe to delete
+            if (!empty($toDeleteIds)) {
+                $acquisto->righe()->whereIn('id', $toDeleteIds)->delete();
+            }
+
+            // GAP-T4: upsert remaining rows preserving IDs
+            foreach ($data['righe'] as $rigaData) {
+                $id = $rigaData['id'] ?? null;
+                unset($rigaData['id']);
+
+                if ($id) {
+                    $riga = AcquistoRiga::where('id', $id)->where('acquisto_id', $acquisto->id)->first();
+                    if ($riga) {
+                        $riga->update($rigaData);
+                    }
+                } else {
+                    $acquisto->righe()->create($rigaData);
+                }
+            }
+        });
 
         return redirect()->route('acquisti.index')
             ->with('success', 'Acquisto aggiornato.');
@@ -129,6 +165,7 @@ class AcquistoController extends Controller
             'tipo_documento'     => ['required', 'in:DDT,Fattura,Bolla'],
             'note'               => ['nullable', 'string'],
             'righe'              => ['required', 'array', 'min:1'],
+            'righe.*.id'         => ['nullable', 'integer'],
             'righe.*.nome_prodotto' => ['required', 'string', 'max:200'],
             'righe.*.um'         => ['nullable', 'string', 'max:10'],
             'righe.*.quantita_pz' => ['nullable', 'numeric', 'min:0'],

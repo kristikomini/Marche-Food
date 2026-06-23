@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class LottoImballaggioPrimario extends Model
 {
+    use Auditable;
+
     protected $table = 'lotti_imballaggi_primari';
 
     protected $fillable = [

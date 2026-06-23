@@ -210,6 +210,7 @@ const umOptions = [
 
 function emptyRiga() {
   return {
+    id:            null,
     nome_prodotto: '',
     pezzatura_gr:  null,
     um:            'pz',
@@ -233,6 +234,7 @@ const form = useForm({
   note:            props.vendita?.note            ?? '',
   righe: props.vendita?.righe?.length
     ? props.vendita.righe.map(r => ({
+        id:            r.id            ?? null,
         nome_prodotto: r.nome_prodotto ?? '',
         pezzatura_gr:  r.pezzatura_gr  ? Number(r.pezzatura_gr)  : null,
         um:            r.um            ?? 'pz',

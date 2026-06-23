@@ -56,38 +56,32 @@
         </section>
       </div>
 
-      <!-- MATERIE PRIME UTILIZZATE (tracciabilità HACCP) -->
-      <div class="form-card">
+      <!-- MATERIE PRIME UTILIZZATE -->
+      <div class="form-card mb-4">
         <div class="righe-header">
           <div>
             <h2 class="section-title" style="margin:0">Materie prime utilizzate</h2>
             <p class="section-sub">Collegare ogni ingrediente al lotto di acquisto per la tracciabilità HACCP</p>
           </div>
-          <Button type="button" label="Aggiungi riga" icon="pi pi-plus" size="small" outlined @click="addRiga" />
+          <Button type="button" label="Aggiungi riga" icon="pi pi-plus" size="small" outlined @click="addMateriaPrima" />
         </div>
+        <div v-if="form.errors['materie_prime']" class="error" style="padding:0.5rem 1.5rem">{{ form.errors['materie_prime'] }}</div>
 
         <div class="table-wrapper">
           <table class="righe-table">
             <thead>
               <tr>
                 <th style="min-width:180px">Materia Prima *</th>
-                <th style="min-width:280px">Lotto Acquisto (DDT / Fornitore / Lotto) *</th>
+                <th style="min-width:300px">Lotto Acquisto *</th>
                 <th style="width:120px">Q.tà Kg *</th>
+                <th style="width:110px">Disponibile</th>
                 <th style="width:44px"></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(r, i) in form.materie_prime" :key="i">
                 <td>
-                  <Select
-                    v-model="r.materia_prima_id"
-                    :options="materie"
-                    option-label="nome"
-                    option-value="id"
-                    placeholder="Seleziona..."
-                    filter
-                    fluid size="small"
-                  />
+                  <Select v-model="r.materia_prima_id" :options="materie" option-label="nome" option-value="id" placeholder="Seleziona..." filter fluid size="small" />
                 </td>
                 <td>
                   <Select
@@ -96,32 +90,140 @@
                     :option-label="rigaLabel"
                     option-value="id"
                     placeholder="Seleziona lotto..."
-                    filter
-                    fluid size="small"
+                    filter fluid size="small"
                     :invalid="!!form.errors[`materie_prime.${i}.acquisto_riga_id`]"
                   />
                 </td>
                 <td>
-                  <InputNumber
-                    v-model="r.quantita_kg"
-                    :min-fraction-digits="3" :max-fraction-digits="3"
-                    :invalid="!!form.errors[`materie_prime.${i}.quantita_kg`]"
-                    fluid size="small"
-                  />
+                  <InputNumber v-model="r.quantita_kg" :min-fraction-digits="3" :max-fraction-digits="3" :invalid="!!form.errors[`materie_prime.${i}.quantita_kg`]" fluid size="small" />
                 </td>
                 <td>
-                  <Button type="button" icon="pi pi-trash" size="small" text severity="danger" @click="removeRiga(i)" />
+                  <span v-if="selectedRigaBalance(r.acquisto_riga_id) !== null" :class="selectedRigaBalance(r.acquisto_riga_id) < 0 ? 'balance-negative' : 'balance-ok'">
+                    {{ Number(selectedRigaBalance(r.acquisto_riga_id)).toFixed(3) }} kg
+                  </span>
+                  <span v-else class="balance-empty">—</span>
+                </td>
+                <td>
+                  <Button type="button" icon="pi pi-trash" size="small" text severity="danger" @click="removeMateriaPrima(i)" />
                 </td>
               </tr>
               <tr v-if="!form.materie_prime.length">
-                <td colspan="4" style="text-align:center;color:#94a3b8;padding:1rem">Nessuna materia prima aggiunta.</td>
+                <td colspan="5" style="text-align:center;color:#94a3b8;padding:1rem">Nessuna materia prima aggiunta.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-actions-sub">
+          <span class="righe-count">{{ form.materie_prime.length }} riga/righe</span>
+        </div>
+      </div>
+
+      <!-- IMBALLAGGI PRIMARI -->
+      <div class="form-card mb-4">
+        <div class="righe-header">
+          <div>
+            <h2 class="section-title" style="margin:0">Imballaggi primari utilizzati</h2>
+            <p class="section-sub">Collegare i lotti di imballaggio usati in questa produzione (MOCA)</p>
+          </div>
+          <Button type="button" label="Aggiungi" icon="pi pi-plus" size="small" outlined @click="addImballaggio" />
+        </div>
+
+        <div class="table-wrapper">
+          <table class="righe-table">
+            <thead>
+              <tr>
+                <th style="min-width:280px">Lotto Imballaggio *</th>
+                <th style="width:130px">Q.tà Usata</th>
+                <th style="min-width:160px">Note</th>
+                <th style="width:44px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(r, i) in form.imballaggi" :key="i">
+                <td>
+                  <Select
+                    v-model="r.lotto_imballaggio_id"
+                    :options="lotti_imballaggi"
+                    :option-label="imballaggioLabel"
+                    option-value="id"
+                    placeholder="Seleziona lotto..."
+                    filter fluid size="small"
+                    :invalid="!!form.errors[`imballaggi.${i}.lotto_imballaggio_id`]"
+                  />
+                </td>
+                <td>
+                  <InputNumber v-model="r.quantita_usata" :min-fraction-digits="3" :max-fraction-digits="3" fluid size="small" />
+                </td>
+                <td>
+                  <InputText v-model="r.note" fluid size="small" />
+                </td>
+                <td>
+                  <Button type="button" icon="pi pi-trash" size="small" text severity="danger" @click="removeImballaggio(i)" />
+                </td>
+              </tr>
+              <tr v-if="!form.imballaggi.length">
+                <td colspan="4" style="text-align:center;color:#94a3b8;padding:1rem">Nessun imballaggio collegato.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-actions-sub">
+          <span class="righe-count">{{ form.imballaggi.length }} riga/righe</span>
+        </div>
+      </div>
+
+      <!-- DETERGENTI -->
+      <div class="form-card mb-4">
+        <div class="righe-header">
+          <div>
+            <h2 class="section-title" style="margin:0">Detergenti e sanificanti utilizzati</h2>
+            <p class="section-sub">Collegare i lotti di detergente usati in questa sessione di pulizia</p>
+          </div>
+          <Button type="button" label="Aggiungi" icon="pi pi-plus" size="small" outlined @click="addDetergente" />
+        </div>
+
+        <div class="table-wrapper">
+          <table class="righe-table">
+            <thead>
+              <tr>
+                <th style="min-width:280px">Lotto Detergente *</th>
+                <th style="width:130px">Q.tà Usata</th>
+                <th style="min-width:160px">Note</th>
+                <th style="width:44px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(r, i) in form.detergenti" :key="i">
+                <td>
+                  <Select
+                    v-model="r.lotto_detergente_id"
+                    :options="lotti_detergenti"
+                    :option-label="detergenteLabel"
+                    option-value="id"
+                    placeholder="Seleziona lotto..."
+                    filter fluid size="small"
+                    :invalid="!!form.errors[`detergenti.${i}.lotto_detergente_id`]"
+                  />
+                </td>
+                <td>
+                  <InputNumber v-model="r.quantita_usata" :min-fraction-digits="3" :max-fraction-digits="3" fluid size="small" />
+                </td>
+                <td>
+                  <InputText v-model="r.note" fluid size="small" />
+                </td>
+                <td>
+                  <Button type="button" icon="pi pi-trash" size="small" text severity="danger" @click="removeDetergente(i)" />
+                </td>
+              </tr>
+              <tr v-if="!form.detergenti.length">
+                <td colspan="4" style="text-align:center;color:#94a3b8;padding:1rem">Nessun detergente collegato.</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <div class="form-actions">
-          <span class="righe-count">{{ form.materie_prime.length }} riga/righe</span>
+          <span class="righe-count">{{ form.detergenti.length }} riga/righe</span>
           <Button type="submit" :label="isEdit ? 'Salva modifiche' : 'Registra produzione'" icon="pi pi-check" :loading="form.processing" />
         </div>
       </div>
@@ -140,23 +242,55 @@ import Select from 'primevue/select';
 import DatePicker from 'primevue/datepicker';
 
 const props = defineProps({
-  produzione: Object,
-  schede: Array,
-  materie: Array,
-  acquisti_righe: Array,
+  produzione:       Object,
+  schede:           Array,
+  materie:          Array,
+  acquisti_righe:   Array,
+  lotti_imballaggi: Array,
+  lotti_detergenti: Array,
 });
 
 const isEdit = computed(() => !!props.produzione);
 
-function rigaLabel(r) {
-  const lotto = r.lotto || r.lotto_esterno || '—';
-  const fornitore = r.acquisto?.fornitore?.ragione_sociale ?? '?';
-  const ddt = r.acquisto?.numero_documento ?? '?';
-  return `${ddt} | ${fornitore} | ${r.nome_prodotto} | Lotto: ${lotto}`;
+// GAP-D2: look up the remaining balance for a selected acquisto_riga
+const balanceMap = computed(() => {
+  const map = {};
+  (props.acquisti_righe ?? []).forEach(r => { map[r.id] = r.balance_kg; });
+  return map;
+});
+
+function selectedRigaBalance(id) {
+  return id ? (balanceMap.value[id] ?? null) : null;
 }
 
-function emptyRiga() {
+function rigaLabel(r) {
+  const lotto    = r.lotto || r.lotto_esterno || '—';
+  const fornitore = r.acquisto?.fornitore?.ragione_sociale ?? '?';
+  const ddt      = r.acquisto?.numero_documento ?? '?';
+  const balance  = r.balance_kg != null ? ` | Disp: ${Number(r.balance_kg).toFixed(3)} kg` : '';
+  return `${ddt} | ${fornitore} | ${r.nome_prodotto} | Lotto: ${lotto}${balance}`;
+}
+
+function imballaggioLabel(r) {
+  const lotto    = r.lotto || '—';
+  const fornitore = r.fornitore?.ragione_sociale ?? '?';
+  return `${r.componente} | ${fornitore} | Lotto: ${lotto}`;
+}
+
+function detergenteLabel(r) {
+  const lotto    = r.lotto || '—';
+  const fornitore = r.fornitore?.ragione_sociale ?? '?';
+  return `${r.componente} | ${fornitore} | Lotto: ${lotto}`;
+}
+
+function emptyMateriaPrima() {
   return { materia_prima_id: null, acquisto_riga_id: null, quantita_kg: null };
+}
+function emptyImballaggio() {
+  return { lotto_imballaggio_id: null, quantita_usata: null, note: '' };
+}
+function emptyDetergente() {
+  return { lotto_detergente_id: null, quantita_usata: null, note: '' };
 }
 
 const form = useForm({
@@ -168,15 +302,33 @@ const form = useForm({
   note:                 props.produzione?.note                 ?? '',
   materie_prime: props.produzione?.materie_prime?.length
     ? props.produzione.materie_prime.map(m => ({
-        materia_prima_id:  m.materia_prima_id,
-        acquisto_riga_id:  m.acquisto_riga_id,
-        quantita_kg:       Number(m.quantita_kg),
+        materia_prima_id: m.materia_prima_id,
+        acquisto_riga_id: m.acquisto_riga_id,
+        quantita_kg:      Number(m.quantita_kg),
+      }))
+    : [],
+  imballaggi: props.produzione?.imballaggi_primari?.length
+    ? props.produzione.imballaggi_primari.map(x => ({
+        lotto_imballaggio_id: x.lotto_imballaggio_id,
+        quantita_usata:       x.quantita_usata ? Number(x.quantita_usata) : null,
+        note:                 x.note ?? '',
+      }))
+    : [],
+  detergenti: props.produzione?.detergenti?.length
+    ? props.produzione.detergenti.map(x => ({
+        lotto_detergente_id: x.lotto_detergente_id,
+        quantita_usata:      x.quantita_usata ? Number(x.quantita_usata) : null,
+        note:                x.note ?? '',
       }))
     : [],
 });
 
-function addRiga() { form.materie_prime.push(emptyRiga()); }
-function removeRiga(i) { form.materie_prime.splice(i, 1); }
+function addMateriaPrima()  { form.materie_prime.push(emptyMateriaPrima()); }
+function removeMateriaPrima(i) { form.materie_prime.splice(i, 1); }
+function addImballaggio()   { form.imballaggi.push(emptyImballaggio()); }
+function removeImballaggio(i) { form.imballaggi.splice(i, 1); }
+function addDetergente()    { form.detergenti.push(emptyDetergente()); }
+function removeDetergente(i) { form.detergenti.splice(i, 1); }
 
 function submit() {
   const payload = {
@@ -209,5 +361,9 @@ function submit() {
 .righe-table th { padding:0.6rem 0.5rem; text-align:left; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:#64748b; background:#f8fafc; border-bottom:1px solid #e2e8f0; white-space:nowrap; }
 .righe-table td { padding:0.4rem 0.5rem; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
 .form-actions { padding:1rem 1.5rem; background:#f8fafc; display:flex; align-items:center; justify-content:space-between; border-top:1px solid #e2e8f0; }
+.form-actions-sub { padding:0.5rem 1.5rem; background:#f8fafc; display:flex; align-items:center; justify-content:flex-start; border-top:1px solid #e2e8f0; }
 .righe-count { font-size:0.85rem; color:#64748b; }
+.balance-ok { font-size:0.82rem; font-weight:600; color:#16a34a; font-family:monospace; }
+.balance-negative { font-size:0.82rem; font-weight:600; color:#dc2626; font-family:monospace; }
+.balance-empty { font-size:0.82rem; color:#94a3b8; }
 </style>
