@@ -54,11 +54,13 @@ class ProduzioneController extends Controller
     public function store(Request $request)
     {
         $data = $this->validateRequest($request);
-
-        // GAP-D3: cross-check submitted ingredients against the scheda recipe
         $this->validateRecipeIngredients($data);
 
         DB::transaction(function () use ($data) {
+            // Lock acquisto_righe rows and re-validate balance inside the transaction
+            // to prevent two concurrent submissions from over-drawing the same lot.
+            $this->lockAndCheckBalance($data['materie_prime'] ?? []);
+
             $produzione = Produzione::create([
                 'scheda_id'            => $data['scheda_id'],
                 'lotto_produzione'     => $data['lotto_produzione'],
@@ -103,6 +105,9 @@ class ProduzioneController extends Controller
         $this->validateRecipeIngredients($data);
 
         DB::transaction(function () use ($produzione, $data) {
+            // Exclude this production's own current consumption from the balance check
+            $this->lockAndCheckBalance($data['materie_prime'] ?? [], $produzione->id);
+
             $produzione->update([
                 'scheda_id'            => $data['scheda_id'],
                 'lotto_produzione'     => $data['lotto_produzione'],
@@ -205,6 +210,45 @@ class ProduzioneController extends Controller
             ->whereNull('data_out')
             ->orderByDesc('data_in')
             ->get(['id', 'fornitore_id', 'componente', 'lotto', 'numero_ddt', 'quantita', 'um', 'data_in']);
+    }
+
+    private function lockAndCheckBalance(array $materiePrime, ?int $excludeProduzioneId = null): void
+    {
+        if (empty($materiePrime)) {
+            return;
+        }
+
+        $righeIds = collect($materiePrime)->pluck('acquisto_riga_id')->unique()->filter()->all();
+
+        // Row-level lock: any concurrent transaction touching the same rows must wait
+        $righe = AcquistoRiga::lockForUpdate()->whereIn('id', $righeIds)->get()->keyBy('id');
+
+        // Fresh consumed totals, excluding the current production when editing
+        $consumed = DB::table('produzioni_materie_prime')
+            ->when($excludeProduzioneId, fn ($q) => $q->where('produzione_id', '!=', $excludeProduzioneId))
+            ->whereIn('acquisto_riga_id', $righeIds)
+            ->groupBy('acquisto_riga_id')
+            ->pluck(DB::raw('SUM(quantita_kg)'), 'acquisto_riga_id');
+
+        $errors = [];
+        foreach ($materiePrime as $mp) {
+            $riga = $righe[$mp['acquisto_riga_id']] ?? null;
+            if (!$riga) {
+                continue;
+            }
+            $balance  = round((float) $riga->quantita_kg - (float) ($consumed[$riga->id] ?? 0), 3);
+            $required = (float) $mp['quantita_kg'];
+            if ($required > $balance + 0.001) {
+                $label    = $riga->lotto ?: ($riga->lotto_esterno ?: "ID {$riga->id}");
+                $errors[] = "Lotto «{$label}»: richiesti {$required} kg, disponibili {$balance} kg.";
+            }
+        }
+
+        if (!empty($errors)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'materie_prime' => implode(' | ', $errors),
+            ]);
+        }
     }
 
     private function validateRecipeIngredients(array $data): void

@@ -35,10 +35,16 @@ flowchart TB
     end
 
     subgraph Cross["🔍 CROSS-CUTTING"]
-        TRC[Tracciabilità\nForward + Reverse]
+        TRC[Tracciabilità\nForward + Reverse + Sales]
+        RCL[Recall Report\nSupplier → Customer impact]
         DSH[Dashboard\nKPI + Scadenze]
         IMP2[Import CSV]
         USR[Gestione Utenti]
+        EXP[CSV Exports\nAcquisti · Vendite · Produzioni]
+        PDF[HACCP PDF\nper Produzione]
+        ALE[Alert Email\nScadenze giornaliero]
+        BCK[DB Backup\npg_dump giornaliero]
+        MOB[Mobile Layout\nResponsive sidebar]
     end
 
     F -->|alimentare| ACQ
@@ -189,6 +195,101 @@ All operational records (`acquisti`, `vendite`, `produzioni`, `bolle_reso`, `not
 
 ---
 
+### Password Reset (Self-Service)
+
+Users can reset their own password without admin involvement:
+
+1. User clicks "Password dimenticata?" on the login screen → `/forgot-password`
+2. `ForgotPasswordController::send()` calls `Password::sendResetLink()`, which inserts a hashed token into `password_reset_tokens` and sends an email.
+3. User clicks the link in the email → `/reset-password/{token}`
+4. `ResetPasswordController::reset()` validates the token (60-minute expiry) and calls `Password::reset()` to update the password and invalidate the token.
+
+Rate-limited: `POST /forgot-password` is throttled at 5 requests/minute to prevent email flooding. The token is single-use and expires after 60 minutes (Laravel default).
+
+---
+
+### CSV Exports
+
+Each of the three main operational list views has an "Esporta CSV" button that triggers a streaming download:
+
+| Route | Controller | Contents |
+|---|---|---|
+| `GET /acquisti/export` | `AcquistoController::export()` | All acquisto_righe with document header + lot fields |
+| `GET /vendite/export` | `VenditaController::export()` | All vendita_righe with document header + lot fields |
+| `GET /produzioni/export` | `ProduzioneController::export()` | All production runs with scheda, product, operator |
+
+Files are UTF-8 with BOM (for Excel compatibility), semicolon-delimited. The download uses `response()->streamDownload()` — no temp file is written to disk. Filename format: `acquisti_YYYYMMDD_HHmmss.csv`.
+
+---
+
+### HACCP PDF Reports
+
+Each production run has a PDF download button in the Produzioni index (`pi-file-pdf` icon). The route `GET /produzioni/{id}/pdf` is handled by `ReportController::produzionePdf()`:
+
+1. Loads the production with all relationships (scheda, product, workflow steps, raw materials with supplier lots, packaging lots, detergent lots).
+2. Renders `resources/views/pdf/produzione.blade.php` via dompdf (`barryvdh/laravel-dompdf v3.1`).
+3. Returns the PDF as a file download (`Content-Disposition: attachment`). Filename: `lavorazione_{lotto_produzione}.pdf`.
+
+The PDF includes: company header, production lot + date, product name, scheda code, workflow steps with CCP measurements, ingredient table (lot, supplier, quantity), packaging and detergent tables, operator signature field.
+
+---
+
+### Recall Report
+
+`GET /recall` (sidebar: "Rapporto Recall") handled by `RecallController::index()`.
+
+Given a production lot number, the recall report answers: "Which customers received this finished product lot?"
+
+The controller searches `produzioni` by `lotto_produzione` (partial match), then finds all `vendite_righe` whose `lotto` or `lotto_esterno` matches any of the found production lots. Results are shown in two sections: (1) matching production runs, (2) customer sales rows that need to be notified.
+
+**Scope**: The search starts from a production lot. For ingredient-based recall (e.g., "supplier X recalled ingredient Y"), use the Tracciabilità module first to find which production lots consumed that ingredient, then bring those lots into the Recall Report. A combined single-query flow from ingredient → customer is a planned enhancement.
+
+The report includes a warning banner listing the number of customers to contact and a reminder to notify the health authority (ASL/RASFF).
+
+---
+
+### Expiry Alert Emails
+
+The Artisan command `haccp:alert-scadenze` (class `InviaAlertScadenze`) runs daily at 07:00 via the Laravel scheduler:
+
+1. Queries open `acquisti_righe` (`data_out IS NULL`) to build two lot lists:
+   - **Expired** (`scadenza < today`)
+   - **Expiring within 30 days** (`scadenza BETWEEN today AND today+30`)
+2. Queries active suppliers (`attivo = true`) with `haccp_certificato = true` whose `haccp_scadenza` falls within the next 60 days.
+3. If any of the three lists are non-empty, sends `AlertScadenzeMail` to **all users with `role = admin`** (queried from the `users` table).
+4. The mail (`resources/views/emails/alert_scadenze.blade.php`) renders three sections:
+   - 🔴 Lotti già scaduti
+   - 🟡 Lotti in scadenza nei prossimi 30 giorni
+   - 📋 Certificati HACCP fornitori in scadenza (60 giorni)
+
+If all three lists are empty, no email is sent. If `MAIL_*` env vars are not configured, the command exits with an error logged but does not crash the container.
+
+---
+
+### DB Backup (Automated)
+
+The Artisan command `db:backup` (class `BackupDatabase`) runs daily at 03:00:
+
+1. Calls `pg_dump` (available via `postgresql-client` installed in the Dockerfile) against the configured `DB_*` env vars.
+2. Saves the dump to `storage/app/backups/backup_YYYYMMDD_HHmmss.sql.gz` (hardcoded path inside the container).
+3. Prunes backup files older than 14 days from the same directory.
+
+**Durability note**: The backup path is inside the Docker container. On a container rebuild the files are lost. To make backups durable, mount a Hetzner Volume at the `BACKUP_PATH` — the command uses whatever path the env var points to.
+
+---
+
+### Mobile Layout
+
+`AppLayout.vue` is fully responsive at the 768px breakpoint:
+
+- **Hamburger button** (top-left of the topbar) appears on mobile; hidden on desktop.
+- **Sidebar** becomes fixed-position, off-screen by default (`transform: translateX(-100%)`). Clicking the hamburger adds class `sidebar-open` which slides it in (`transform: translateX(0)`).
+- **Overlay** — a dark semi-transparent div covers the main content while the sidebar is open. Clicking the overlay closes the sidebar.
+- **Auto-close** — any nav link click inside the sidebar fires `sidebarOpen = false`, closing the sidebar automatically after navigation.
+- All list pages (DataTables) use `overflow-x: auto` so wide tables scroll horizontally rather than breaking the layout on narrow screens.
+
+---
+
 ## 3. Module Interaction Summary
 
 | Module | Reads From | Writes To | Blocks If Missing |
@@ -201,5 +302,11 @@ All operational records (`acquisti`, `vendite`, `produzioni`, `bolle_reso`, `not
 | Schede Produzione | Prodotti, Materie Prime, Flussi | `schede_produzione` + children | Produzioni cannot be created |
 | Produzioni | Schede, Acquisti Righe, Lotti Imballaggi, Lotti Detergenti | `produzioni`, `produzioni_materie_prime`, `produzioni_imballaggi_primari`, `produzioni_detergenti` | Tracciabilità has no data |
 | Tracciabilità | Acquisti Righe, Produzioni, Vendite Righe | (read-only) | — |
+| Recall Report | Acquisti Righe, Produzioni, Vendite Righe, Clienti | (read-only) | — |
+| HACCP PDF | Produzioni + all relationships | (read-only, streams to browser) | — |
+| CSV Exports | Acquisti Righe / Vendite Righe / Produzioni | (read-only, streams to browser) | — |
+| Expiry Alert Email | Acquisti Righe | Sends email | Requires MAIL_* env vars |
+| DB Backup | PostgreSQL (via pg_dump) | `storage/backups/*.sql.gz` | Requires postgresql-client in image |
 | Dashboard | Acquisti, Vendite, Produzioni | (read-only) | — |
 | Import | Fornitori, Clienti | `acquisti`, `acquisti_righe`, `vendite`, `vendite_righe` | — |
+| Password Reset | `users`, `password_reset_tokens` | `password_reset_tokens`, `users.password` | Requires MAIL_* env vars |

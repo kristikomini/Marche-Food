@@ -41,6 +41,7 @@ sequenceDiagram
         Ctrl->>Ctrl: Build $grouped[fornitore|doc_number|date][]
     end
 
+    Ctrl->>DB: BEGIN TRANSACTION
     loop Each document group
         Ctrl->>DB: SELECT fornitori WHERE codice = ?
         alt Fornitore not found
@@ -53,6 +54,7 @@ sequenceDiagram
             end
         end
     end
+    Ctrl->>DB: COMMIT (or ROLLBACK on exception)
 
     Ctrl-->>Admin: redirect /import + flash message\n"Importati N righe in M documenti. Avvisi: ..."
 ```
@@ -99,13 +101,13 @@ Identical flow to acquisti, but groups by `cliente_codice|numero_documento|data_
 
 ### Import Error Handling
 
-The import is **not transactional per-file** — it commits each document group as it is processed. If row 50 of 200 triggers a supplier-not-found error, rows 1–49 are already committed. There is no rollback. Error messages are collected and returned as a single concatenated string in the flash message, truncated to the first 5 warnings.
+The import is **fully transactional** — both `importAcquisti` and `importVendite` wrap the entire import loop in `DB::beginTransaction()` / `DB::commit()` / `DB::rollBack()`. If any unhandled exception occurs mid-import, the entire batch is rolled back and nothing is committed. Supplier-not-found and validation errors are collected in `$errors[]` and do not throw; those groups are skipped. The transaction only rolls back on an unexpected database or PHP exception. Error messages are collected and returned as a single concatenated string in the flash message, truncated to the first 5 warnings.
 
 ---
 
 ## 3. Environment Variables
 
-All environment variables required for this application. Variables marked **Unused** are Laravel skeleton defaults that serve no function in this codebase and can be removed.
+All environment variables required for this application. Variables marked **Unused** are Laravel skeleton defaults that serve no function in this codebase and can be removed. `Yes*` = required for email-dependent features (password reset, expiry alert emails); the app runs without them but those features will error.
 
 | Variable | Required | Used | Value |
 |---|---|---|---|
@@ -123,18 +125,18 @@ All environment variables required for this application. Variables marked **Unus
 | `DB_PASSWORD` | Yes | Yes | Database password |
 | `SESSION_DRIVER` | Yes | Yes | `database` |
 | `SESSION_LIFETIME` | No | Yes | `120` (minutes) |
-| `SESSION_ENCRYPT` | No | No | `false` — sessions not encrypted at rest |
+| `SESSION_ENCRYPT` | No | Yes | `true` — sessions encrypted at rest (GAP-S3) |
 | `CACHE_STORE` | No | Yes | `database` |
 | `QUEUE_CONNECTION` | No | Yes | `database` (queue worker runs in dev; not used in prod) |
 | `LOG_CHANNEL` | No | Yes | `stack` |
 | `LOG_LEVEL` | No | Yes | `error` in production |
 | `BCRYPT_ROUNDS` | No | Yes | `12` |
-| `MAIL_MAILER` | No | **Unused** | Not wired to any feature |
-| `MAIL_HOST` | No | **Unused** | — |
-| `MAIL_PORT` | No | **Unused** | — |
-| `MAIL_USERNAME` | No | **Unused** | — |
-| `MAIL_PASSWORD` | No | **Unused** | — |
-| `MAIL_FROM_ADDRESS` | No | **Unused** | — |
+| `MAIL_MAILER` | Yes* | Yes | `smtp` — required for password reset emails and expiry alert emails |
+| `MAIL_HOST` | Yes* | Yes | SMTP server hostname (e.g., `smtp.mailgun.org`) |
+| `MAIL_PORT` | Yes* | Yes | SMTP port (587 for TLS) |
+| `MAIL_USERNAME` | Yes* | Yes | SMTP username |
+| `MAIL_PASSWORD` | Yes* | Yes | SMTP password |
+| `MAIL_FROM_ADDRESS` | Yes* | Yes | Sender address for all outgoing email |
 | `REDIS_HOST` | No | **Unused** | Redis not used |
 | `REDIS_PASSWORD` | No | **Unused** | — |
 | `REDIS_PORT` | No | **Unused** | — |

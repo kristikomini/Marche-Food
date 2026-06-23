@@ -41,8 +41,12 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 | Method | Path | Auth | Body / Query | Description |
 |---|---|---|---|---|
 | `GET` | `/login` | Guest only | — | Render Login.vue |
-| `POST` | `/login` | Guest only | `email`, `password`, `remember` | Authenticate user, regenerate session |
+| `POST` | `/login` | Guest only | `email`, `password`, `remember` | Authenticate user, regenerate session. `throttle:10,1` |
 | `POST` | `/logout` | `auth` | — | Invalidate session and redirect to `/login` |
+| `GET` | `/forgot-password` | Guest only | — | Render ForgotPassword.vue |
+| `POST` | `/forgot-password` | Guest only | `email` | Send password-reset email. `throttle:5,1` |
+| `GET` | `/reset-password/{token}` | Guest only | — | Render ResetPassword.vue |
+| `POST` | `/reset-password` | Guest only | `token`, `email`, `password`, `password_confirmation` | Validate token and set new password |
 
 ---
 
@@ -59,7 +63,15 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 | Method | Path | Auth | Query | Description |
 |---|---|---|---|---|
 | `GET` | `/tracciabilita` | `auth` | — | Render empty traceability search page |
-| `GET` | `/tracciabilita/search` | `auth` | `q` (min 2 chars) | Forward + reverse lot search across `acquisti_righe` and `produzioni` |
+| `GET` | `/tracciabilita/search` | `auth` | `q` (min 2 chars) | Forward + reverse lot search across `acquisti_righe`, `produzioni`, and `vendite_righe` |
+
+---
+
+### Recall
+
+| Method | Path | Auth | Query | Description |
+|---|---|---|---|---|
+| `GET` | `/recall` | `auth` | `q` | Find productions matching the lot, then all customer sales of that lot |
 
 ---
 
@@ -142,6 +154,7 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 | `PUT` | `/acquisti/{id}` | `auth` | See below | Replace document header + all lines |
 | `DELETE` | `/acquisti/{id}` | `admin` | — | Delete document (cascades lines) |
 | `GET` | `/acquisti/{id}/print` | `auth` | — | Print view (DDT-style layout) |
+| `GET` | `/acquisti/export` | `auth` | — | Download all acquisti_righe as UTF-8 BOM CSV (semicolon-delimited) |
 
 **Acquisto body:** `fornitore_id`, `numero_documento`, `data_documento`, `tipo_documento` (DDT\|Fattura\|Bolla), `note`, `righe[]` (array, min 1): each riga has `nome_prodotto`, `quantita_kg` (required, >0), `quantita_pz`, `um`, `lotto`, `lotto_esterno`, `scadenza`, `data_in`, `data_out`, `nota_credito_ref`.
 
@@ -157,6 +170,7 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 | `GET` | `/vendite/{id}/edit` | `auth` | — | Edit form |
 | `PUT` | `/vendite/{id}` | `auth` | See below | Replace document + lines |
 | `DELETE` | `/vendite/{id}` | `admin` | — | Delete document (cascades lines) |
+| `GET` | `/vendite/export` | `auth` | — | Download all vendite_righe as UTF-8 BOM CSV |
 
 **Vendita body:** `cliente_id`, `numero_documento`, `data_documento`, `tipo_documento` (DDT\|FI\|NC), `note`, `righe[]`: each riga has `nome_prodotto`, `quantita_kg`, `quantita_pz`, `pezzatura_gr`, `um`, `lotto`, `lotto_esterno`, `scadenza`.
 
@@ -235,7 +249,9 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 | `GET` | `/produzioni/{id}/edit` | `auth` | — | Edit form |
 | `PUT` | `/produzioni/{id}` | `auth` | See below | Update run; replaces all `produzioni_materie_prime` |
 | `DELETE` | `/produzioni/{id}` | `admin` | — | Delete run (cascades ingredient linkages) |
-| `GET` | `/produzioni/{id}/print` | `auth` | — | Printable production record |
+| `GET` | `/produzioni/{id}/print` | `auth` | — | Printable production record (Inertia Vue page) |
+| `GET` | `/produzioni/{id}/pdf` | `auth` | — | Download HACCP production report as PDF (dompdf) |
+| `GET` | `/produzioni/export` | `auth` | — | Download all production runs as UTF-8 BOM CSV |
 
 **Produzione body:** `scheda_id`, `lotto_produzione` (unique), `data_produzione`, `quantita_prodotta_kg`, `operatore`, `note`, `materie_prime[]` (each: `materia_prima_id`, `acquisto_riga_id`, `quantita_kg`).
 
@@ -287,12 +303,13 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 
 ## 3. Rate Limits
 
-No application-level rate limiting (`throttle` middleware) is configured on any route. Login brute-force protection is absent at the application layer and must be enforced at the infrastructure level (Traefik/Coolify/Hetzner firewall).
+Application-level throttle middleware is applied on sensitive write endpoints. All limits are per IP per minute.
 
-| Route | App Throttle | Infrastructure Throttle |
+| Route | App Throttle | Notes |
 |---|---|---|
-| `POST /login` | **None** | Depends on Coolify/Traefik config |
-| `POST /import/*` | **None** (10 MB file cap only) | Depends on Coolify/Traefik config |
-| All other routes | None | None |
+| `POST /login` | `throttle:10,1` | 10 attempts/minute; 429 after limit |
+| `POST /forgot-password` | `throttle:5,1` | 5 attempts/minute; prevents email flooding |
+| `POST /import/*` | None (10 MB file cap only) | Admin-only; brute-force not applicable |
+| All other routes | None | |
 
-See GAPS.md for recommended remediation.
+Infrastructure-level rate limiting (Traefik/Coolify/Hetzner firewall) can add an additional layer but is not required for current threat model.

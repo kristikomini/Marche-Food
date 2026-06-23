@@ -39,8 +39,8 @@ flowchart TB
         subgraph Container["Docker Container — PHP 8.4 Apache"]
             Apache[Apache 2.4\nmod_rewrite → public/index.php]
             Laravel[Laravel 13\nMiddleware Stack]
-            Controllers[Controllers\nAcquisti · Vendite · Produzione\nImballaggi · Tracciabilità]
-            Models[Eloquent Models\n20 models]
+            Controllers[Controllers\nAcquisti · Vendite · Produzione\nImballaggi · Tracciabilità · Recall · Report]
+            Models[Eloquent Models\n24 models]
             Inertia_Server[Inertia Server Adapter\nRendering Vue pages]
         end
 
@@ -74,16 +74,20 @@ marche-food/
 │   ├── Http/
 │   │   ├── Controllers/
 │   │   │   ├── Auth/
-│   │   │   │   └── LoginController.php        # Session login/logout
-│   │   │   ├── AcquistoController.php         # Screen 1 — purchase documents
-│   │   │   ├── VenditaController.php          # Screen 1 — sales documents
+│   │   │   │   ├── LoginController.php             # Session login/logout
+│   │   │   │   ├── ForgotPasswordController.php    # Send password reset email
+│   │   │   │   └── ResetPasswordController.php     # Reset password via token
+│   │   │   ├── AcquistoController.php         # Screen 1 — purchase documents (+ export)
+│   │   │   ├── VenditaController.php          # Screen 1 — sales documents (+ export)
 │   │   │   ├── BollaResoController.php        # Screen 1 — return notes
 │   │   │   ├── NotaCreditoController.php      # Screen 1 — credit notes
 │   │   │   ├── ImballaggioController.php      # Screen 2 — packaging lots
 │   │   │   ├── SchedaProduzioneController.php # Screen 3 — HACCP production sheets
-│   │   │   ├── ProduzioneController.php       # Screen 3 — production runs (lot linking)
+│   │   │   ├── ProduzioneController.php       # Screen 3 — production runs (+ export)
 │   │   │   ├── FlussoProduzioneController.php # Screen 3 — workflow step config (admin)
-│   │   │   ├── TracciabilitaController.php    # Cross-cutting lot search (forward+reverse)
+│   │   │   ├── TracciabilitaController.php    # Cross-cutting lot search (forward+reverse+sales)
+│   │   │   ├── RecallController.php           # Recall report — lots by supplier/product/date
+│   │   │   ├── ReportController.php           # HACCP PDF download per production run
 │   │   │   ├── DashboardController.php        # KPIs + expiry alerts
 │   │   │   ├── ImportController.php           # CSV bulk import (acquisti + vendite)
 │   │   │   ├── FornitoreController.php        # Supplier registry (anagrafica)
@@ -96,13 +100,19 @@ marche-food/
 │   │   └── Middleware/
 │   │       ├── EnsureAdmin.php                # role === 'admin' gate
 │   │       └── HandleInertiaRequests.php      # Shares auth user to all Inertia pages
-│   ├── Models/                                # 22 Eloquent models (see DATABASE.md)
+│   ├── Models/                                # 24 Eloquent models (see DATABASE.md)
+│   ├── Mail/
+│   │   └── AlertScadenzeMail.php              # Mailable: daily expiry alert digest to admin
+│   ├── Console/
+│   │   └── Commands/
+│   │       ├── InviaAlertScadenze.php         # Artisan: haccp:alert-scadenze (runs daily 07:00)
+│   │       └── BackupDatabase.php             # Artisan: db:backup — pg_dump + 14-day retention
 │   ├── Concerns/
 │   │   └── Auditable.php                      # Trait: auto-populates created_by/updated_by on model events
 │   └── Providers/
 │       └── AppServiceProvider.php
 ├── database/
-│   ├── migrations/                            # 26 migration files (chronological)
+│   ├── migrations/                            # 30 migration files (chronological)
 │   ├── seeders/                               # Dev-only seed data
 │   └── database.sqlite                        # Dev database (git-ignored in prod)
 ├── resources/
@@ -111,6 +121,8 @@ marche-food/
 │   │   │   └── AppLayout.vue                  # Shared shell: sidebar nav + header
 │   │   └── Pages/                             # One subfolder per domain module
 │   │       ├── Auth/Login.vue
+│   │       ├── Auth/ForgotPassword.vue        # Request password reset email
+│   │       ├── Auth/ResetPassword.vue         # Set new password via token
 │   │       ├── Dashboard.vue
 │   │       ├── Acquisti/{Index,Form,Print}.vue
 │   │       ├── Vendite/{Index,Form}.vue
@@ -118,8 +130,9 @@ marche-food/
 │   │       ├── NoteCredito/{Index,Form}.vue
 │   │       ├── Imballaggi/{Index,FormPrimario,FormDetergente}.vue
 │   │       ├── Schede/{Index,Form,Print}.vue
-│   │       ├── Produzioni/{Index,Form,Print}.vue
+│   │       ├── Produzioni/{Index,Form,Print}.vue   # Index has CSV export + PDF per-row button
 │   │       ├── Tracciabilita.vue
+│   │       ├── Recall/Index.vue               # Recall report — cross-lot impact search
 │   │       ├── Fornitori/{Index,Form}.vue
 │   │       ├── Clienti/{Index,Form}.vue
 │   │       ├── Prodotti/{Index,Form}.vue
@@ -132,11 +145,14 @@ marche-food/
 │   ├── css/app.css                            # Tailwind entry point
 │   └── views/
 │       ├── app.blade.php                      # Single Blade template (Inertia root)
-│       └── errors/403.blade.php
+│       ├── errors/403.blade.php
+│       ├── emails/alert_scadenze.blade.php    # HTML email: daily expiry alert
+│       └── pdf/produzione.blade.php           # Blade PDF template (dompdf) for HACCP report
 ├── routes/
-│   └── web.php                                # All routes (no api.php used)
+│   ├── web.php                                # All routes (no api.php used)
+│   └── console.php                            # Scheduler: haccp:alert-scadenze @ 07:00, db:backup @ 03:00
 ├── docker/
-│   └── start.sh                               # Entrypoint: artisan migrate → apache2-foreground
+│   └── start.sh                               # Entrypoint: artisan migrate → scheduler loop (bg) → apache2-foreground
 ├── public/
 │   └── build/                                 # Vite output (baked into image at build time)
 ├── schema.sql                                 # Canonical PostgreSQL DDL (source of truth)
@@ -236,6 +252,7 @@ sequenceDiagram
 | **Mass assignment** | Eloquent `$fillable` | All models define explicit `$fillable` arrays. No `$guarded = []` shortcuts observed. |
 | **Input validation** | Laravel `Request::validate()` | Every controller write method validates before touching the database. |
 | **SQL injection** | Eloquent + Query Builder | All user input passed through parameterized queries. Raw `ilike` searches use `->where('col', 'ilike', $term)` with bound parameters, not string interpolation. |
-| **Rate limiting** | `throttle:10,1` middleware | Applied to `POST /login` — max 10 attempts per minute per IP before Laravel returns 429. |
+| **Rate limiting** | `throttle:10,1` / `throttle:5,1` | `POST /login` — 10 attempts/minute. `POST /forgot-password` — 5 attempts/minute. |
+| **Password reset** | Laravel built-in token mechanism | `password_reset_tokens` table; 60-minute expiry; HMAC-signed. Token sent via email (SMTP). `POST /reset-password` validates token before allowing new password. |
 | **HTTPS enforcement** | `URL::forceScheme('https')` | Enabled in `AppServiceProvider::boot()` when `APP_ENV=production`. All generated URLs are forced to HTTPS. Configure HSTS in Traefik for full coverage. |
 | **Audit trail** | `Auditable` trait | All operational models (`Acquisto`, `Vendita`, `Produzione`, `BollaReso`, `NotaCredito`, `LottoImballaggioPrimario`, `LottoDetergente`) auto-populate `created_by` and `updated_by` FK columns referencing `users.id`. |

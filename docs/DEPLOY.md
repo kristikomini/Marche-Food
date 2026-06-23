@@ -52,10 +52,17 @@ The container entrypoint is `docker/start.sh`:
 
 ```bash
 php artisan migrate --force    # Run pending migrations; exits 1 on failure
-apache2-foreground              # Start Apache in foreground
+
+# Laravel scheduler — runs every 60 seconds in the background
+(while true; do
+    php artisan schedule:run >> /dev/null 2>&1
+    sleep 60
+done) &
+
+apache2-foreground              # Start Apache in foreground (PID 1)
 ```
 
-Migrations run automatically on every container start. If a migration fails, the container exits with code 1 and Coolify will surface the error in its logs.
+Migrations run automatically on every container start. If a migration fails, the container exits with code 1 and Coolify will surface the error in its logs. The scheduler background loop fires `schedule:run` once per minute and is killed automatically when the Apache process (PID 1) exits.
 
 ---
 
@@ -93,10 +100,21 @@ LOG_LEVEL=error
 
 # ── Security ─────────────────────────────────────────────────────────────────
 BCRYPT_ROUNDS=12
+
+# ── Mail (SMTP — required for password reset + HACCP expiry alerts) ──────────
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailgun.org
+MAIL_PORT=587
+MAIL_USERNAME=postmaster@mg.your-domain.example.com
+MAIL_PASSWORD=YOUR_MAILGUN_SMTP_PASSWORD
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=haccp@your-domain.example.com
+MAIL_FROM_NAME="Marche Food HACCP"
+
 ```
 
 **Variables you do NOT need in production** (safe to omit):
-`MAIL_*`, `REDIS_*`, `AWS_*`, `BROADCAST_CONNECTION`, `MEMCACHED_HOST`, `VITE_APP_NAME`, `APP_LOCALE`, `APP_FALLBACK_LOCALE`, `APP_FAKER_LOCALE`, `APP_MAINTENANCE_DRIVER`.
+`REDIS_*`, `AWS_*`, `BROADCAST_CONNECTION`, `MEMCACHED_HOST`, `VITE_APP_NAME`, `APP_LOCALE`, `APP_FALLBACK_LOCALE`, `APP_FAKER_LOCALE`, `APP_MAINTENANCE_DRIVER`.
 
 ---
 
@@ -138,19 +156,17 @@ Coolify watches the configured Git branch (typically `main`). On push:
 ## 5. Background Jobs / Cron
 
 ### Queue Worker
-The database queue driver is configured (`QUEUE_CONNECTION=database`). In development, `queue:listen` runs as part of `composer dev`. **In production, no queue worker is started** — `start.sh` only starts Apache. The `jobs` table exists but no jobs are dispatched by current application code. A worker process would need to be added to `start.sh` or as a separate Coolify process if background jobs are added in future.
+The database queue driver is configured (`QUEUE_CONNECTION=database`). In development, `queue:listen` runs as part of `composer dev`. **In production, no queue worker is started** — `start.sh` only starts Apache and the scheduler. The `jobs` table exists but no jobs are dispatched by current application code. A worker process would need to be added to `start.sh` or as a separate Coolify process if background jobs are added in future.
 
 ### Scheduled Tasks
-There are no scheduled tasks defined. `routes/console.php` is empty. `php artisan schedule:run` is not called from `start.sh` or any cron.
+`routes/console.php` defines two scheduled commands. The scheduler is started automatically as a background loop in `docker/start.sh` — no external cron is needed.
 
-### Potential Future Cron Candidates
-Based on the domain, the following would be natural additions:
+| Task | Command | Schedule | Purpose |
+|---|---|---|---|
+| HACCP expiry alert | `haccp:alert-scadenze` | Daily 07:00 | Emails admin a digest of lots expiring within 30 days |
+| Database backup | `db:backup` | Daily 03:00 | Runs `pg_dump`, stores gzip file in `storage/backups/`, prunes files older than 14 days |
 
-| Task | Suggested Frequency | Purpose |
-|---|---|---|
-| Expiry alert email digest | Daily at 07:00 | Notify admin of lots expiring in ≤ 30 days |
-| HACCP certificate expiry check | Weekly | Alert on `fornitori.haccp_scadenza` within 60 days |
-| Database backup | Daily | Dump PostgreSQL and store off-site |
+**Mail dependency**: `haccp:alert-scadenze` requires `MAIL_*` env vars to be set. If mail is not configured the command will throw and log an error but will not crash the container.
 
 ---
 
@@ -158,7 +174,8 @@ Based on the domain, the following would be natural additions:
 
 - **Uploaded files**: CSV imports are read from PHP's temp directory and never persisted. No file storage volume is needed.
 - **Logs**: Set `LOG_CHANNEL=stderr` in Coolify's environment variable panel. Logs are then captured by Docker and visible in Coolify's container log viewer, surviving container rebuilds. The default `stack` driver writes to `storage/logs/laravel.log` which is lost on rebuild — do not rely on it in production.
-- **Database backups**: Not automated. Hetzner snapshots or `pg_dump` cron jobs must be configured manually outside Coolify.
+- **Database backups**: Automated. The `db:backup` Artisan command runs `pg_dump` daily at 03:00, saves a gzip file to `storage/backups/` inside the container, and prunes backups older than 14 days. **Important**: `storage/backups/` is inside the container and is wiped on rebuild. For durable backups, either mount a Hetzner Volume at that path, or add an off-site copy step (e.g., `rclone`) to the command.
+- **PDF generation**: dompdf renders HACCP reports server-side. No temp files are persisted — PDFs are streamed directly to the browser response.
 
 ---
 
