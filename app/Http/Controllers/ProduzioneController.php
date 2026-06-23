@@ -6,10 +6,12 @@ use App\Models\Produzione;
 use App\Models\SchedaProduzione;
 use App\Models\MateriaPrima;
 use App\Models\AcquistoRiga;
+use App\Models\LottoSemilavorato;
 use App\Models\LottoImballaggioPrimario;
 use App\Models\LottoDetergente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 
 class ProduzioneController extends Controller
@@ -45,9 +47,10 @@ class ProduzioneController extends Controller
             'produzione'         => null,
             'schede'             => $this->schedeAttive(),
             'materie'            => MateriaPrima::orderBy('nome')->get(['id', 'codice', 'nome']),
-            'acquisti_righe'     => $this->acquistiRigheForForm(),
+            'lotti_disponibili'  => $this->lottiDisponibiliForForm(),
             'lotti_imballaggi'   => $this->lottiImballaggiForForm(),
             'lotti_detergenti'   => $this->lottiDetergentiForForm(),
+            'lotto_semilavorato' => null,
         ]);
     }
 
@@ -83,17 +86,20 @@ class ProduzioneController extends Controller
         $produzione->load([
             'materiePrime.materiaPrima',
             'materiePrime.acquistoRiga.acquisto.fornitore',
+            'materiePrime.semilavorato',
             'imballaggiPrimari.lottoImballaggio.fornitore',
             'detergenti.lottoDetergente.fornitore',
+            'lottoSemilavorato',
         ]);
 
         return Inertia::render('Produzioni/Form', [
-            'produzione'         => $produzione,
-            'schede'             => $this->schedeAttive(),
-            'materie'            => MateriaPrima::orderBy('nome')->get(['id', 'codice', 'nome']),
-            'acquisti_righe'     => $this->acquistiRigheForForm($produzione->id),
-            'lotti_imballaggi'   => $this->lottiImballaggiForForm(),
-            'lotti_detergenti'   => $this->lottiDetergentiForForm(),
+            'produzione'          => $produzione,
+            'schede'              => $this->schedeAttive(),
+            'materie'             => MateriaPrima::orderBy('nome')->get(['id', 'codice', 'nome']),
+            'lotti_disponibili'   => $this->lottiDisponibiliForForm($produzione->id),
+            'lotti_imballaggi'    => $this->lottiImballaggiForForm(),
+            'lotti_detergenti'    => $this->lottiDetergentiForForm(),
+            'lotto_semilavorato'  => $produzione->lottoSemilavorato,
         ]);
     }
 
@@ -141,7 +147,8 @@ class ProduzioneController extends Controller
     {
         foreach ($righe as $r) {
             $produzione->materiePrime()->create([
-                'acquisto_riga_id' => $r['acquisto_riga_id'],
+                'acquisto_riga_id' => ($r['source_type'] === 'acquisto') ? $r['acquisto_riga_id'] : null,
+                'semilavorato_id'  => ($r['source_type'] === 'interno')  ? $r['semilavorato_id']  : null,
                 'materia_prima_id' => $r['materia_prima_id'],
                 'quantita_kg'      => $r['quantita_kg'],
             ]);
@@ -178,22 +185,51 @@ class ProduzioneController extends Controller
             ->get(['id', 'prodotto_id', 'modello', 'revisione']);
     }
 
-    private function acquistiRigheForForm(?int $excludeProduzioneId = null)
+    private function lottiDisponibiliForForm(?int $excludeProduzioneId = null): array
     {
-        // GAP-D2: compute remaining balance (received - already consumed by other productions)
-        $consumed = DB::table('produzioni_materie_prime')
+        // GAP-D2 (extended): balance for purchased lots = received - consumed in productions - sold directly
+        $consumedPurchased = DB::table('produzioni_materie_prime')
+            ->whereNotNull('acquisto_riga_id')
             ->when($excludeProduzioneId, fn($q) => $q->where('produzione_id', '!=', $excludeProduzioneId))
             ->groupBy('acquisto_riga_id')
-            ->select('acquisto_riga_id', DB::raw('SUM(quantita_kg) as consumed'))
-            ->pluck('consumed', 'acquisto_riga_id');
+            ->pluck(DB::raw('SUM(quantita_kg)'), 'acquisto_riga_id');
 
-        return AcquistoRiga::with(['acquisto' => fn($q) => $q->with('fornitore:id,ragione_sociale,codice')])
+        $soldDirectly = DB::table('vendite_righe')
+            ->whereNotNull('acquisto_riga_id')
+            ->groupBy('acquisto_riga_id')
+            ->pluck(DB::raw('SUM(quantita_kg)'), 'acquisto_riga_id');
+
+        $purchasedLots = AcquistoRiga::with(['acquisto' => fn($q) => $q->with('fornitore:id,ragione_sociale,codice')])
             ->orderByDesc('data_in')
             ->get(['id', 'acquisto_id', 'nome_prodotto', 'lotto', 'lotto_esterno', 'quantita_kg', 'scadenza', 'data_in'])
-            ->map(function ($riga) use ($consumed) {
-                $riga->balance_kg = round((float) $riga->quantita_kg - (float) ($consumed[$riga->id] ?? 0), 3);
+            ->map(function ($riga) use ($consumedPurchased, $soldDirectly) {
+                $riga->balance_kg  = round(
+                    (float) $riga->quantita_kg
+                    - (float) ($consumedPurchased[$riga->id] ?? 0)
+                    - (float) ($soldDirectly[$riga->id] ?? 0),
+                    3
+                );
+                $riga->source_type = 'acquisto';
                 return $riga;
             });
+
+        // Balance for internal lots = produced qty - consumed in downstream productions
+        $consumedInternal = DB::table('produzioni_materie_prime')
+            ->whereNotNull('semilavorato_id')
+            ->when($excludeProduzioneId, fn($q) => $q->where('produzione_id', '!=', $excludeProduzioneId))
+            ->groupBy('semilavorato_id')
+            ->pluck(DB::raw('SUM(quantita_kg)'), 'semilavorato_id');
+
+        $internalLots = LottoSemilavorato::whereNull('data_out')
+            ->orderByDesc('data_produzione')
+            ->get(['id', 'produzione_id', 'lotto', 'nome_prodotto', 'quantita_kg', 'data_produzione'])
+            ->map(function ($semi) use ($consumedInternal) {
+                $semi->balance_kg  = round((float) $semi->quantita_kg - (float) ($consumedInternal[$semi->id] ?? 0), 3);
+                $semi->source_type = 'interno';
+                return $semi;
+            });
+
+        return $purchasedLots->concat($internalLots)->values()->all();
     }
 
     private function lottiImballaggiForForm()
@@ -218,28 +254,57 @@ class ProduzioneController extends Controller
             return;
         }
 
-        $righeIds = collect($materiePrime)->pluck('acquisto_riga_id')->unique()->filter()->all();
+        $purchaseIds = collect($materiePrime)
+            ->where('source_type', 'acquisto')->pluck('acquisto_riga_id')->unique()->filter()->all();
+        $internalIds = collect($materiePrime)
+            ->where('source_type', 'interno')->pluck('semilavorato_id')->unique()->filter()->all();
 
-        // Row-level lock: any concurrent transaction touching the same rows must wait
-        $righe = AcquistoRiga::lockForUpdate()->whereIn('id', $righeIds)->get()->keyBy('id');
+        // Lock both tables in deterministic order to prevent deadlocks
+        $righe = $purchaseIds
+            ? AcquistoRiga::lockForUpdate()->whereIn('id', $purchaseIds)->get()->keyBy('id')
+            : collect();
+        $semis = $internalIds
+            ? LottoSemilavorato::lockForUpdate()->whereIn('id', $internalIds)->get()->keyBy('id')
+            : collect();
 
-        // Fresh consumed totals, excluding the current production when editing
-        $consumed = DB::table('produzioni_materie_prime')
-            ->when($excludeProduzioneId, fn ($q) => $q->where('produzione_id', '!=', $excludeProduzioneId))
-            ->whereIn('acquisto_riga_id', $righeIds)
-            ->groupBy('acquisto_riga_id')
-            ->pluck(DB::raw('SUM(quantita_kg)'), 'acquisto_riga_id');
+        // Fresh consumed totals inside the transaction
+        $consumedPurchased = $purchaseIds ? DB::table('produzioni_materie_prime')
+            ->whereNotNull('acquisto_riga_id')->whereIn('acquisto_riga_id', $purchaseIds)
+            ->when($excludeProduzioneId, fn($q) => $q->where('produzione_id', '!=', $excludeProduzioneId))
+            ->pluck(DB::raw('SUM(quantita_kg)'), 'acquisto_riga_id') : collect();
+
+        $soldDirectly = $purchaseIds ? DB::table('vendite_righe')
+            ->whereNotNull('acquisto_riga_id')->whereIn('acquisto_riga_id', $purchaseIds)
+            ->pluck(DB::raw('SUM(quantita_kg)'), 'acquisto_riga_id') : collect();
+
+        $consumedInternal = $internalIds ? DB::table('produzioni_materie_prime')
+            ->whereNotNull('semilavorato_id')->whereIn('semilavorato_id', $internalIds)
+            ->when($excludeProduzioneId, fn($q) => $q->where('produzione_id', '!=', $excludeProduzioneId))
+            ->pluck(DB::raw('SUM(quantita_kg)'), 'semilavorato_id') : collect();
 
         $errors = [];
+
         foreach ($materiePrime as $mp) {
-            $riga = $righe[$mp['acquisto_riga_id']] ?? null;
-            if (!$riga) {
-                continue;
-            }
-            $balance  = round((float) $riga->quantita_kg - (float) ($consumed[$riga->id] ?? 0), 3);
             $required = (float) $mp['quantita_kg'];
+
+            if (($mp['source_type'] ?? null) === 'interno') {
+                $semi = $semis[$mp['semilavorato_id']] ?? null;
+                if (!$semi) continue;
+                $balance = round((float) $semi->quantita_kg - (float) ($consumedInternal[$semi->id] ?? 0), 3);
+                $label   = $semi->lotto;
+            } else {
+                $riga = $righe[$mp['acquisto_riga_id']] ?? null;
+                if (!$riga) continue;
+                $balance = round(
+                    (float) $riga->quantita_kg
+                    - (float) ($consumedPurchased[$riga->id] ?? 0)
+                    - (float) ($soldDirectly[$riga->id] ?? 0),
+                    3
+                );
+                $label = $riga->lotto ?: ($riga->lotto_esterno ?: "ID {$riga->id}");
+            }
+
             if ($required > $balance + 0.001) {
-                $label    = $riga->lotto ?: ($riga->lotto_esterno ?: "ID {$riga->id}");
                 $errors[] = "Lotto «{$label}»: richiesti {$required} kg, disponibili {$balance} kg.";
             }
         }
@@ -283,7 +348,7 @@ class ProduzioneController extends Controller
 
     private function validateRequest(Request $request, ?int $ignoreId = null): array
     {
-        return $request->validate([
+        $validator = Validator::make($request->all(), [
             'scheda_id'            => ['required', 'exists:schede_produzione,id'],
             'lotto_produzione'     => ['required', 'string', 'max:100',
                 \Illuminate\Validation\Rule::unique('produzioni', 'lotto_produzione')->ignore($ignoreId)],
@@ -293,7 +358,9 @@ class ProduzioneController extends Controller
             'note'                 => ['nullable', 'string'],
             'materie_prime'        => ['array'],
             'materie_prime.*.materia_prima_id' => ['required', 'exists:materie_prime,id'],
-            'materie_prime.*.acquisto_riga_id' => ['required', 'exists:acquisti_righe,id'],
+            'materie_prime.*.source_type'      => ['required', 'in:acquisto,interno'],
+            'materie_prime.*.acquisto_riga_id' => ['nullable', 'integer', 'exists:acquisti_righe,id'],
+            'materie_prime.*.semilavorato_id'  => ['nullable', 'integer', 'exists:lotti_semilavorati,id'],
             'materie_prime.*.quantita_kg'      => ['required', 'numeric', 'min:0.001'],
             'imballaggi'           => ['array'],
             'imballaggi.*.lotto_imballaggio_id' => ['required', 'exists:lotti_imballaggi_primari,id'],
@@ -304,6 +371,61 @@ class ProduzioneController extends Controller
             'detergenti.*.quantita_usata'       => ['nullable', 'numeric', 'min:0'],
             'detergenti.*.note'                 => ['nullable', 'string'],
         ]);
+
+        // XOR: exactly one of acquisto_riga_id / semilavorato_id must be present per row
+        $validator->after(function ($v) use ($request) {
+            foreach ($request->input('materie_prime', []) as $i => $mp) {
+                $hasA = !empty($mp['acquisto_riga_id']);
+                $hasS = !empty($mp['semilavorato_id']);
+                if (!($hasA xor $hasS)) {
+                    $v->errors()->add(
+                        "materie_prime.{$i}",
+                        'Ogni ingrediente deve avere esattamente una fonte (lotto acquisto oppure semilavorato, non entrambi né nessuno).'
+                    );
+                }
+            }
+        });
+
+        return $validator->validate();
+    }
+
+    public function storeSemilavorato(Request $request, Produzione $produzione)
+    {
+        if ($produzione->lottoSemilavorato()->exists()) {
+            return back()->withErrors([
+                'lotto_semilavorato' => 'Questa produzione ha già un lotto semilavorato registrato.',
+            ]);
+        }
+
+        $data = $request->validate([
+            'lotto'         => ['required', 'string', 'max:100', 'unique:lotti_semilavorati,lotto'],
+            'nome_prodotto' => ['required', 'string', 'max:200'],
+            'quantita_kg'   => ['required', 'numeric', 'min:0.001'],
+            'note'          => ['nullable', 'string'],
+        ]);
+
+        DB::transaction(function () use ($produzione, $data) {
+            // Lock the parent production to prevent concurrent double-registration
+            Produzione::lockForUpdate()->find($produzione->id);
+
+            // Re-check inside the transaction after acquiring the lock
+            if ($produzione->lottoSemilavorato()->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'lotto_semilavorato' => 'Questa produzione ha già un lotto semilavorato registrato.',
+                ]);
+            }
+
+            $produzione->lottoSemilavorato()->create([
+                'lotto'           => $data['lotto'],
+                'nome_prodotto'   => $data['nome_prodotto'],
+                'quantita_kg'     => $data['quantita_kg'],
+                'data_produzione' => $produzione->data_produzione,
+                'note'            => $data['note'] ?? null,
+            ]);
+        });
+
+        return redirect()->route('produzioni.edit', $produzione)
+            ->with('success', 'Lotto semilavorato registrato e disponibile per produzioni future.');
     }
 
     public function export()

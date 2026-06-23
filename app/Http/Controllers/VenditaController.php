@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Vendita;
 use App\Models\Cliente;
+use App\Models\AcquistoRiga;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -52,10 +53,9 @@ class VenditaController extends Controller
     public function create()
     {
         return Inertia::render('Vendite/Form', [
-            'vendita' => null,
-            'clienti' => Cliente::where('attivo', true)
-                ->orderBy('ragione_sociale')
-                ->get(['id', 'ragione_sociale', 'codice_cliente']),
+            'vendita'        => null,
+            'clienti'        => Cliente::where('attivo', true)->orderBy('ragione_sociale')->get(['id', 'ragione_sociale', 'codice_cliente']),
+            'acquisti_righe' => $this->acquistiRigheForVendita(),
         ]);
     }
 
@@ -84,11 +84,19 @@ class VenditaController extends Controller
         $vendita->load('righe');
 
         return Inertia::render('Vendite/Form', [
-            'vendita' => $vendita,
-            'clienti' => Cliente::where('attivo', true)
-                ->orderBy('ragione_sociale')
-                ->get(['id', 'ragione_sociale', 'codice_cliente']),
+            'vendita'        => $vendita,
+            'clienti'        => Cliente::where('attivo', true)->orderBy('ragione_sociale')->get(['id', 'ragione_sociale', 'codice_cliente']),
+            'acquisti_righe' => $this->acquistiRigheForVendita(),
         ]);
+    }
+
+    private function acquistiRigheForVendita(): array
+    {
+        return AcquistoRiga::with(['acquisto.fornitore:id,ragione_sociale'])
+            ->whereNull('data_out')
+            ->orderByDesc('data_in')
+            ->get(['id', 'acquisto_id', 'nome_prodotto', 'lotto', 'lotto_esterno', 'quantita_kg', 'data_in'])
+            ->all();
     }
 
     public function update(Request $request, Vendita $vendita)
@@ -203,9 +211,10 @@ class VenditaController extends Controller
             'righe.*.um'         => ['nullable', 'string', 'max:10'],
             'righe.*.quantita_pz' => ['nullable', 'numeric', 'min:0'],
             'righe.*.quantita_kg' => ['required', 'numeric', 'min:0.001'],
-            'righe.*.lotto'      => ['nullable', 'string', 'max:100'],
-            'righe.*.lotto_esterno' => ['nullable', 'string', 'max:100'],
-            'righe.*.scadenza'   => ['nullable', 'date'],
+            'righe.*.lotto'           => ['nullable', 'string', 'max:100'],
+            'righe.*.lotto_esterno'   => ['nullable', 'string', 'max:100'],
+            'righe.*.scadenza'        => ['nullable', 'date'],
+            'righe.*.acquisto_riga_id' => ['nullable', 'integer', 'exists:acquisti_righe,id'],
         ]);
     }
 }

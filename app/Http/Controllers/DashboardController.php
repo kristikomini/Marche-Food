@@ -20,8 +20,9 @@ class DashboardController extends Controller
 
         $stats = Cache::remember("dashboard_stats_{$anno}_{$mese}", 300, function () use ($anno, $mese) {
             return [
-                'acquisti_totali'   => Acquisto::count(),
-                'acquisti_mese'     => Acquisto::whereYear('data_documento', $anno)
+                'acquisti_totali'   => Acquisto::where('is_conto_terzi', false)->count(),
+                'acquisti_mese'     => Acquisto::where('is_conto_terzi', false)
+                                               ->whereYear('data_documento', $anno)
                                                ->whereMonth('data_documento', $mese)->count(),
                 'vendite_totali'    => Vendita::count(),
                 'vendite_mese'      => Vendita::whereYear('data_documento', $anno)
@@ -49,6 +50,7 @@ class DashboardController extends Controller
         $stats = array_merge($stats, $expiryCounts);
 
         $ultimiAcquisti = Acquisto::with('fornitore')
+            ->where('is_conto_terzi', false)
             ->orderByDesc('data_documento')
             ->orderByDesc('id')
             ->limit(5)

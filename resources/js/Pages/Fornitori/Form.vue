@@ -191,6 +191,7 @@ const tipoOptions = [
   { label: 'Alimentare',                    value: 'alimentare' },
   { label: 'Imballaggio Primario (MOCA)',   value: 'imballaggio_primario' },
   { label: 'Detergente / Imb. Secondario',  value: 'detergente_secondario' },
+  { label: 'Conto Terzi',                   value: 'conto_terzi' },
 ];
 
 function submit() {

@@ -17,10 +17,12 @@ class Acquisto extends Model
         'data_documento',
         'tipo_documento',
         'note',
+        'is_conto_terzi',
     ];
 
     protected $casts = [
-        'data_documento' => 'date',
+        'data_documento'  => 'date',
+        'is_conto_terzi'  => 'boolean',
     ];
 
     public function fornitore()

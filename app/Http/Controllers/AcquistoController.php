@@ -63,11 +63,12 @@ class AcquistoController extends Controller
         $data = $this->validateRequest($request);
 
         $acquisto = Acquisto::create([
-            'fornitore_id'    => $data['fornitore_id'],
+            'fornitore_id'     => $data['fornitore_id'],
             'numero_documento' => $data['numero_documento'],
-            'data_documento'  => $data['data_documento'],
-            'tipo_documento'  => $data['tipo_documento'],
-            'note'            => $data['note'] ?? null,
+            'data_documento'   => $data['data_documento'],
+            'tipo_documento'   => $data['tipo_documento'],
+            'note'             => $data['note'] ?? null,
+            'is_conto_terzi'   => $data['is_conto_terzi'] ?? false,
         ]);
 
         foreach ($data['righe'] as $riga) {
@@ -121,6 +122,7 @@ class AcquistoController extends Controller
                 'data_documento'   => $data['data_documento'],
                 'tipo_documento'   => $data['tipo_documento'],
                 'note'             => $data['note'] ?? null,
+                'is_conto_terzi'   => $data['is_conto_terzi'] ?? false,
             ]);
 
             // Delete only rows that were removed and are safe to delete
@@ -164,6 +166,7 @@ class AcquistoController extends Controller
             'data_documento'     => ['required', 'date'],
             'tipo_documento'     => ['required', 'in:DDT,Fattura,Bolla'],
             'note'               => ['nullable', 'string'],
+            'is_conto_terzi'     => ['boolean'],
             'righe'              => ['required', 'array', 'min:1'],
             'righe.*.id'         => ['nullable', 'integer'],
             'righe.*.nome_prodotto' => ['required', 'string', 'max:200'],
@@ -189,6 +192,7 @@ class AcquistoController extends Controller
     public function export()
     {
         $righe = AcquistoRiga::with(['acquisto.fornitore'])
+            ->whereHas('acquisto', fn($q) => $q->where('is_conto_terzi', false))
             ->orderBy('data_in', 'desc')
             ->get();
 

@@ -61,7 +61,7 @@
         <div class="righe-header">
           <div>
             <h2 class="section-title" style="margin:0">Materie prime utilizzate</h2>
-            <p class="section-sub">Collegare ogni ingrediente al lotto di acquisto per la tracciabilità HACCP</p>
+            <p class="section-sub">Collegare ogni ingrediente al lotto di acquisto (o semilavorato interno) per la tracciabilità HACCP</p>
           </div>
           <Button type="button" label="Aggiungi riga" icon="pi pi-plus" size="small" outlined @click="addMateriaPrima" />
         </div>
@@ -72,7 +72,7 @@
             <thead>
               <tr>
                 <th style="min-width:180px">Materia Prima *</th>
-                <th style="min-width:300px">Lotto Acquisto *</th>
+                <th style="min-width:300px">Lotto *</th>
                 <th style="width:120px">Q.tà Kg *</th>
                 <th style="width:110px">Disponibile</th>
                 <th style="width:44px"></th>
@@ -85,21 +85,23 @@
                 </td>
                 <td>
                   <Select
-                    v-model="r.acquisto_riga_id"
-                    :options="acquisti_righe"
-                    :option-label="rigaLabel"
+                    v-model="r.lot_id"
+                    :options="lotti_disponibili"
+                    :option-label="lotLabel"
                     option-value="id"
                     placeholder="Seleziona lotto..."
                     filter fluid size="small"
-                    :invalid="!!form.errors[`materie_prime.${i}.acquisto_riga_id`]"
+                    :invalid="!!form.errors[`materie_prime.${i}`]"
+                    @change="(e) => onLotChange(r, e.value)"
                   />
+                  <small v-if="form.errors[`materie_prime.${i}`]" class="error">{{ form.errors[`materie_prime.${i}`] }}</small>
                 </td>
                 <td>
                   <InputNumber v-model="r.quantita_kg" :min-fraction-digits="3" :max-fraction-digits="3" :invalid="!!form.errors[`materie_prime.${i}.quantita_kg`]" fluid size="small" />
                 </td>
                 <td>
-                  <span v-if="selectedRigaBalance(r.acquisto_riga_id) !== null" :class="selectedRigaBalance(r.acquisto_riga_id) < 0 ? 'balance-negative' : 'balance-ok'">
-                    {{ Number(selectedRigaBalance(r.acquisto_riga_id)).toFixed(3) }} kg
+                  <span v-if="balanceFor(r.lot_id) !== null" :class="balanceFor(r.lot_id) < 0 ? 'balance-negative' : 'balance-ok'">
+                    {{ Number(balanceFor(r.lot_id)).toFixed(3) }} kg
                   </span>
                   <span v-else class="balance-empty">—</span>
                 </td>
@@ -228,11 +230,83 @@
         </div>
       </div>
     </form>
+
+    <!-- LOTTO SEMILAVORATO (edit only, outside the main form) -->
+    <div v-if="isEdit" class="form-card mb-4">
+      <div class="righe-header">
+        <div>
+          <h2 class="section-title" style="margin:0">Lotto Semilavorato</h2>
+          <p class="section-sub">Rendi questa produzione disponibile come ingrediente interno per produzioni future</p>
+        </div>
+      </div>
+      <div class="form-section">
+
+        <!-- Already registered -->
+        <template v-if="props.lotto_semilavorato">
+          <div class="semi-info">
+            <div class="semi-info-row">
+              <span class="semi-label">Lotto</span>
+              <span class="semi-value">{{ props.lotto_semilavorato.lotto }}</span>
+            </div>
+            <div class="semi-info-row">
+              <span class="semi-label">Prodotto</span>
+              <span class="semi-value">{{ props.lotto_semilavorato.nome_prodotto }}</span>
+            </div>
+            <div class="semi-info-row">
+              <span class="semi-label">Quantità</span>
+              <span class="semi-value">{{ Number(props.lotto_semilavorato.quantita_kg).toFixed(3) }} kg</span>
+            </div>
+            <div v-if="props.lotto_semilavorato.note" class="semi-info-row">
+              <span class="semi-label">Note</span>
+              <span class="semi-value">{{ props.lotto_semilavorato.note }}</span>
+            </div>
+          </div>
+        </template>
+
+        <!-- Not yet registered -->
+        <template v-else>
+          <Button
+            v-if="!showSemiForm"
+            type="button"
+            label="Rendi disponibile come semilavorato"
+            icon="pi pi-box"
+            outlined
+            @click="openSemiForm"
+          />
+          <div v-if="showSemiForm" class="form-grid-4">
+            <div class="field" style="grid-column:span 2">
+              <label>Lotto *</label>
+              <InputText v-model="semiForm.lotto" :invalid="!!semiForm.errors.lotto" fluid />
+              <small class="error">{{ semiForm.errors.lotto }}</small>
+            </div>
+            <div class="field" style="grid-column:span 2">
+              <label>Nome Prodotto *</label>
+              <InputText v-model="semiForm.nome_prodotto" :invalid="!!semiForm.errors.nome_prodotto" fluid />
+              <small class="error">{{ semiForm.errors.nome_prodotto }}</small>
+            </div>
+            <div class="field">
+              <label>Quantità Kg *</label>
+              <InputNumber v-model="semiForm.quantita_kg" :min-fraction-digits="3" :max-fraction-digits="3" :invalid="!!semiForm.errors.quantita_kg" fluid />
+              <small class="error">{{ semiForm.errors.quantita_kg }}</small>
+            </div>
+            <div class="field" style="grid-column:span 3">
+              <label>Note</label>
+              <InputText v-model="semiForm.note" fluid />
+            </div>
+            <div class="field" style="grid-column:span 4;display:flex;gap:0.5rem;padding-top:0.5rem">
+              <Button type="button" label="Registra" icon="pi pi-check" :loading="semiForm.processing" @click="submitSemi" />
+              <Button type="button" label="Annulla" text severity="secondary" @click="showSemiForm = false" />
+            </div>
+          </div>
+        </template>
+
+      </div>
+    </div>
   </AppLayout>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -245,30 +319,43 @@ const props = defineProps({
   produzione:       Object,
   schede:           Array,
   materie:          Array,
-  acquisti_righe:   Array,
+  lotti_disponibili: Array,
   lotti_imballaggi: Array,
   lotti_detergenti: Array,
+  lotto_semilavorato: Object,
 });
 
 const isEdit = computed(() => !!props.produzione);
 
-// GAP-D2: look up the remaining balance for a selected acquisto_riga
+// ── Balance lookup ────────────────────────────────────────────────────────────
+
 const balanceMap = computed(() => {
   const map = {};
-  (props.acquisti_righe ?? []).forEach(r => { map[r.id] = r.balance_kg; });
+  (props.lotti_disponibili ?? []).forEach(l => { map[l.id] = l.balance_kg; });
   return map;
 });
 
-function selectedRigaBalance(id) {
-  return id ? (balanceMap.value[id] ?? null) : null;
+function balanceFor(lot_id) {
+  return lot_id != null ? (balanceMap.value[lot_id] ?? null) : null;
 }
 
-function rigaLabel(r) {
-  const lotto    = r.lotto || r.lotto_esterno || '—';
-  const fornitore = r.acquisto?.fornitore?.ragione_sociale ?? '?';
-  const ddt      = r.acquisto?.numero_documento ?? '?';
-  const balance  = r.balance_kg != null ? ` | Disp: ${Number(r.balance_kg).toFixed(3)} kg` : '';
-  return `${ddt} | ${fornitore} | ${r.nome_prodotto} | Lotto: ${lotto}${balance}`;
+// ── Lot dropdown ──────────────────────────────────────────────────────────────
+
+function lotLabel(l) {
+  const bal = l.balance_kg != null ? ` | Disp: ${Number(l.balance_kg).toFixed(3)} kg` : '';
+  if (l.source_type === 'interno') {
+    return `[INTERNO] ${l.nome_prodotto} | Lotto: ${l.lotto}${bal}`;
+  }
+  const lotto    = l.lotto || l.lotto_esterno || '—';
+  const fornitore = l.acquisto?.fornitore?.ragione_sociale ?? '?';
+  const ddt      = l.acquisto?.numero_documento ?? '?';
+  return `${ddt} | ${fornitore} | ${l.nome_prodotto} | Lotto: ${lotto}${bal}`;
+}
+
+// When the user picks a lot, record the source_type on the row
+function onLotChange(row, lotId) {
+  const item = (props.lotti_disponibili ?? []).find(l => l.id === lotId);
+  if (item) row.source_type = item.source_type;
 }
 
 function imballaggioLabel(r) {
@@ -283,8 +370,10 @@ function detergenteLabel(r) {
   return `${r.componente} | ${fornitore} | Lotto: ${lotto}`;
 }
 
+// ── Form state ────────────────────────────────────────────────────────────────
+
 function emptyMateriaPrima() {
-  return { materia_prima_id: null, acquisto_riga_id: null, quantita_kg: null };
+  return { materia_prima_id: null, lot_id: null, source_type: null, quantita_kg: null };
 }
 function emptyImballaggio() {
   return { lotto_imballaggio_id: null, quantita_usata: null, note: '' };
@@ -303,8 +392,9 @@ const form = useForm({
   materie_prime: props.produzione?.materie_prime?.length
     ? props.produzione.materie_prime.map(m => ({
         materia_prima_id: m.materia_prima_id,
-        acquisto_riga_id: m.acquisto_riga_id,
-        quantita_kg:      Number(m.quantita_kg),
+        lot_id:      m.acquisto_riga_id ?? m.semilavorato_id,
+        source_type: m.acquisto_riga_id ? 'acquisto' : 'interno',
+        quantita_kg: Number(m.quantita_kg),
       }))
     : [],
   imballaggi: props.produzione?.imballaggi_primari?.length
@@ -323,23 +413,59 @@ const form = useForm({
     : [],
 });
 
-function addMateriaPrima()  { form.materie_prime.push(emptyMateriaPrima()); }
+function addMateriaPrima()     { form.materie_prime.push(emptyMateriaPrima()); }
 function removeMateriaPrima(i) { form.materie_prime.splice(i, 1); }
-function addImballaggio()   { form.imballaggi.push(emptyImballaggio()); }
-function removeImballaggio(i) { form.imballaggi.splice(i, 1); }
-function addDetergente()    { form.detergenti.push(emptyDetergente()); }
-function removeDetergente(i) { form.detergenti.splice(i, 1); }
+function addImballaggio()      { form.imballaggi.push(emptyImballaggio()); }
+function removeImballaggio(i)  { form.imballaggi.splice(i, 1); }
+function addDetergente()       { form.detergenti.push(emptyDetergente()); }
+function removeDetergente(i)   { form.detergenti.splice(i, 1); }
 
 function submit() {
   const payload = {
     ...form.data(),
     data_produzione: form.data_produzione ? form.data_produzione.toISOString().slice(0, 10) : null,
+    materie_prime: form.materie_prime.map(r => ({
+      materia_prima_id: r.materia_prima_id,
+      acquisto_riga_id: r.source_type === 'acquisto' ? r.lot_id : null,
+      semilavorato_id:  r.source_type === 'interno'  ? r.lot_id : null,
+      source_type:      r.source_type,
+      quantita_kg:      r.quantita_kg,
+    })),
   };
   if (isEdit.value) {
     form.transform(() => payload).put(`/produzioni/${props.produzione.id}`);
   } else {
     form.transform(() => payload).post('/produzioni');
   }
+}
+
+// ── Semilavorato section ──────────────────────────────────────────────────────
+
+const showSemiForm = ref(false);
+
+const schedaSelezionata = computed(() =>
+  (props.schede ?? []).find(s => s.id === form.scheda_id) ?? null
+);
+
+const semiForm = useForm({
+  lotto:         '',
+  nome_prodotto: '',
+  quantita_kg:   null,
+  note:          '',
+});
+
+function openSemiForm() {
+  semiForm.lotto         = `SL-${props.produzione?.lotto_produzione ?? ''}`;
+  semiForm.nome_prodotto = schedaSelezionata.value?.prodotto?.nome ?? '';
+  semiForm.quantita_kg   = props.produzione?.quantita_prodotta_kg
+    ? Number(props.produzione.quantita_prodotta_kg)
+    : null;
+  semiForm.note = '';
+  showSemiForm.value = true;
+}
+
+function submitSemi() {
+  semiForm.post(`/produzioni/${props.produzione.id}/semilavorato`);
 }
 </script>
 
@@ -366,4 +492,8 @@ function submit() {
 .balance-ok { font-size:0.82rem; font-weight:600; color:#16a34a; font-family:monospace; }
 .balance-negative { font-size:0.82rem; font-weight:600; color:#dc2626; font-family:monospace; }
 .balance-empty { font-size:0.82rem; color:#94a3b8; }
+.semi-info { display:flex; flex-direction:column; gap:0.5rem; }
+.semi-info-row { display:flex; gap:1rem; align-items:baseline; }
+.semi-label { font-size:0.82rem; font-weight:600; color:#64748b; min-width:80px; }
+.semi-value { font-size:0.9rem; color:#1e293b; }
 </style>

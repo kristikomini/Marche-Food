@@ -44,4 +44,9 @@ class Produzione extends Model
     {
         return $this->hasMany(ProduzioneDetergente::class);
     }
+
+    public function lottoSemilavorato()
+    {
+        return $this->hasOne(LottoSemilavorato::class);
+    }
 }

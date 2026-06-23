@@ -11,7 +11,7 @@ class VenditaRiga extends Model
     protected $fillable = [
         'vendita_id', 'prodotto_id', 'nome_prodotto', 'pezzatura_gr',
         'um', 'quantita_pz', 'quantita_kg', 'lotto', 'lotto_esterno', 'scadenza',
-        'produzione_id',
+        'produzione_id', 'acquisto_riga_id',
     ];
 
     protected $casts = [
@@ -29,6 +29,11 @@ class VenditaRiga extends Model
     public function produzione()
     {
         return $this->belongsTo(Produzione::class);
+    }
+
+    public function acquistoRiga()
+    {
+        return $this->belongsTo(AcquistoRiga::class);
     }
 
     public function bolleReso()

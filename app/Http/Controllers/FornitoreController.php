@@ -87,7 +87,7 @@ class FornitoreController extends Controller
         return $request->validate([
             'codice'               => ['nullable', 'string', 'max:20', Rule::unique('fornitori', 'codice')->ignore($ignoreId)],
             'ragione_sociale'      => 'required|string|max:200',
-            'tipo'                 => 'required|in:alimentare,imballaggio_primario,detergente_secondario',
+            'tipo'                 => 'required|in:alimentare,imballaggio_primario,detergente_secondario,conto_terzi',
             'piva'                 => 'nullable|string|max:20',
             'indirizzo'            => 'nullable|string',
             'email'                => 'nullable|email|max:100',

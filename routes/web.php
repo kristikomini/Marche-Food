@@ -121,6 +121,7 @@ Route::middleware('auth')->group(function () {
     Route::get('schede/{schede}/print', [SchedaProduzioneController::class, 'print'])->name('schede.print');
     Route::get('acquisti/{acquisto}/print', [AcquistoController::class, 'print'])->name('acquisti.print');
     Route::get('produzioni/{produzione}/print', [ProduzioneController::class, 'print'])->name('produzioni.print');
+    Route::post('produzioni/{produzione}/semilavorato', [ProduzioneController::class, 'storeSemilavorato'])->name('produzioni.semilavorato.store');
     Route::resource('produzioni', ProduzioneController::class)
         ->except(['show', 'destroy']);
 
