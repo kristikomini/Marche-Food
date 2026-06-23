@@ -73,7 +73,8 @@
 
           <div class="field">
             <label>Data Uscita</label>
-            <DatePicker v-model="form.data_out" date-format="dd/mm/yy" show-button-bar fluid />
+            <DatePicker v-model="form.data_out" date-format="dd/mm/yy" :invalid="!!form.errors.data_out" show-button-bar fluid />
+            <small class="error">{{ form.errors.data_out }}</small>
           </div>
 
           <div class="field field-full">
