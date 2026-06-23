@@ -74,11 +74,14 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('admin')->group(function () {
         Route::resource('fornitori', FornitoreController::class)
-            ->except(['show', 'index']);
+            ->except(['show', 'index'])
+            ->parameters(['fornitori' => 'fornitore']);
         Route::resource('clienti', ClienteController::class)
-            ->except(['show', 'index']);
+            ->except(['show', 'index'])
+            ->parameters(['clienti' => 'cliente']);
         Route::resource('prodotti', ProdottoController::class)
-            ->except(['show', 'index']);
+            ->except(['show', 'index'])
+            ->parameters(['prodotti' => 'prodotto']);
         Route::resource('materie-prime', MateriaPrimaController::class)
             ->except(['show', 'index'])
             ->parameters(['materie-prime' => 'materiePrime']);
@@ -91,9 +94,11 @@ Route::middleware('auth')->group(function () {
     // Operator: create + edit. Admin: also delete.
 
     Route::resource('acquisti', AcquistoController::class)
-        ->except(['show', 'destroy']);
+        ->except(['show', 'destroy'])
+        ->parameters(['acquisti' => 'acquisto']);
     Route::resource('vendite', VenditaController::class)
-        ->except(['show', 'destroy']);
+        ->except(['show', 'destroy'])
+        ->parameters(['vendite' => 'vendita']);
     Route::resource('bolle-reso', BollaResoController::class)
         ->except(['show', 'destroy'])
         ->parameters(['bolle-reso' => 'bolleReso']);
@@ -123,7 +128,8 @@ Route::middleware('auth')->group(function () {
     Route::get('produzioni/{produzione}/print', [ProduzioneController::class, 'print'])->name('produzioni.print');
     Route::post('produzioni/{produzione}/semilavorato', [ProduzioneController::class, 'storeSemilavorato'])->name('produzioni.semilavorato.store');
     Route::resource('produzioni', ProduzioneController::class)
-        ->except(['show', 'destroy']);
+        ->except(['show', 'destroy'])
+        ->parameters(['produzioni' => 'produzione']);
 
     // ── ADMIN-ONLY routes ───────────────────────────────────────────────────
     Route::middleware('admin')->group(function () {
