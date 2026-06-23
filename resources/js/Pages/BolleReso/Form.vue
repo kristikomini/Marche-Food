@@ -74,7 +74,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -104,6 +104,17 @@ const form = useForm({
   quantita_kg:     props.bolla?.quantita_kg     ? Number(props.bolla.quantita_kg) : null,
   data_reso:       props.bolla?.data_reso       ? new Date(props.bolla.data_reso) : null,
   note:            props.bolla?.note            ?? '',
+});
+
+watch(() => props.bolla, (b) => {
+  selectedVenditaId.value = b?.vendita_riga?.vendita_id ?? null;
+  form.vendita_riga_id = b?.vendita_riga_id ?? null;
+  form.numero_bolla    = b?.numero_bolla    ?? '';
+  form.quantita_pz     = b?.quantita_pz     ? Number(b.quantita_pz) : null;
+  form.quantita_kg     = b?.quantita_kg     ? Number(b.quantita_kg) : null;
+  form.data_reso       = b?.data_reso       ? new Date(b.data_reso) : null;
+  form.note            = b?.note            ?? '';
+  form.clearErrors();
 });
 
 function submit() {

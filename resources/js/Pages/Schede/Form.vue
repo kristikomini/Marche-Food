@@ -169,7 +169,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -208,6 +208,26 @@ const form = useForm({
   scheda_flussi: props.scheda?.flussi?.length
     ? props.scheda.flussi.map(f => ({ flusso_id: f.flusso_id, valore_controllo: f.valore_controllo ?? '', tempo_minuti: f.tempo_minuti ?? null }))
     : [],
+});
+
+watch(() => props.scheda, (s) => {
+  form.prodotto_id    = s?.prodotto_id    ?? null;
+  form.modello        = s?.modello        ?? '';
+  form.revisione      = s?.revisione      ?? 0;
+  form.data_revisione = s?.data_revisione ? new Date(s.data_revisione) : null;
+  form.ha_marinatura  = s?.ha_marinatura  ?? false;
+  form.attiva         = s?.attiva         ?? true;
+  form.note           = s?.note           ?? '';
+  form.ricette = s?.ricette?.length
+    ? s.ricette.map(r => ({ materia_prima_id: r.materia_prima_id, percentuale: r.percentuale ? Number(r.percentuale) : null, grammi_per_kg: r.grammi_per_kg ? Number(r.grammi_per_kg) : null, um: r.um ?? 'g' }))
+    : [];
+  form.ricette_marinature = s?.ricette_marinature?.length
+    ? s.ricette_marinature.map(r => ({ materia_prima_id: r.materia_prima_id, litri_grammi: r.litri_grammi ? Number(r.litri_grammi) : null, um: r.um ?? 'lt' }))
+    : [];
+  form.scheda_flussi = s?.flussi?.length
+    ? s.flussi.map(f => ({ flusso_id: f.flusso_id, valore_controllo: f.valore_controllo ?? '', tempo_minuti: f.tempo_minuti ?? null }))
+    : [];
+  form.clearErrors();
 });
 
 function addRiga(key) {

@@ -92,7 +92,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -122,6 +122,20 @@ const form = useForm({
   data_in:        props.lotto?.data_in        ? new Date(props.lotto.data_in)  : null,
   data_out:       props.lotto?.data_out       ? new Date(props.lotto.data_out) : null,
   note:           props.lotto?.note           ?? '',
+});
+
+watch(() => props.lotto, (l) => {
+  form.fornitore_id    = l?.fornitore_id    ?? null;
+  form.componente      = l?.componente      ?? '';
+  form.codice_articolo = l?.codice_articolo ?? '';
+  form.um              = l?.um              ?? 'pz';
+  form.quantita        = l?.quantita        ? Number(l.quantita) : null;
+  form.lotto           = l?.lotto           ?? '';
+  form.numero_ddt      = l?.numero_ddt      ?? '';
+  form.data_in         = l?.data_in         ? new Date(l.data_in)  : null;
+  form.data_out        = l?.data_out        ? new Date(l.data_out) : null;
+  form.note            = l?.note            ?? '';
+  form.clearErrors();
 });
 
 function submit() {

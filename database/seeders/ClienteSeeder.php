@@ -58,7 +58,7 @@ class ClienteSeeder extends Seeder
         ];
 
         foreach ($clienti as $data) {
-            Cliente::create($data);
+            Cliente::firstOrCreate(['codice_cliente' => $data['codice_cliente']], $data);
         }
     }
 }

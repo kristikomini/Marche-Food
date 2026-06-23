@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -91,6 +91,16 @@ const form = useForm({
   importo:          props.nota?.importo           ? Number(props.nota.importo) : null,
   data_documento:   props.nota?.data_documento    ? new Date(props.nota.data_documento) : null,
   note:             props.nota?.note             ?? '',
+});
+
+watch(() => props.nota, (n) => {
+  form.numero_documento = n?.numero_documento ?? '';
+  form.vendita_id       = n?.vendita_id       ?? null;
+  form.bolla_reso_id    = n?.bolla_reso_id    ?? null;
+  form.importo          = n?.importo           ? Number(n.importo) : null;
+  form.data_documento   = n?.data_documento    ? new Date(n.data_documento) : null;
+  form.note             = n?.note             ?? '';
+  form.clearErrors();
 });
 
 function submit() {

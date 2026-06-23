@@ -306,7 +306,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -411,6 +411,38 @@ const form = useForm({
         note:                x.note ?? '',
       }))
     : [],
+});
+
+watch(() => props.produzione, (p) => {
+  form.scheda_id            = p?.scheda_id            ?? null;
+  form.lotto_produzione     = p?.lotto_produzione     ?? '';
+  form.data_produzione      = p?.data_produzione      ? new Date(p.data_produzione) : null;
+  form.quantita_prodotta_kg = p?.quantita_prodotta_kg ? Number(p.quantita_prodotta_kg) : null;
+  form.operatore            = p?.operatore            ?? '';
+  form.note                 = p?.note                 ?? '';
+  form.materie_prime = p?.materie_prime?.length
+    ? p.materie_prime.map(m => ({
+        materia_prima_id: m.materia_prima_id,
+        lot_id:           m.acquisto_riga_id ?? m.semilavorato_id,
+        source_type:      m.acquisto_riga_id ? 'acquisto' : 'interno',
+        quantita_kg:      Number(m.quantita_kg),
+      }))
+    : [];
+  form.imballaggi = p?.imballaggi_primari?.length
+    ? p.imballaggi_primari.map(x => ({
+        lotto_imballaggio_id: x.lotto_imballaggio_id,
+        quantita_usata:       x.quantita_usata ? Number(x.quantita_usata) : null,
+        note:                 x.note ?? '',
+      }))
+    : [];
+  form.detergenti = p?.detergenti?.length
+    ? p.detergenti.map(x => ({
+        lotto_detergente_id: x.lotto_detergente_id,
+        quantita_usata:      x.quantita_usata ? Number(x.quantita_usata) : null,
+        note:                x.note ?? '',
+      }))
+    : [];
+  form.clearErrors();
 });
 
 function addMateriaPrima()     { form.materie_prime.push(emptyMateriaPrima()); }

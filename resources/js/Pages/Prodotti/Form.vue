@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -68,6 +68,16 @@ const form = useForm({
   attivo:           props.prodotto?.attivo           ?? true,
   note:             props.prodotto?.note             ?? '',
 });
+watch(() => props.prodotto, (p) => {
+  form.codice_prodotto  = p?.codice_prodotto  ?? '';
+  form.nome             = p?.nome             ?? '';
+  form.pezzatura_valore = p?.pezzatura_valore ? Number(p.pezzatura_valore) : null;
+  form.pezzatura_um     = p?.pezzatura_um     ?? 'g';
+  form.attivo           = p?.attivo           ?? true;
+  form.note             = p?.note             ?? '';
+  form.clearErrors();
+});
+
 function submit() {
   isEdit.value ? form.put(`/prodotti/${props.prodotto.id}`) : form.post('/prodotti');
 }

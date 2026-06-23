@@ -193,7 +193,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -269,6 +269,29 @@ const form = useForm({
         acquisto_riga_id: r.acquisto_riga_id ?? null,
       }))
     : [emptyRiga()],
+});
+
+watch(() => props.vendita, (v) => {
+  form.cliente_id       = v?.cliente_id       ?? null;
+  form.numero_documento = v?.numero_documento ?? '';
+  form.data_documento   = v?.data_documento   ? new Date(v.data_documento) : null;
+  form.tipo_documento   = v?.tipo_documento   ?? 'DDT';
+  form.note             = v?.note             ?? '';
+  form.righe = v?.righe?.length
+    ? v.righe.map(r => ({
+        id:               r.id               ?? null,
+        nome_prodotto:    r.nome_prodotto    ?? '',
+        pezzatura_gr:     r.pezzatura_gr     ? Number(r.pezzatura_gr)  : null,
+        um:               r.um               ?? 'pz',
+        quantita_pz:      r.quantita_pz      ? Number(r.quantita_pz)  : null,
+        quantita_kg:      r.quantita_kg      ? Number(r.quantita_kg)  : null,
+        lotto:            r.lotto            ?? '',
+        lotto_esterno:    r.lotto_esterno    ?? '',
+        scadenza:         parseDate(r.scadenza),
+        acquisto_riga_id: r.acquisto_riga_id ?? null,
+      }))
+    : [emptyRiga()];
+  form.clearErrors();
 });
 
 function addRiga() {

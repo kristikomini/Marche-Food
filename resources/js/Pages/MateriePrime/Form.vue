@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -40,6 +40,12 @@ const form = useForm({
   codice: props.materia?.codice ?? null,
   nome:   props.materia?.nome   ?? '',
 });
+watch(() => props.materia, (m) => {
+  form.codice = m?.codice ?? null;
+  form.nome   = m?.nome   ?? '';
+  form.clearErrors();
+});
+
 function submit() {
   isEdit.value ? form.put(`/materie-prime/${props.materia.id}`) : form.post('/materie-prime');
 }
