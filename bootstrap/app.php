@@ -12,6 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust Traefik reverse proxy so X-Forwarded-Proto: https is respected
+        $middleware->trustProxies(at: '*');
         $middleware->web(prepend: [
             \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         ]);
