@@ -86,7 +86,7 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 | `PUT` | `/fornitori/{id}` | `admin` | See validation below | Update supplier |
 | `DELETE` | `/fornitori/{id}` | `admin` | — | Delete supplier |
 
-**Fornitore validation fields:** `ragione_sociale` (required, max 200), `tipo` (required, enum: `alimentare\|imballaggio_primario\|detergente_secondario`), `codice` (nullable, unique), `piva`, `indirizzo`, `email`, `telefono`, `haccp_certificato` (bool), `haccp_scadenza` (date), `certificazioni_note`, `moca_certificato` (bool), `moca_numero`, `attivo` (bool), `note`.
+**Fornitore validation fields:** `ragione_sociale` (required, max 200), `tipo` (required, enum: `alimentare\|imballaggio_primario\|detergente_secondario\|conto_terzi`), `codice` (nullable, unique), `piva`, `indirizzo`, `email`, `telefono`, `haccp_certificato` (bool), `haccp_scadenza` (date), `certificazioni_note`, `moca_certificato` (bool), `moca_numero`, `attivo` (bool), `note`.
 
 ---
 
@@ -252,8 +252,11 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 | `GET` | `/produzioni/{id}/print` | `auth` | — | Printable production record (Inertia Vue page) |
 | `GET` | `/produzioni/{id}/pdf` | `auth` | — | Download HACCP production report as PDF (dompdf) |
 | `GET` | `/produzioni/export` | `auth` | — | Download all production runs as UTF-8 BOM CSV |
+| `POST` | `/produzioni/{id}/semilavorato` | `auth` | See below | Register a semi-finished lot output from this production run |
 
-**Produzione body:** `scheda_id`, `lotto_produzione` (unique), `data_produzione`, `quantita_prodotta_kg`, `operatore`, `note`, `materie_prime[]` (each: `materia_prima_id`, `acquisto_riga_id`, `quantita_kg`).
+**Produzione body:** `scheda_id`, `lotto_produzione` (unique), `data_produzione`, `quantita_prodotta_kg`, `operatore`, `note`, `materie_prime[]` (each: `materia_prima_id`, `acquisto_riga_id` or `semilavorato_id`, `quantita_kg`), `imballaggi[]` (each: `lotto_imballaggio_id`, `quantita_usata`, `note`), `detergenti[]` (each: `lotto_detergente_id`, `quantita_usata`, `note`).
+
+**Semilavorato body:** `lotto` (required, unique in `lotti_semilavorati`), `nome_prodotto` (required), `quantita_kg` (required, >0), `note`. A production can only have one semilavorato; a 422 is returned if one already exists for this production.
 
 ---
 

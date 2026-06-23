@@ -48,6 +48,7 @@ flowchart TB
     end
 
     F -->|alimentare| ACQ
+    F -->|conto_terzi| ACQ
     F -->|imballaggio_primario| IMP
     F -->|detergente_secondario| DET
     C --> VEN
@@ -81,7 +82,8 @@ flowchart TB
 The anagrafica modules are the configuration layer. Operators can read all registries; only admins can mutate them. Mastering this data correctly is a prerequisite for all operational modules to function.
 
 **Fornitori** are typed. The `tipo` field determines which operational screen they appear in:
-- `alimentare` → available in Acquisti forms
+- `alimentare` → available in Acquisti forms (standard ingredient purchases)
+- `conto_terzi` → available in Acquisti forms; marks third-party processing suppliers (acquisti with `is_conto_terzi = TRUE`)
 - `imballaggio_primario` → available in Lotti Imballaggi Primari forms
 - `detergente_secondario` → available in Lotti Detergenti forms
 
@@ -294,7 +296,7 @@ The Artisan command `db:backup` (class `BackupDatabase`) runs daily at 03:00:
 
 | Module | Reads From | Writes To | Blocks If Missing |
 |---|---|---|---|
-| Acquisti | Fornitori (alimentare) | `acquisti`, `acquisti_righe` | Produzioni cannot link lots |
+| Acquisti | Fornitori (alimentare, conto_terzi) | `acquisti`, `acquisti_righe` | Produzioni cannot link lots |
 | Vendite | Clienti | `vendite`, `vendite_righe` | — |
 | Bolle Reso | Vendite righe | `bolle_reso` | Note Credito (via bolla) |
 | Note Credito | Vendite, Bolle Reso | `note_credito` | — |

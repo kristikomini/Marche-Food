@@ -18,7 +18,7 @@
 | **Roles** | Custom `EnsureAdmin` middleware | — | Two roles: `operator` (default) and `admin` |
 | **Containerization** | Docker (multi-stage) | — | Stage 1: Node 22 Alpine (Vite build); Stage 2: PHP 8.4 Apache |
 | **Hosting** | Hetzner VPS + Coolify | — | Coolify manages container lifecycle, SSL, and reverse proxy |
-| **Queue** | Laravel Queue (database driver) | — | Background jobs stored in `jobs` table; worker runs via `queue:listen` in dev |
+| **Queue** | Laravel Queue (database driver) | — | Background jobs stored in `jobs` table; `queue:listen` in dev, `queue:work --tries=3 --max-time=3600` in production (started in `start.sh`) |
 | **Cache** | Database driver | — | `cache` table; no Redis in production by default |
 | **Session** | Database driver | — | `sessions` table; 120-minute lifetime |
 
@@ -152,7 +152,7 @@ marche-food/
 │   ├── web.php                                # All routes (no api.php used)
 │   └── console.php                            # Scheduler: haccp:alert-scadenze @ 07:00, db:backup @ 03:00
 ├── docker/
-│   └── start.sh                               # Entrypoint: artisan migrate → scheduler loop (bg) → apache2-foreground
+│   └── start.sh                               # Entrypoint: artisan migrate → scheduler loop (bg) → queue worker (bg) → apache2-foreground
 ├── public/
 │   └── build/                                 # Vite output (baked into image at build time)
 ├── schema.sql                                 # Canonical PostgreSQL DDL (source of truth)

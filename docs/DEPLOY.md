@@ -59,10 +59,13 @@ php artisan migrate --force    # Run pending migrations; exits 1 on failure
     sleep 60
 done) &
 
+# Queue worker — processes database-backed jobs in the background
+php artisan queue:work --sleep=3 --tries=3 --max-time=3600 >> /dev/null 2>&1 &
+
 apache2-foreground              # Start Apache in foreground (PID 1)
 ```
 
-Migrations run automatically on every container start. If a migration fails, the container exits with code 1 and Coolify will surface the error in its logs. The scheduler background loop fires `schedule:run` once per minute and is killed automatically when the Apache process (PID 1) exits.
+Migrations run automatically on every container start. If a migration fails, the container exits with code 1 and Coolify will surface the error in its logs. The scheduler and queue worker background processes are killed automatically when the Apache process (PID 1) exits.
 
 ---
 
@@ -94,9 +97,9 @@ CACHE_STORE=database
 QUEUE_CONNECTION=database
 
 # ── Logging ──────────────────────────────────────────────────────────────────
-LOG_CHANNEL=stack
+LOG_CHANNEL=stderr
 LOG_STACK=single
-LOG_LEVEL=error
+LOG_LEVEL=warning
 
 # ── Security ─────────────────────────────────────────────────────────────────
 BCRYPT_ROUNDS=12
@@ -156,7 +159,7 @@ Coolify watches the configured Git branch (typically `main`). On push:
 ## 5. Background Jobs / Cron
 
 ### Queue Worker
-The database queue driver is configured (`QUEUE_CONNECTION=database`). In development, `queue:listen` runs as part of `composer dev`. **In production, no queue worker is started** — `start.sh` only starts Apache and the scheduler. The `jobs` table exists but no jobs are dispatched by current application code. A worker process would need to be added to `start.sh` or as a separate Coolify process if background jobs are added in future.
+The database queue driver is configured (`QUEUE_CONNECTION=database`). In development, `queue:listen` runs as part of `composer dev`. **In production, `queue:work --sleep=3 --tries=3 --max-time=3600` runs automatically** as a background process in `docker/start.sh`, alongside the scheduler. The `jobs` table exists and any queued jobs will be processed automatically. The worker restarts itself after `--max-time=3600` seconds to prevent memory leaks.
 
 ### Scheduled Tasks
 `routes/console.php` defines two scheduled commands. The scheduler is started automatically as a background loop in `docker/start.sh` — no external cron is needed.

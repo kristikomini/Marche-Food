@@ -50,6 +50,9 @@ The guiding principles are:
 | `ricette_marinature` | `ricette_marinature_pkey` |
 | `produzioni` | `produzioni_pkey` |
 | `produzioni_materie_prime` | `produzioni_materie_prime_pkey` |
+| `produzioni_imballaggi_primari` | `produzioni_imballaggi_primari_pkey` |
+| `produzioni_detergenti` | `produzioni_detergenti_pkey` |
+| `lotti_semilavorati` | `lotti_semilavorati_pkey` |
 
 ### Unique Indexes (implicit, created by `UNIQUE` constraints)
 

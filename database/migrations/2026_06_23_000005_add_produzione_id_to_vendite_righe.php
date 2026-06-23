@@ -1,19 +1,36 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('ALTER TABLE vendite_righe ADD COLUMN IF NOT EXISTS produzione_id BIGINT NULL REFERENCES produzioni(id) ON DELETE SET NULL');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_vendite_righe_produzione ON vendite_righe(produzione_id)');
+        if (Schema::hasColumn('vendite_righe', 'produzione_id')) {
+            return;
+        }
+
+        Schema::table('vendite_righe', function (Blueprint $table) {
+            $table->foreignId('produzione_id')
+                  ->nullable()
+                  ->constrained('produzioni')
+                  ->nullOnDelete();
+            $table->index('produzione_id', 'idx_vendite_righe_produzione');
+        });
     }
 
     public function down(): void
     {
-        DB::statement('DROP INDEX IF EXISTS idx_vendite_righe_produzione');
-        DB::statement('ALTER TABLE vendite_righe DROP COLUMN IF EXISTS produzione_id');
+        if (!Schema::hasColumn('vendite_righe', 'produzione_id')) {
+            return;
+        }
+
+        Schema::table('vendite_righe', function (Blueprint $table) {
+            $table->dropIndex('idx_vendite_righe_produzione');
+            $table->dropForeign(['produzione_id']);
+            $table->dropColumn('produzione_id');
+        });
     }
 };

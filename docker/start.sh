@@ -1,10 +1,6 @@
 #!/bin/bash
 echo "=== Starting Marche Food ==="
 echo "PHP version: $(php -v | head -1)"
-echo "APP_ENV: ${APP_ENV}"
-echo "DB_CONNECTION: ${DB_CONNECTION}"
-echo "DB_HOST: ${DB_HOST}"
-echo "DB_DATABASE: ${DB_DATABASE}"
 
 php /var/www/html/artisan migrate --force
 if [ $? -ne 0 ]; then
@@ -21,5 +17,8 @@ echo "=== Migration complete ==="
     sleep 60
 done) &
 
-echo "=== Scheduler started, launching Apache ==="
+# Start queue worker in the background
+php /var/www/html/artisan queue:work --sleep=3 --tries=3 --max-time=3600 >> /dev/null 2>&1 &
+
+echo "=== Scheduler and queue worker started, launching Apache ==="
 exec apache2-foreground

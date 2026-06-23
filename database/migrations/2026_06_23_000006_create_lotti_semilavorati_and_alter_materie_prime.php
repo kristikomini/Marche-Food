@@ -21,10 +21,13 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 2. Drop NOT NULL on acquisto_riga_id via raw SQL.
-        //    Schema::table()->change() on FK columns in PostgreSQL can silently drop
-        //    the FK constraint itself — raw ALTER is the safe path.
-        DB::statement('ALTER TABLE produzioni_materie_prime ALTER COLUMN acquisto_riga_id DROP NOT NULL');
+        // 2. Drop NOT NULL on acquisto_riga_id — PostgreSQL only.
+        //    Schema::table()->change() on FK columns can silently drop the FK constraint;
+        //    raw ALTER is the safe path. SQLite does not support this syntax and does not
+        //    enforce NOT NULL as strictly in test scenarios anyway.
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE produzioni_materie_prime ALTER COLUMN acquisto_riga_id DROP NOT NULL');
+        }
 
         // 3. Add the semilavorato FK column
         Schema::table('produzioni_materie_prime', function (Blueprint $table) {
@@ -34,25 +37,29 @@ return new class extends Migration {
                   ->nullOnDelete();
         });
 
-        // 4. XOR constraint: exactly one of the two sources must be present
-        DB::statement('ALTER TABLE produzioni_materie_prime ADD CONSTRAINT source_exactly_one CHECK (
-            (acquisto_riga_id IS NOT NULL AND semilavorato_id IS NULL) OR
-            (acquisto_riga_id IS NULL     AND semilavorato_id IS NOT NULL)
-        )');
+        // 4. XOR constraint: exactly one of the two sources must be present (PostgreSQL only)
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE produzioni_materie_prime ADD CONSTRAINT source_exactly_one CHECK (
+                (acquisto_riga_id IS NOT NULL AND semilavorato_id IS NULL) OR
+                (acquisto_riga_id IS NULL     AND semilavorato_id IS NOT NULL)
+            )');
+        }
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE produzioni_materie_prime DROP CONSTRAINT IF EXISTS source_exactly_one');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE produzioni_materie_prime DROP CONSTRAINT IF EXISTS source_exactly_one');
+        }
 
         Schema::table('produzioni_materie_prime', function (Blueprint $table) {
             $table->dropForeign(['semilavorato_id']);
             $table->dropColumn('semilavorato_id');
         });
 
-        // Safe to restore NOT NULL because rolling back this migration means no
-        // semilavorato rows exist yet, so acquisto_riga_id is populated on every row.
-        DB::statement('ALTER TABLE produzioni_materie_prime ALTER COLUMN acquisto_riga_id SET NOT NULL');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE produzioni_materie_prime ALTER COLUMN acquisto_riga_id SET NOT NULL');
+        }
 
         Schema::dropIfExists('lotti_semilavorati');
     }

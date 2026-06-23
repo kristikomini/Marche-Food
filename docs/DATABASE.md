@@ -107,6 +107,7 @@ erDiagram
         date data_documento
         varchar tipo_documento
         text note
+        boolean is_conto_terzi
         timestamptz created_at
         timestamptz updated_at
     }
@@ -144,6 +145,8 @@ erDiagram
         bigserial id PK
         bigint vendita_id FK
         bigint prodotto_id FK
+        bigint acquisto_riga_id FK
+        bigint produzione_id FK
         varchar nome_prodotto
         numeric pezzatura_gr
         varchar um
@@ -268,10 +271,24 @@ erDiagram
         timestamptz updated_at
     }
 
+    lotti_semilavorati {
+        bigserial id PK
+        bigint produzione_id FK
+        varchar lotto UK
+        varchar nome_prodotto
+        numeric quantita_kg
+        date data_produzione
+        date data_out
+        text note
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
     produzioni_materie_prime {
         bigserial id PK
         bigint produzione_id FK
         bigint acquisto_riga_id FK
+        bigint semilavorato_id FK
         bigint materia_prima_id FK
         numeric quantita_kg
     }
@@ -311,6 +328,8 @@ erDiagram
     vendite         }|--|| clienti                  : "cliente_id"
     vendite_righe   }|--|| vendite                  : "vendita_id (CASCADE)"
     vendite_righe   }o--|| prodotti                 : "prodotto_id (nullable)"
+    vendite_righe   }o--|| acquisti_righe           : "acquisto_riga_id (nullable)"
+    vendite_righe   }o--|| produzioni               : "produzione_id (nullable)"
 
     %% Resi & Note Credito
     bolle_reso      }|--|| vendite_righe            : "vendita_riga_id"
@@ -332,8 +351,10 @@ erDiagram
     ricette_marinature        }|--|| materie_prime   : "materia_prima_id"
     ricette_marinature        }o--|| fornitori       : "fornitore_id (nullable)"
     produzioni                }|--|| schede_produzione : "scheda_id"
+    lotti_semilavorati        }|--|| produzioni      : "produzione_id (CASCADE)"
     produzioni_materie_prime  }|--|| produzioni      : "produzione_id (CASCADE)"
-    produzioni_materie_prime  }|--|| acquisti_righe  : "acquisto_riga_id"
+    produzioni_materie_prime  }o--|| acquisti_righe  : "acquisto_riga_id (nullable)"
+    produzioni_materie_prime  }o--|| lotti_semilavorati : "semilavorato_id (nullable)"
     produzioni_materie_prime  }|--|| materie_prime   : "materia_prima_id"
     produzioni_imballaggi_primari }|--|| produzioni          : "produzione_id (CASCADE)"
     produzioni_imballaggi_primari }|--|| lotti_imballaggi_primari : "lotto_imballaggio_id (RESTRICT)"
@@ -370,10 +391,10 @@ Raw ingredients catalogue. `codice` is an integer business key (matches legacy n
 Allowed mapping between a raw material and the finished products it can enter. This is a many-to-many join with a `UNIQUE(prodotto_id, materia_prima_id)` constraint. It serves as a validation layer to prevent incorrect ingredient assignment, though it is not enforced at the database level on purchase lines — it is a UI-level guide only.
 
 ### `acquisti` / `acquisti_righe`
-The incoming goods register. Each `acquisto` is a delivery document (DDT, Fattura, Bolla) from a food supplier. Each `acquisto_riga` is one ingredient lot line. The lot identifier is stored either as `lotto` (internally assigned) or `lotto_esterno` (supplier's lot number) — a `CHECK` constraint enforces mutual exclusivity. `data_in` is the arrival date; `data_out` marks when the lot was fully consumed or returned.
+The incoming goods register. Each `acquisto` is a delivery document (DDT, Fattura, Bolla) from a food supplier. `is_conto_terzi` flags documents that belong to a third party (customer-owned goods processed on their behalf) — these are excluded from financial reports and dashboard stock totals. Each `acquisto_riga` is one ingredient lot line. The lot identifier is stored either as `lotto` (internally assigned) or `lotto_esterno` (supplier's lot number) — a `CHECK` constraint enforces mutual exclusivity. `data_in` is the arrival date; `data_out` marks when the lot was fully consumed or returned.
 
 ### `vendite` / `vendite_righe`
-The outgoing goods register. Document types: `DDT` (transport document), `FI` (invoice), `NC` (credit note). Each sale line carries its lot reference, enabling forward traceability to identify which customers received a specific ingredient lot.
+The outgoing goods register. Document types: `DDT` (transport document), `FI` (invoice), `NC` (credit note). Each sale line carries its lot reference, enabling forward traceability to identify which customers received a specific ingredient lot. `acquisto_riga_id` (nullable) links a sale line directly to the purchase lot that was sold without going through a production run. `produzione_id` (nullable) links a sale line to the production run whose finished product was sold.
 
 ### `bolle_reso`
 Return notes issued when a customer returns goods. Linked to a specific `vendita_riga` (original sold lot line). Captures returned quantities in both pieces and kg.
@@ -402,8 +423,11 @@ The marinade recipe for products where `ha_marinatura = TRUE`. Separate from the
 ### `produzioni`
 Records a single production run. `lotto_produzione` is the system-assigned lot identifier for the batch of finished product — it is globally unique. This is the pivot of the entire HACCP traceability chain.
 
+### `lotti_semilavorati`
+Records a semi-finished product (intermediate output) created by a production run. A production run can produce a `lotto_semilavorato` which can then be consumed as an ingredient in a subsequent production run, enabling multi-stage processing chains. `data_out` marks when the semi-finished lot was fully consumed. Linked back to the originating `produzione_id` with `CASCADE ON DELETE`.
+
 ### `produzioni_materie_prime`
-**The core of HACCP traceability.** Each row links a production run to the exact purchase lot line (`acquisto_riga_id`) used for one ingredient, recording the quantity consumed (`quantita_kg`). This table enables:
+**The core of HACCP traceability.** Each row links a production run to an ingredient source — either a purchased lot (`acquisto_riga_id`) or an internal semi-finished lot (`semilavorato_id`). Exactly one of the two FK columns must be non-null (enforced by a `CHECK` constraint on PostgreSQL). Records the quantity consumed (`quantita_kg`). This table enables:
 - **Forward trace**: Given a purchase lot → which productions used it → which sales received those finished lots.
 - **Reverse trace**: Given a production lot → which purchase lots and suppliers contributed ingredients.
 
@@ -443,6 +467,8 @@ Junction table linking a production run to the cleaning/sanitizing product lots 
 **No stock ledger**: The schema records quantities in and out per lot but does not maintain a running stock balance. Current stock of any lot must be computed by subtracting `produzioni_materie_prime.quantita_kg` (consumed) from `acquisti_righe.quantita_kg` (received). There is no materialized inventory column.
 
 **`produzioni_materie_prime` has no timestamps**: `public $timestamps = false` on the model. Audit trail for production ingredient lines relies on the parent `produzioni.updated_at`.
+
+**`produzioni_materie_prime` XOR source constraint**: On PostgreSQL, a `CHECK` constraint (`source_exactly_one`) enforces that exactly one of `acquisto_riga_id` or `semilavorato_id` is non-null per row. This is also enforced at the application layer in `ProduzioneController::validateRequest()`.
 
 **Audit columns on operational tables**: `acquisti`, `vendite`, `produzioni`, `bolle_reso`, `note_credito`, `lotti_imballaggi_primari`, and `lotti_detergenti` all carry `created_by BIGINT REFERENCES users(id)` and `updated_by BIGINT REFERENCES users(id)`, auto-populated by the `Auditable` trait via Eloquent model events.
 

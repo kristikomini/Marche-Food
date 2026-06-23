@@ -127,9 +127,9 @@ All environment variables required for this application. Variables marked **Unus
 | `SESSION_LIFETIME` | No | Yes | `120` (minutes) |
 | `SESSION_ENCRYPT` | No | Yes | `true` — sessions encrypted at rest (GAP-S3) |
 | `CACHE_STORE` | No | Yes | `database` |
-| `QUEUE_CONNECTION` | No | Yes | `database` (queue worker runs in dev; not used in prod) |
-| `LOG_CHANNEL` | No | Yes | `stack` |
-| `LOG_LEVEL` | No | Yes | `error` in production |
+| `QUEUE_CONNECTION` | No | Yes | `database` (queue worker runs in both dev and production) |
+| `LOG_CHANNEL` | No | Yes | `stderr` in production (routes logs to Docker/Coolify log aggregation) |
+| `LOG_LEVEL` | No | Yes | `warning` in production |
 | `BCRYPT_ROUNDS` | No | Yes | `12` |
 | `MAIL_MAILER` | Yes* | Yes | `smtp` — required for password reset emails and expiry alert emails |
 | `MAIL_HOST` | Yes* | Yes | SMTP server hostname (e.g., `smtp.mailgun.org`) |
