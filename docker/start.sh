@@ -13,5 +13,13 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "=== Migration complete, starting Apache ==="
+echo "=== Migration complete ==="
+
+# Start Laravel scheduler in the background (runs every minute)
+(while true; do
+    php /var/www/html/artisan schedule:run >> /dev/null 2>&1
+    sleep 60
+done) &
+
+echo "=== Scheduler started, launching Apache ==="
 exec apache2-foreground

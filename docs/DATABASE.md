@@ -276,6 +276,26 @@ erDiagram
         numeric quantita_kg
     }
 
+    produzioni_imballaggi_primari {
+        bigserial id PK
+        bigint produzione_id FK
+        bigint lotto_imballaggio_id FK
+        numeric quantita_usata
+        text note
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    produzioni_detergenti {
+        bigserial id PK
+        bigint produzione_id FK
+        bigint lotto_detergente_id FK
+        numeric quantita_usata
+        text note
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
     %% Anagrafica
     prodotti        }o--|| unita_misura             : "um_id"
     materie_prime   }o--|| unita_misura             : "um_id"
@@ -315,6 +335,10 @@ erDiagram
     produzioni_materie_prime  }|--|| produzioni      : "produzione_id (CASCADE)"
     produzioni_materie_prime  }|--|| acquisti_righe  : "acquisto_riga_id"
     produzioni_materie_prime  }|--|| materie_prime   : "materia_prima_id"
+    produzioni_imballaggi_primari }|--|| produzioni          : "produzione_id (CASCADE)"
+    produzioni_imballaggi_primari }|--|| lotti_imballaggi_primari : "lotto_imballaggio_id (RESTRICT)"
+    produzioni_detergenti     }|--|| produzioni      : "produzione_id (CASCADE)"
+    produzioni_detergenti     }|--|| lotti_detergenti : "lotto_detergente_id (RESTRICT)"
 ```
 
 ---
@@ -355,7 +379,7 @@ The outgoing goods register. Document types: `DDT` (transport document), `FI` (i
 Return notes issued when a customer returns goods. Linked to a specific `vendita_riga` (original sold lot line). Captures returned quantities in both pieces and kg.
 
 ### `note_credito`
-Credit notes can relate to either a sale document directly (`vendita_id`) or to a return note (`bolla_reso_id`). Both foreign keys are nullable; at least one should be populated but this is not enforced by a DB constraint.
+Credit notes can relate to either a sale document directly (`vendita_id`) or to a return note (`bolla_reso_id`). Both foreign keys are nullable but a `CHECK` constraint (`note_credito_requires_parent`) enforces that at least one must be non-null.
 
 ### `lotti_imballaggi_primari`
 Incoming lots of primary packaging materials (bags, trays, etc.) from `imballaggio_primario` suppliers. Tracked for MOCA compliance. `data_out` marks when the lot was exhausted.
@@ -383,6 +407,12 @@ Records a single production run. `lotto_produzione` is the system-assigned lot i
 - **Forward trace**: Given a purchase lot → which productions used it → which sales received those finished lots.
 - **Reverse trace**: Given a production lot → which purchase lots and suppliers contributed ingredients.
 
+### `produzioni_imballaggi_primari`
+Junction table linking a production run to the primary packaging lots (MOCA compliance) used during that run. `lotto_imballaggio_id` uses `ON DELETE RESTRICT` to prevent deletion of a packaging lot that has been used in a production. Enables answering: "Which production runs used packaging lot X?"
+
+### `produzioni_detergenti`
+Junction table linking a production run to the cleaning/sanitizing product lots used during that session. `lotto_detergente_id` uses `ON DELETE RESTRICT`. Enables full chemical traceability per production batch.
+
 ---
 
 ## 3. Data Integrity Notes
@@ -397,6 +427,8 @@ Records a single production run. `lotto_produzione` is the system-assigned lot i
 | `schede_produzione` | `ricette` | `ON DELETE CASCADE` |
 | `schede_produzione` | `ricette_marinature` | `ON DELETE CASCADE` |
 | `produzioni` | `produzioni_materie_prime` | `ON DELETE CASCADE` — deleting a production run removes all its ingredient lot linkages |
+| `produzioni` | `produzioni_imballaggi_primari` | `ON DELETE CASCADE` |
+| `produzioni` | `produzioni_detergenti` | `ON DELETE CASCADE` |
 
 **Critical constraint — lotto XOR lotto_esterno**: Both `acquisti_righe` and `vendite_righe` carry a `CHECK` constraint (`lotto_xor`) that prevents both `lotto` and `lotto_esterno` from being non-null simultaneously. One must be null.
 
@@ -411,3 +443,7 @@ Records a single production run. `lotto_produzione` is the system-assigned lot i
 **No stock ledger**: The schema records quantities in and out per lot but does not maintain a running stock balance. Current stock of any lot must be computed by subtracting `produzioni_materie_prime.quantita_kg` (consumed) from `acquisti_righe.quantita_kg` (received). There is no materialized inventory column.
 
 **`produzioni_materie_prime` has no timestamps**: `public $timestamps = false` on the model. Audit trail for production ingredient lines relies on the parent `produzioni.updated_at`.
+
+**Audit columns on operational tables**: `acquisti`, `vendite`, `produzioni`, `bolle_reso`, `note_credito`, `lotti_imballaggi_primari`, and `lotti_detergenti` all carry `created_by BIGINT REFERENCES users(id)` and `updated_by BIGINT REFERENCES users(id)`, auto-populated by the `Auditable` trait via Eloquent model events.
+
+**`note_credito_requires_parent` CHECK constraint**: Ensures `vendita_id IS NOT NULL OR bolla_reso_id IS NOT NULL` — an orphaned credit note with both FK columns null is rejected at the database level.

@@ -21,11 +21,21 @@ use App\Http\Controllers\UtenteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TracciabilitaController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\RecallController;
+use App\Http\Controllers\ReportController;
 
 // ─── Auth (guest only) ───────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
     Route::get('/login',  [LoginController::class, 'showLogin'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:10,1');
+
+    // Password reset
+    Route::get('/forgot-password',  [ForgotPasswordController::class, 'show'])->name('password.request');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'send'])->name('password.email')->middleware('throttle:5,1');
+    Route::get('/reset-password/{token}', [ResetPasswordController::class, 'show'])->name('password.reset');
+    Route::post('/reset-password',        [ResetPasswordController::class, 'reset'])->name('password.update');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
@@ -38,6 +48,17 @@ Route::middleware('auth')->group(function () {
     // Tracciabilità lotti
     Route::get('tracciabilita', [TracciabilitaController::class, 'index'])->name('tracciabilita');
     Route::get('tracciabilita/search', [TracciabilitaController::class, 'search'])->name('tracciabilita.search');
+
+    // Recall report
+    Route::get('recall', [RecallController::class, 'index'])->name('recall.index');
+
+    // PDF download
+    Route::get('produzioni/{produzione}/pdf', [ReportController::class, 'produzionePdf'])->name('produzioni.pdf');
+
+    // CSV exports
+    Route::get('acquisti/export',   [AcquistoController::class,   'export'])->name('acquisti.export');
+    Route::get('vendite/export',    [VenditaController::class,    'export'])->name('vendite.export');
+    Route::get('produzioni/export', [ProduzioneController::class, 'export'])->name('produzioni.export');
 
     // Profile
     Route::get('profilo', [ProfileController::class, 'show'])->name('profilo');

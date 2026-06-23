@@ -24,6 +24,10 @@
         <h2 class="card-title">Accedi</h2>
         <p class="card-subtitle">Inserisci le tue credenziali per continuare</p>
 
+        <div v-if="$page.props.flash?.status" class="flash-status">
+          {{ $page.props.flash.status }}
+        </div>
+
         <form @submit.prevent="submit" class="form">
           <div class="field">
             <label for="email">Indirizzo email</label>
@@ -59,6 +63,7 @@
               <Checkbox v-model="form.remember" input-id="remember" binary />
               <label for="remember">Ricordami</label>
             </div>
+            <a href="/forgot-password" class="forgot-link">Password dimenticata?</a>
           </div>
 
           <Button
@@ -270,6 +275,24 @@ function submit() {
   gap: 0.5rem;
   font-size: 0.875rem;
   color: #4b5563;
+}
+
+.forgot-link {
+  font-size: 0.8rem;
+  color: #2a6941;
+  text-decoration: none;
+  font-weight: 500;
+}
+.forgot-link:hover { text-decoration: underline; }
+
+.flash-status {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
 }
 
 .submit-btn {

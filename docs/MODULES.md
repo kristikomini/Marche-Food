@@ -93,7 +93,7 @@ The food document module covers the full purchase-to-sale cycle for ingredients 
 
 **Acquisti** register incoming food deliveries. Each document has a header (supplier, document number, date, type) and one or more `acquisti_righe`. Each line represents one ingredient lot. The lot identifier (`lotto` or `lotto_esterno`) is the key field — it links purchases to production runs in the HACCP chain. `data_out` on a riga signals the lot is closed (fully consumed or returned); the dashboard uses `data_out IS NULL` to identify open lots.
 
-> **Important operational constraint**: When editing an acquisto, the controller performs a full delete-and-recreate of all `acquisti_righe`. If any `acquisto_riga` has been linked to a `produzione` via `produzioni_materie_prime`, the DELETE will fail with a FK violation (no `ON DELETE CASCADE` from `acquisti_righe` to `produzioni_materie_prime`). This means **once a purchase line has been used in a production run, the parent acquisto cannot be updated via the edit form**. This is not surfaced as a clear error message to the user (see GAPS.md).
+> **Edit safety**: The controller uses a diff-based sync strategy when saving an acquisto. Lines present in both the database and the submission are updated in place (IDs preserved). Lines removed from the submission are checked for downstream FK references in `produzioni_materie_prime` before deletion — if references exist, the save is rejected with a clear Italian error message. Lines already used in a production can still be edited (quantity, lot number, etc.); only deletion of such lines is blocked.
 
 **Vendite** register outgoing sales. Document types:
 - `DDT` — transport document, no financial value
@@ -104,13 +104,13 @@ Each `vendita_riga` carries the lot number of the finished product sold, enablin
 
 **Bolle Reso** record customer returns. They reference a specific `vendita_riga` (the original lot sold). Returned quantities are recorded but there is no mechanism to automatically re-open or reverse the lot in `acquisti_righe`.
 
-**Note Credito** are financial adjustments. They can reference either a `vendita` directly or a `bolla_reso`. There is no validation enforcing that at least one of the two foreign keys is populated — both can be null, creating orphaned credit notes.
+**Note Credito** are financial adjustments. They can reference either a `vendita` directly or a `bolla_reso`. A `CHECK` constraint at the database level (`note_credito_requires_parent`) ensures at least one FK is always populated.
 
 ---
 
 ### Screen 2 — Imballaggi (Packaging Lots)
 
-A self-contained register for non-food inputs. Unlike food purchases, packaging and detergent lots are **not linked to production runs** in the current schema. They are tracked for regulatory compliance (MOCA for packaging; chemical safety for detergents) but there is no `produzioni_imballaggi` junction table. This means the system records that a packaging lot existed but cannot trace which production run used it.
+A register for non-food inputs linked to the HACCP production chain. Packaging and detergent lots are linked to production runs via `produzioni_imballaggi_primari` and `produzioni_detergenti` junction tables. The system can now answer: "Which production runs used packaging lot X?" and "Which cleaning product was used during batch Y?"
 
 **Lotti Imballaggi Primari** — materials in direct contact with food (e.g., vacuum bags, trays). Supplier must be type `imballaggio_primario`.
 
@@ -131,7 +131,7 @@ The most complex module and the backbone of HACCP compliance.
 2. A standard recipe (`ricette`): the list of raw materials with percentages and grams-per-kg.
 3. Optionally, a marinade recipe (`ricette_marinature`) if `ha_marinatura = TRUE`.
 
-When a scheda is updated (new revision), the old scheda should be deactivated (`attiva = false`) and a new one created. The `UNIQUE(prodotto_id, revisione)` constraint enforces clean versioning, but there is no automated workflow to handle scheda transitions — it is a manual admin operation.
+When a scheda is created with `attiva = true`, the controller automatically sets `attiva = false` on all previous revisions for the same `prodotto_id`. The `UNIQUE(prodotto_id, revisione)` constraint enforces clean versioning. At most one revision per product is active at any time.
 
 **Produzioni** are individual production run records. Creating a production is the critical HACCP act: the operator selects an active scheda, assigns a unique `lotto_produzione`, and — most importantly — links each ingredient in the recipe to a specific `acquisto_riga` (i.e., a specific physical lot of that ingredient).
 
@@ -143,7 +143,7 @@ acquisto_riga (lot of ingredient X from supplier Y on date Z)
             → vendita_riga (sold as finished product to customer W)
 ```
 
-There is no enforcement that the ingredients selected in a production match the recipe defined in the scheda. An operator can link any raw material lots to any scheda — the recipe is a guide, not a database constraint.
+The backend validates that all submitted `materia_prima_id` values are present in the scheda's recipe (`ricette` + `ricette_marinature`). Submitting an ingredient not in the recipe returns a 422 with the names of the invalid ingredients. Validation is skipped when the scheda has no defined recipe, allowing flexible production runs for schede without rigid ingredient lists.
 
 ---
 
@@ -153,7 +153,7 @@ The dashboard (`DashboardController`) aggregates six KPI counters (total and cur
 - **Lotti in scadenza**: open acquisto_righe expiring within the next 30 days.
 - **Lotti scaduti**: open acquisto_righe with a past `scadenza`.
 
-The last 5 acquisti and last 5 produzioni are shown as quick-access recent activity panels. All queries run synchronously on page load — there is no caching layer for dashboard stats.
+The last 5 acquisti and last 5 produzioni are shown as quick-access recent activity panels. KPI counts are cached for 5 minutes (`Cache::remember`). Safety-critical expiry counts use a separate 60-second TTL to balance freshness with performance.
 
 ---
 
@@ -165,7 +165,7 @@ A unified cross-domain search. Given a query string, the controller performs two
 
 2. **Reverse trace** (production lot → ingredients): searches `produzioni.lotto_produzione` and the product name. For each match, eager-loads `scheda → prodotto` and `materiePrime → materiaPrima + acquistoRiga → acquisto → fornitore`.
 
-Results are limited to 50 rows (forward) and 20 rows (reverse) to prevent UI overload. This is a hard cut-off; results are not paginated. The traceability view does not currently link to sale records (`vendite_righe`) — connecting a production lot to which customers received it requires a manual lookup in the Vendite screen.
+Results are limited to 50 rows (forward) and 20 rows (reverse/production) and 20 rows (sales). When a limit is hit, the UI displays a truncation warning with the actual total count. A third search leg queries `vendite_righe` by lot number and product name, linking production lots forward to sale documents and customers — completing the full HACCP chain from ingredient lot → production → customer.
 
 ---
 
@@ -173,7 +173,7 @@ Results are limited to 50 rows (forward) and 20 rows (reverse) to prevent UI ove
 
 An admin-only bulk data entry tool for migrating historical records. Accepts semicolon-delimited CSV files for acquisti and vendite. The import groups rows by `fornitore_codice|numero_documento|data_documento` (acquisti) or `cliente_codice|numero_documento|data_documento` (vendite) to reconstruct document headers from flat CSV rows.
 
-**Key constraint**: Supplier and customer lookup is by `codice` / `codice_cliente`. If a supplier code in the CSV does not match an existing `fornitori.codice`, that document group is skipped and an error is appended to the response message. There is no rollback — partial imports are committed row by row.
+**Key constraint**: Supplier and customer lookup is by `codice` / `codice_cliente`. If a supplier code in the CSV does not match an existing `fornitori.codice`, that document group is skipped and an error is appended to the response message. The entire import is wrapped in a `DB::transaction()` — if any error occurs, all rows are rolled back and the database is left unchanged.
 
 ---
 
@@ -185,7 +185,7 @@ Admin-only user management. No self-registration. Admin can:
 - Force-reset any user's password
 - Delete any user except themselves
 
-The system does not track which user created or last modified a record anywhere in the schema (no `created_by` / `updated_by` FK on operational tables).
+All operational records (`acquisti`, `vendite`, `produzioni`, `bolle_reso`, `note_credito`, `lotti_imballaggi_primari`, `lotti_detergenti`) carry `created_by` and `updated_by` FK columns referencing `users.id`, auto-populated by the `Auditable` trait on model creation and update events.
 
 ---
 
@@ -199,7 +199,7 @@ The system does not track which user created or last modified a record anywhere 
 | Note Credito | Vendite, Bolle Reso | `note_credito` | — |
 | Imballaggi | Fornitori (packaging/detergent) | `lotti_imballaggi_primari`, `lotti_detergenti` | — |
 | Schede Produzione | Prodotti, Materie Prime, Flussi | `schede_produzione` + children | Produzioni cannot be created |
-| Produzioni | Schede, Acquisti Righe | `produzioni`, `produzioni_materie_prime` | Tracciabilità has no data |
-| Tracciabilità | Acquisti Righe, Produzioni | (read-only) | — |
+| Produzioni | Schede, Acquisti Righe, Lotti Imballaggi, Lotti Detergenti | `produzioni`, `produzioni_materie_prime`, `produzioni_imballaggi_primari`, `produzioni_detergenti` | Tracciabilità has no data |
+| Tracciabilità | Acquisti Righe, Produzioni, Vendite Righe | (read-only) | — |
 | Dashboard | Acquisti, Vendite, Produzioni | (read-only) | — |
 | Import | Fornitori, Clienti | `acquisti`, `acquisti_righe`, `vendite`, `vendite_righe` | — |

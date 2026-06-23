@@ -2,9 +2,14 @@
   <AppLayout>
     <div class="page-header">
       <h1 class="page-title">Vendite</h1>
-      <Link href="/vendite/create">
-        <Button label="Nuova Vendita" icon="pi pi-plus" />
-      </Link>
+      <div style="display:flex;gap:0.5rem">
+        <a href="/vendite/export">
+          <Button label="Esporta CSV" icon="pi pi-download" outlined severity="secondary" />
+        </a>
+        <Link href="/vendite/create">
+          <Button label="Nuova Vendita" icon="pi pi-plus" />
+        </Link>
+      </div>
     </div>
 
     <div class="filters-bar">

@@ -262,6 +262,37 @@ class ProduzioneController extends Controller
         ]);
     }
 
+    public function export()
+    {
+        $produzioni = Produzione::with(['scheda.prodotto'])
+            ->orderByDesc('data_produzione')
+            ->get();
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="produzioni_' . now()->format('Ymd_His') . '.csv"',
+        ];
+
+        $callback = function () use ($produzioni) {
+            $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF");
+            fputcsv($handle, ['Data Produzione', 'Lotto', 'Prodotto', 'Scheda', 'Q.tà (kg)', 'Operatore'], ';');
+            foreach ($produzioni as $p) {
+                fputcsv($handle, [
+                    $p->data_produzione,
+                    $p->lotto_produzione,
+                    $p->scheda?->prodotto?->nome,
+                    $p->scheda ? ($p->scheda->modello . '.v' . $p->scheda->revisione) : null,
+                    $p->quantita_prodotta_kg,
+                    $p->operatore,
+                ], ';');
+            }
+            fclose($handle);
+        };
+
+        return response()->streamDownload($callback, 'produzioni_' . now()->format('Ymd_His') . '.csv', $headers);
+    }
+
     public function print(Produzione $produzione)
     {
         $produzione->load([

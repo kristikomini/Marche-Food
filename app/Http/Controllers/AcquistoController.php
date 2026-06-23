@@ -185,4 +185,39 @@ class AcquistoController extends Controller
 
         return Inertia::render('Acquisti/Print', ['acquisto' => $acquisto]);
     }
+
+    public function export()
+    {
+        $righe = AcquistoRiga::with(['acquisto.fornitore'])
+            ->orderBy('data_in', 'desc')
+            ->get();
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="acquisti_' . now()->format('Ymd_His') . '.csv"',
+        ];
+
+        $callback = function () use ($righe) {
+            $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel
+            fputcsv($handle, ['Data Doc.', 'Fornitore', 'N° Documento', 'Prodotto', 'Lotto', 'Lotto Esterno', 'Q.tà (kg)', 'Scadenza', 'Data In', 'Data Out'], ';');
+            foreach ($righe as $r) {
+                fputcsv($handle, [
+                    $r->acquisto?->data_documento,
+                    $r->acquisto?->fornitore?->ragione_sociale,
+                    $r->acquisto?->numero_documento,
+                    $r->nome_prodotto,
+                    $r->lotto,
+                    $r->lotto_esterno,
+                    $r->quantita_kg,
+                    $r->scadenza,
+                    $r->data_in,
+                    $r->data_out,
+                ], ';');
+            }
+            fclose($handle);
+        };
+
+        return response()->streamDownload($callback, 'acquisti_' . now()->format('Ymd_His') . '.csv', $headers);
+    }
 }

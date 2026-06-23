@@ -2,9 +2,14 @@
   <AppLayout>
     <div class="page-header">
       <h1 class="page-title">Acquisti</h1>
-      <Link href="/acquisti/create">
-        <Button label="Nuovo Acquisto" icon="pi pi-plus" />
-      </Link>
+      <div style="display:flex;gap:0.5rem">
+        <a href="/acquisti/export">
+          <Button label="Esporta CSV" icon="pi pi-download" outlined severity="secondary" />
+        </a>
+        <Link href="/acquisti/create">
+          <Button label="Nuovo Acquisto" icon="pi pi-plus" />
+        </Link>
+      </div>
     </div>
 
     <!-- Filters -->

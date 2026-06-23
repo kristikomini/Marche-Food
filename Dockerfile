@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     curl \
     unzip \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 RUN docker-php-ext-install \

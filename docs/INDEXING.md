@@ -85,25 +85,26 @@ The guiding principles are:
 
 ---
 
-## 3. Missing Indexes (Gaps)
+## 3. Previously Missing Indexes — Now Applied ✅
 
-The following FK columns are used in eager loads or joins but have **no explicit index**. They will trigger sequential scans on large tables.
+All 13 previously missing FK indexes plus `idx_vendite_righe_lotto_ext` were created by migration `2026_06_23_000001_add_missing_fk_indexes`.
 
-| Table | Column | Used In | Recommended Action |
-|---|---|---|---|
-| `acquisti_righe` | `acquisto_id` | `Acquisto::righe()` hasMany eager load | `CREATE INDEX idx_acquisti_righe_acquisto ON acquisti_righe(acquisto_id)` |
-| `vendite_righe` | `vendita_id` | `Vendita::righe()` hasMany eager load | `CREATE INDEX idx_vendite_righe_vendita ON vendite_righe(vendita_id)` |
-| `bolle_reso` | `vendita_riga_id` | BollaReso list + form joins | `CREATE INDEX idx_bolle_reso_vendita_riga ON bolle_reso(vendita_riga_id)` |
-| `note_credito` | `vendita_id` | NotaCredito list views | `CREATE INDEX idx_note_credito_vendita ON note_credito(vendita_id)` |
-| `note_credito` | `bolla_reso_id` | NotaCredito form | `CREATE INDEX idx_note_credito_bolla ON note_credito(bolla_reso_id)` |
-| `schede_produzione_flussi` | `scheda_id` | `SchedaProduzione::flussi()` | `CREATE INDEX idx_schede_flussi_scheda ON schede_produzione_flussi(scheda_id)` |
-| `schede_produzione_flussi` | `flusso_id` | Join to flussi_produzione | `CREATE INDEX idx_schede_flussi_flusso ON schede_produzione_flussi(flusso_id)` |
-| `ricette` | `scheda_id` | `SchedaProduzione::ricette()` | `CREATE INDEX idx_ricette_scheda ON ricette(scheda_id)` |
-| `ricette` | `materia_prima_id` | Recipe ingredient joins | `CREATE INDEX idx_ricette_mp ON ricette(materia_prima_id)` |
-| `ricette_marinature` | `scheda_id` | `SchedaProduzione::ricetteMarinature()` | `CREATE INDEX idx_ricette_mar_scheda ON ricette_marinature(scheda_id)` |
-| `produzioni_materie_prime` | `materia_prima_id` | Traceability reverse lookups | `CREATE INDEX idx_prod_mp_materia ON produzioni_materie_prime(materia_prima_id)` |
-| `lotti_imballaggi_primari` | `fornitore_id` | ImballaggioController list view | `CREATE INDEX idx_imb_primari_fornitore ON lotti_imballaggi_primari(fornitore_id)` |
-| `lotti_detergenti` | `fornitore_id` | ImballaggioController list view | `CREATE INDEX idx_detergenti_fornitore ON lotti_detergenti(fornitore_id)` |
+| Index Name | Table | Column |
+|---|---|---|
+| `idx_acquisti_righe_acquisto` | `acquisti_righe` | `acquisto_id` |
+| `idx_vendite_righe_vendita` | `vendite_righe` | `vendita_id` |
+| `idx_bolle_reso_vendita_riga` | `bolle_reso` | `vendita_riga_id` |
+| `idx_note_credito_vendita` | `note_credito` | `vendita_id` |
+| `idx_note_credito_bolla` | `note_credito` | `bolla_reso_id` |
+| `idx_schede_flussi_scheda` | `schede_produzione_flussi` | `scheda_id` |
+| `idx_schede_flussi_flusso` | `schede_produzione_flussi` | `flusso_id` |
+| `idx_ricette_scheda` | `ricette` | `scheda_id` |
+| `idx_ricette_mp` | `ricette` | `materia_prima_id` |
+| `idx_ricette_mar_scheda` | `ricette_marinature` | `scheda_id` |
+| `idx_prod_mp_materia` | `produzioni_materie_prime` | `materia_prima_id` |
+| `idx_imb_primari_fornitore` | `lotti_imballaggi_primari` | `fornitore_id` |
+| `idx_detergenti_fornitore` | `lotti_detergenti` | `fornitore_id` |
+| `idx_vendite_righe_lotto_ext` | `vendite_righe` | `lotto_esterno` |
 
 ---
 

@@ -96,11 +96,13 @@ marche-food/
 │   │   └── Middleware/
 │   │       ├── EnsureAdmin.php                # role === 'admin' gate
 │   │       └── HandleInertiaRequests.php      # Shares auth user to all Inertia pages
-│   ├── Models/                                # 20 Eloquent models (see DATABASE.md)
+│   ├── Models/                                # 22 Eloquent models (see DATABASE.md)
+│   ├── Concerns/
+│   │   └── Auditable.php                      # Trait: auto-populates created_by/updated_by on model events
 │   └── Providers/
 │       └── AppServiceProvider.php
 ├── database/
-│   ├── migrations/                            # 22 migration files (chronological)
+│   ├── migrations/                            # 26 migration files (chronological)
 │   ├── seeders/                               # Dev-only seed data
 │   └── database.sqlite                        # Dev database (git-ignored in prod)
 ├── resources/
@@ -234,5 +236,6 @@ sequenceDiagram
 | **Mass assignment** | Eloquent `$fillable` | All models define explicit `$fillable` arrays. No `$guarded = []` shortcuts observed. |
 | **Input validation** | Laravel `Request::validate()` | Every controller write method validates before touching the database. |
 | **SQL injection** | Eloquent + Query Builder | All user input passed through parameterized queries. Raw `ilike` searches use `->where('col', 'ilike', $term)` with bound parameters, not string interpolation. |
-| **Missing** | Rate limiting | No `throttle` middleware applied to the `/login` route. Brute-force protection relies solely on Coolify/Traefik config if any. |
-| **Missing** | HTTPS enforcement | No `ForceHttps` middleware or HSTS header in application code. SSL is expected to be handled entirely by Traefik/Coolify. |
+| **Rate limiting** | `throttle:10,1` middleware | Applied to `POST /login` — max 10 attempts per minute per IP before Laravel returns 429. |
+| **HTTPS enforcement** | `URL::forceScheme('https')` | Enabled in `AppServiceProvider::boot()` when `APP_ENV=production`. All generated URLs are forced to HTTPS. Configure HSTS in Traefik for full coverage. |
+| **Audit trail** | `Auditable` trait | All operational models (`Acquisto`, `Vendita`, `Produzione`, `BollaReso`, `NotaCredito`, `LottoImballaggioPrimario`, `LottoDetergente`) auto-populate `created_by` and `updated_by` FK columns referencing `users.id`. |

@@ -2,7 +2,12 @@
   <AppLayout>
     <div class="page-header">
       <h1 class="page-title">Produzioni</h1>
-      <Link href="/produzioni/create"><Button label="Nuova Produzione" icon="pi pi-plus" /></Link>
+      <div style="display:flex;gap:0.5rem">
+        <a href="/produzioni/export">
+          <Button label="Esporta CSV" icon="pi pi-download" outlined severity="secondary" />
+        </a>
+        <Link href="/produzioni/create"><Button label="Nuova Produzione" icon="pi pi-plus" /></Link>
+      </div>
     </div>
 
     <div class="filters-bar">
@@ -39,10 +44,13 @@
       <Column field="operatore" header="Operatore" style="width:130px">
         <template #body="{ data }"><span class="text-muted">{{ data.operatore ?? '—' }}</span></template>
       </Column>
-      <Column header="Azioni" style="width:100px">
+      <Column header="Azioni" style="width:130px">
         <template #body="{ data }">
           <div style="display:flex;gap:0.4rem">
             <Link :href="`/produzioni/${data.id}/edit`"><Button icon="pi pi-pencil" size="small" outlined /></Link>
+            <a :href="`/produzioni/${data.id}/pdf`" target="_blank">
+              <Button icon="pi pi-file-pdf" size="small" outlined severity="danger" v-tooltip="'Scarica PDF'" />
+            </a>
             <Button v-if="isAdmin" icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDelete(data)" />
           </div>
         </template>

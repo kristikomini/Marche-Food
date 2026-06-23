@@ -1,7 +1,10 @@
 <template>
   <div class="app-shell">
+    <!-- Mobile sidebar overlay -->
+    <div v-if="sidebarOpen" class="sidebar-overlay" @click="sidebarOpen = false" />
+
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" :class="{ 'sidebar-open': sidebarOpen }">
       <div class="sidebar-logo">
         <img src="/favicon.png" alt="MIF" class="logo-img" />
         <div class="logo-text">
@@ -10,7 +13,7 @@
         </div>
       </div>
 
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" @click="sidebarOpen = false">
         <Link href="/" :class="['nav-item', page.url === '/' ? 'active' : '']">
           <i class="pi pi-home" /> Dashboard
         </Link>
@@ -67,8 +70,11 @@
         </template>
 
         <div class="nav-section-label">Tracciabilità</div>
-        <Link href="/tracciabilita" :class="['nav-item', isActive('/tracciabilita')]">
+        <Link href="/tracciabilita" :class="['nav-item', isActive('/tracciabilita')]" @click="sidebarOpen = false">
           <i class="pi pi-search" /> Ricerca Lotti
+        </Link>
+        <Link href="/recall" :class="['nav-item', isActive('/recall')]" @click="sidebarOpen = false">
+          <i class="pi pi-exclamation-triangle" /> Rapporto Recall
         </Link>
 
         <div class="nav-section-label">Account</div>
@@ -93,6 +99,9 @@
       <!-- Top header -->
       <header class="topbar">
         <div class="topbar-left">
+          <button class="hamburger" @click="sidebarOpen = !sidebarOpen" aria-label="Menu">
+            <i class="pi pi-bars" />
+          </button>
           <span class="topbar-title">Marche International Food S.r.l.</span>
         </div>
         <div class="topbar-right">
@@ -120,7 +129,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { useToast } from 'primevue/usetoast';
 import Toast from 'primevue/toast';
@@ -129,6 +138,7 @@ import { watchEffect } from 'vue';
 
 const page = usePage();
 const toast = useToast();
+const sidebarOpen = ref(false);
 
 const auth = computed(() => page.props.auth?.user);
 const isAdmin = computed(() => auth.value?.role === 'admin');
@@ -352,5 +362,69 @@ function isActive(path) {
 .content {
   padding: 2rem;
   flex: 1;
+}
+
+/* ── Hamburger (hidden on desktop) ───────────────────────────────────── */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  font-size: 1.1rem;
+  color: #1c3d28;
+  margin-right: 0.5rem;
+}
+
+/* ── Sidebar overlay (mobile) ─────────────────────────────────────────── */
+.sidebar-overlay {
+  display: none;
+}
+
+/* ── Mobile breakpoint ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hamburger {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.12);
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 199;
+    background: rgba(0,0,0,0.35);
+  }
+
+  .content {
+    padding: 1rem;
+  }
+
+  .topbar {
+    padding: 0 1rem;
+  }
+
+  .topbar-title {
+    font-size: 0.78rem;
+  }
+
+  .user-name span,
+  .user-role-badge {
+    display: none;
+  }
 }
 </style>

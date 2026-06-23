@@ -154,6 +154,40 @@ class VenditaController extends Controller
             ->with('success', 'Vendita eliminata.');
     }
 
+    public function export()
+    {
+        $righe = \App\Models\VenditaRiga::with(['vendita.cliente'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="vendite_' . now()->format('Ymd_His') . '.csv"',
+        ];
+
+        $callback = function () use ($righe) {
+            $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF");
+            fputcsv($handle, ['Data Doc.', 'Cliente', 'N° Documento', 'Tipo', 'Prodotto', 'Lotto', 'Lotto Esterno', 'Q.tà (kg)', 'Scadenza'], ';');
+            foreach ($righe as $r) {
+                fputcsv($handle, [
+                    $r->vendita?->data_documento,
+                    $r->vendita?->cliente?->ragione_sociale,
+                    $r->vendita?->numero_documento,
+                    $r->vendita?->tipo_documento,
+                    $r->nome_prodotto,
+                    $r->lotto,
+                    $r->lotto_esterno,
+                    $r->quantita_kg,
+                    $r->scadenza,
+                ], ';');
+            }
+            fclose($handle);
+        };
+
+        return response()->streamDownload($callback, 'vendite_' . now()->format('Ymd_His') . '.csv', $headers);
+    }
+
     private function validateRequest(Request $request): array
     {
         return $request->validate([

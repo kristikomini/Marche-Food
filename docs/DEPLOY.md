@@ -82,7 +82,7 @@ DB_PASSWORD=STRONG_RANDOM_PASSWORD
 # ── Session & Cache (database driver — no Redis needed) ───────────────────
 SESSION_DRIVER=database
 SESSION_LIFETIME=120
-SESSION_ENCRYPT=false
+SESSION_ENCRYPT=true
 CACHE_STORE=database
 QUEUE_CONNECTION=database
 
@@ -157,7 +157,7 @@ Based on the domain, the following would be natural additions:
 ## 6. Storage & Backups
 
 - **Uploaded files**: CSV imports are read from PHP's temp directory and never persisted. No file storage volume is needed.
-- **Logs**: Written to `storage/logs/laravel.log` inside the container. These are lost on container rebuild. For production, pipe logs to `stderr` and capture via Coolify's log viewer, or mount a volume.
+- **Logs**: Set `LOG_CHANNEL=stderr` in Coolify's environment variable panel. Logs are then captured by Docker and visible in Coolify's container log viewer, surviving container rebuilds. The default `stack` driver writes to `storage/logs/laravel.log` which is lost on rebuild — do not rely on it in production.
 - **Database backups**: Not automated. Hetzner snapshots or `pg_dump` cron jobs must be configured manually outside Coolify.
 
 ---
