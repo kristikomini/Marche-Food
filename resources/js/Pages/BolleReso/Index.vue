@@ -22,6 +22,11 @@
       <Column header="Cliente">
         <template #body="{ data }">{{ data.vendita_riga?.vendita?.cliente?.ragione_sociale ?? '—' }}</template>
       </Column>
+      <Column header="Doc. Vendita" style="width:130px">
+        <template #body="{ data }">
+          <span class="text-muted">{{ data.vendita_riga?.vendita?.numero_documento ?? '—' }}</span>
+        </template>
+      </Column>
       <Column header="Prodotto">
         <template #body="{ data }">{{ data.vendita_riga?.nome_prodotto ?? '—' }}</template>
       </Column>
@@ -80,6 +85,7 @@ function confirmDelete(b) {
 .filters-bar { display:flex; gap:1rem; }
 .row-link { color:#1d4ed8; text-decoration:none; font-weight:500; }
 .row-link:hover { text-decoration:underline; }
+.text-muted { color: #94a3b8; }
 .mt-4 { margin-top:1rem; }
 .pagination { display:flex; align-items:center; gap:1rem; margin-top:1rem; justify-content:center; }
 .page-info { font-size:0.875rem; color:#64748b; }

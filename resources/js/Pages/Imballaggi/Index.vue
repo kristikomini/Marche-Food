@@ -97,6 +97,9 @@
             <template #body="{ data }">{{ data.fornitore?.ragione_sociale }}</template>
           </Column>
           <Column field="componente" header="Componente" />
+          <Column field="codice_articolo" header="Cod. Articolo" style="width:120px">
+            <template #body="{ data }"><span class="text-muted">{{ data.codice_articolo ?? '—' }}</span></template>
+          </Column>
           <Column field="lotto" header="Lotto" style="width:120px">
             <template #body="{ data }"><span class="lotto-badge">{{ data.lotto ?? '—' }}</span></template>
           </Column>
@@ -110,6 +113,11 @@
           </Column>
           <Column field="numero_ddt" header="N° DDT" style="width:110px">
             <template #body="{ data }"><span class="text-muted">{{ data.numero_ddt ?? '—' }}</span></template>
+          </Column>
+          <Column header="Data uscita" style="width:110px">
+            <template #body="{ data }">
+              <span :class="data.data_out ? 'text-out' : 'text-muted'">{{ data.data_out ? formatDate(data.data_out) : '—' }}</span>
+            </template>
           </Column>
           <Column header="Azioni" style="width:90px">
             <template #body="{ data }">

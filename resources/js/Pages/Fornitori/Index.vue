@@ -64,6 +64,12 @@
           <span v-else>{{ data.ragione_sociale }}</span>
         </template>
       </Column>
+      <Column header="Email">
+        <template #body="{ data }"><span class="text-muted">{{ data.email ?? '—' }}</span></template>
+      </Column>
+      <Column header="Telefono" style="width: 130px">
+        <template #body="{ data }"><span class="text-muted">{{ data.telefono ?? '—' }}</span></template>
+      </Column>
       <Column field="tipo" header="Tipo" style="width: 150px">
         <template #body="{ data }">
           <Tag :value="tipoLabel[data.tipo]" :severity="tipoSeverity[data.tipo]" />
@@ -76,6 +82,14 @@
             :class="data.haccp_certificato ? 'pi pi-check-circle' : 'pi pi-times-circle'"
             :style="{ color: data.haccp_certificato ? '#16a34a' : '#dc2626' }"
           />
+          <span v-else class="text-muted">—</span>
+        </template>
+      </Column>
+      <Column header="Scad. HACCP" style="width: 115px">
+        <template #body="{ data }">
+          <span v-if="data.tipo === 'alimentare' && data.haccp_scadenza" :class="isScaduto(data.haccp_scadenza) ? 'text-danger' : ''">
+            {{ formatDate(data.haccp_scadenza) }}
+          </span>
           <span v-else class="text-muted">—</span>
         </template>
       </Column>
@@ -162,6 +176,11 @@ const filters = ref({
   tipo: props.filters?.tipo ?? '',
 });
 
+function formatDate(d) {
+  return d ? new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+}
+function isScaduto(d) { return d && new Date(d) < new Date(); }
+
 const tipoLabel = {
   alimentare: 'Alimentare',
   imballaggio_primario: 'Imb. Primario',
@@ -235,6 +254,7 @@ function confirmDelete(fornitore) {
 }
 .row-link:hover { text-decoration: underline; }
 .text-muted { color: #94a3b8; }
+.text-danger { color: #dc2626; font-weight: 600; }
 .mt-4 { margin-top: 1rem; }
 .pagination {
   display: flex;
