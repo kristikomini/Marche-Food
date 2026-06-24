@@ -42,11 +42,16 @@
           <Tag :value="data.attiva ? 'Attiva' : 'Archiviata'" :severity="data.attiva ? 'success' : 'secondary'" />
         </template>
       </Column>
-      <Column v-if="isAdmin" header="Azioni" style="width:100px">
+      <Column header="Azioni" style="width:130px">
         <template #body="{ data }">
           <div style="display:flex;gap:0.4rem">
-            <Link :href="`/schede/${data.id}/edit`"><Button icon="pi pi-pencil" size="small" outlined /></Link>
-            <Button icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDelete(data)" />
+            <Link :href="`/schede/${data.id}/print`" target="_blank">
+              <Button icon="pi pi-print" size="small" outlined severity="secondary" v-tooltip="'Stampa'" />
+            </Link>
+            <template v-if="isAdmin">
+              <Link :href="`/schede/${data.id}/edit`"><Button icon="pi pi-pencil" size="small" outlined /></Link>
+              <Button icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDelete(data)" />
+            </template>
           </div>
         </template>
       </Column>
