@@ -109,6 +109,17 @@ BCRYPT_ROUNDS=12
 BACKUP_PATH=/var/www/html/storage/app/backups   # mount a Hetzner Volume here
 BACKUP_RETENTION=14
 
+# ── HACCP expiry alert windows (optional; defaults 30 / 60) ──────────────────
+HACCP_ALERT_GIORNI_LOTTI=30
+HACCP_ALERT_GIORNI_CERTIFICATI=60
+# HACCP_ALERT_EMAILS=qualita@azienda.it,responsabile@azienda.it   # extra recipients
+
+# ── AI certificate extraction (optional; Epic 2) ─────────────────────────────
+# Leave ANTHROPIC_API_KEY empty to disable the feature.
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=
+ANTHROPIC_MODEL=claude-sonnet-5
+
 # ── Mail (SMTP — required for password reset + HACCP expiry alerts) ──────────
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.mailgun.org
@@ -173,6 +184,7 @@ The database queue driver is configured (`QUEUE_CONNECTION=database`). In develo
 |---|---|---|---|
 | HACCP expiry alert | `haccp:alert-scadenze` | Daily 07:00 | Emails admin a digest of lots expiring within 30 days |
 | Database backup | `db:backup` | Daily 03:00 | Runs `pg_dump`, stores gzip file in `BACKUP_PATH` (default `storage/app/backups`), keeps the most recent `BACKUP_RETENTION` (default 14) |
+| In-app notifications | `notifiche:genera` | Hourly | Regenerates the in-app alerts (expiry / certs / open recalls) shown in the topbar bell and `/notifiche` |
 
 **Mail dependency**: `haccp:alert-scadenze` requires `MAIL_*` env vars to be set. If mail is not configured the command will throw and log an error but will not crash the container.
 

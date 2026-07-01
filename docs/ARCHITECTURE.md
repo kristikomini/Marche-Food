@@ -255,4 +255,23 @@ sequenceDiagram
 | **Rate limiting** | `throttle:10,1` / `throttle:5,1` | `POST /login` — 10 attempts/minute. `POST /forgot-password` — 5 attempts/minute. |
 | **Password reset** | Laravel built-in token mechanism | `password_reset_tokens` table; 60-minute expiry; HMAC-signed. Token sent via email (SMTP). `POST /reset-password` validates token before allowing new password. |
 | **HTTPS enforcement** | `URL::forceScheme('https')` | Enabled in `AppServiceProvider::boot()` when `APP_ENV=production`. All generated URLs are forced to HTTPS. Configure HSTS in Traefik for full coverage. |
-| **Audit trail** | `Auditable` trait | All operational models (`Acquisto`, `Vendita`, `Produzione`, `BollaReso`, `NotaCredito`, `LottoImballaggioPrimario`, `LottoDetergente`) auto-populate `created_by` and `updated_by` FK columns referencing `users.id`. |
+| **Audit trail** | `Auditable` trait | All operational models (`Acquisto`, `Vendita`, `Produzione`, `BollaReso`, `NotaCredito`, `LottoImballaggioPrimario`, `LottoDetergente`, `Recall`) auto-populate `created_by` and `updated_by` FK columns referencing `users.id`. |
+| **Security headers** | `SecurityHeaders` middleware | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` on every response; HSTS in production over HTTPS. |
+| **Two-factor auth** | `TotpService` + `TwoFactorController` | TOTP (RFC 6238) for admins: enrollment (QR), recovery codes, two-step login challenge. Secret/codes encrypted at rest. |
+| **Optimistic locking** | `Controller::assertNotStale()` | `updated_at` conflict check on document edits. |
+
+## Services & components added 2026-07-01
+
+Dedicated **services** (`app/Services/`) keep controllers thin and are unit/simulation tested:
+
+| Service | Responsibility |
+|---|---|
+| `InventoryService` | Purchase-lot & semilavorato balances, stock summary |
+| `ReportService` | Date-range management-report aggregates |
+| `AuditService` | Cross-table "who changed what" feed |
+| `SearchService` | Cross-entity global search (driver-aware ILIKE/LIKE) |
+| `NotificationService` | DB-driven in-app notifications (generate/prune/dismiss) |
+| `TotpService` | RFC 6238 TOTP / HOTP / Base32 |
+| `CertificateExtractionService` | AI (Claude Vision) certificate field extraction |
+
+New controllers: `HealthController`, `MagazzinoController`, `AuditController`, `SearchController`, `NotificationController`, `KioskController`, `CertificatoController`, `Auth/TwoFactorController` (and `ReportController` extended). Vendored browser assets (no build step): `public/vendor/qrcode-generator.js` (lot labels, 2FA QR) and `public/vendor/html5-qrcode.min.js` (kiosk camera scanning).

@@ -5,14 +5,35 @@
 
 ## 1. External Services
 
-This application has **no third-party API integrations**. There is no payment processor, no email delivery service, no OAuth provider, no cloud storage, and no external analytics or monitoring service wired into the application code.
+The application integrates with two external services, both **optional** (features degrade gracefully if unconfigured):
 
-The only external I/O is:
+| Service | Purpose | Config | Required? |
+|---|---|---|---|
+| **SMTP / Mailgun** | Password-reset emails and the daily HACCP expiry digest (`haccp:alert-scadenze`) | `MAIL_*` | Needed for email features |
+| **Anthropic Claude (Vision API)** | AI extraction of expiry date + certificate number from an uploaded supplier certificate (`POST /fornitori/estrai-certificato`) | `config/ai.php` → `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `ANTHROPIC_BASE_URL` | Optional (Epic 2) |
+
+Other external I/O:
 - User-facing HTTPS served by Traefik (Coolify-managed)
 - Database connections to PostgreSQL (internal network within Coolify)
-- CSV file uploads processed entirely in-memory by PHP
+- CSV file uploads processed in PHP
 
-All environment keys for AWS, Redis, and mail in `.env.example` are Laravel framework defaults carried over from the project skeleton. **None of them are used by this application.**
+`AWS_*` and `REDIS_*` keys in `.env.example` remain unused Laravel skeleton defaults.
+
+### 1a. Anthropic Claude — certificate extraction (Epic 2)
+
+`CertificateExtractionService` base64-encodes the uploaded PDF/image and calls
+`POST {ANTHROPIC_BASE_URL}/v1/messages` (headers `x-api-key`, `anthropic-version`)
+with a `document`/`image` content block plus an extraction prompt, requesting a
+strict JSON reply `{"haccp_scadenza","moca_numero"}`. The reply is parsed by a
+fence/prose-tolerant `parseExtraction()` and returned to the Vue form to
+auto-fill the fields.
+
+- **No key configured** → the endpoint returns HTTP 422 with a clear message; the UI shows it and the operator fills the form manually.
+- **Network / API error** → returned as `{ok:false, error}`; no data is lost.
+- **Provider** is selectable via `AI_PROVIDER` (currently `anthropic`).
+- The HTTP call uses Laravel's `Http` client, so it is faked in tests (`Http::fake`) — request shape, parsing, no-key and error paths are all covered without a live call.
+
+> ⚠️ Sending certificates to an external LLM has data-handling implications. Use a key/workspace with an appropriate data-retention policy, and keep the feature disabled (no key) if that is not acceptable.
 
 ---
 

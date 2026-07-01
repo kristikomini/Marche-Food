@@ -416,4 +416,75 @@ CREATE INDEX idx_prod_imb_lotto            ON produzioni_imballaggi_primari(lott
 CREATE INDEX idx_prod_det_produzione       ON produzioni_detergenti(produzione_id);
 CREATE INDEX idx_prod_det_lotto            ON produzioni_detergenti(lotto_detergente_id);
 
--- Fine schema (allineato alle migrazioni fino a 2026_06_23_000008).
+-- =============================================================================
+-- ESTENSIONI 2026_07_01 (2FA, recall, notifiche, semilavorati SQLite)
+-- =============================================================================
+
+-- 2026_07_01_000001: acquisto_riga_id reso nullable anche su driver non-pgsql
+-- (gestito via ALTER nella migrazione; su PostgreSQL già nullable dal 000006).
+
+-- 2026_07_01_000003: colonne 2FA su users (secret e recovery codes cifrati dal model).
+ALTER TABLE users ADD COLUMN two_factor_secret          TEXT;
+ALTER TABLE users ADD COLUMN two_factor_recovery_codes  TEXT;
+ALTER TABLE users ADD COLUMN two_factor_confirmed_at    TIMESTAMPTZ;
+
+-- 2026_07_01_000002: workflow recall con stato e log notifiche per cliente.
+CREATE TABLE recalls (
+    id             BIGSERIAL PRIMARY KEY,
+    lotto          VARCHAR(100) NOT NULL,
+    prodotto       VARCHAR(200),
+    motivo         TEXT         NOT NULL,
+    stato          VARCHAR(20)  NOT NULL DEFAULT 'aperto'
+                       CONSTRAINT recalls_stato_values CHECK (stato IN ('aperto','in_corso','chiuso')),
+    data_apertura  DATE         NOT NULL,
+    data_chiusura  DATE,
+    note           TEXT,
+    created_by     BIGINT       REFERENCES users(id) ON DELETE SET NULL,
+    updated_by     BIGINT       REFERENCES users(id) ON DELETE SET NULL,
+    created_at     TIMESTAMPTZ  DEFAULT NOW(),
+    updated_at     TIMESTAMPTZ  DEFAULT NOW()
+);
+CREATE INDEX idx_recalls_stato ON recalls(stato);
+CREATE INDEX idx_recalls_lotto ON recalls(lotto);
+
+CREATE TABLE recall_notifiche (
+    id               BIGSERIAL PRIMARY KEY,
+    recall_id        BIGINT       NOT NULL REFERENCES recalls(id) ON DELETE CASCADE,
+    cliente_id       BIGINT       REFERENCES clienti(id) ON DELETE SET NULL,
+    vendita_riga_id  BIGINT       REFERENCES vendite_righe(id) ON DELETE SET NULL,
+    documento        VARCHAR(100),
+    quantita_kg      NUMERIC(10,3),
+    notificato       BOOLEAN      NOT NULL DEFAULT FALSE,
+    notificato_at    TIMESTAMPTZ,
+    note             TEXT,
+    created_at       TIMESTAMPTZ  DEFAULT NOW(),
+    updated_at       TIMESTAMPTZ  DEFAULT NOW()
+);
+CREATE INDEX idx_recall_notifiche_recall ON recall_notifiche(recall_id);
+
+-- 2026_07_01_000004: notifiche in-app (generate dalle condizioni di dominio) +
+-- dismissal per utente.
+CREATE TABLE app_notifications (
+    id          BIGSERIAL PRIMARY KEY,
+    chiave      VARCHAR(255) NOT NULL UNIQUE,   -- dedup della condizione
+    livello     VARCHAR(20)  NOT NULL DEFAULT 'info',  -- info | warning | danger
+    titolo      VARCHAR(200) NOT NULL,
+    messaggio   VARCHAR(500),
+    url         VARCHAR(300),
+    signature   VARCHAR(100),                   -- cambia => ricompare dopo dismissal
+    created_at  TIMESTAMPTZ  DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ  DEFAULT NOW()
+);
+
+CREATE TABLE notification_reads (
+    id               BIGSERIAL PRIMARY KEY,
+    notification_id  BIGINT       NOT NULL REFERENCES app_notifications(id) ON DELETE CASCADE,
+    user_id          BIGINT       NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    dismissed_at     TIMESTAMPTZ,
+    created_at       TIMESTAMPTZ  DEFAULT NOW(),
+    updated_at       TIMESTAMPTZ  DEFAULT NOW(),
+    UNIQUE (notification_id, user_id)
+);
+CREATE INDEX idx_notification_reads_recall ON notification_reads(notification_id);
+
+-- Fine schema (allineato alle migrazioni fino a 2026_07_01_000004).

@@ -128,3 +128,20 @@ No composite indexes are currently defined. The following would be beneficial at
 ### `vendite_righe(vendita_id, prodotto_id)` — Nice to have
 
 **Why**: Sale line eager loads always filter by `vendita_id`. Adding `prodotto_id` as a second column supports index-only scans when the form only needs product IDs without fetching the full row.
+
+---
+
+## Indexes added 2026-07-01
+
+Created by the migrations `2026_07_01_000002` / `_000004`:
+
+| Index | Column(s) | Rationale |
+|---|---|---|
+| `idx_recalls_stato` | `recalls(stato)` | Recall list orders/filters by state |
+| `idx_recalls_lotto` | `recalls(lotto)` | Lookups by recalled lot |
+| `idx_recall_notifiche_recall` | `recall_notifiche(recall_id)` | Notification log per recall |
+| `idx_notification_reads_recall` | `notification_reads(notification_id)` | Dismissal joins |
+| `app_notifications.chiave` | UNIQUE | Deduplicates notifications by condition key |
+| `notification_reads (notification_id, user_id)` | UNIQUE | One dismissal row per user/notification |
+
+`users.two_factor_*` columns are unindexed by design (looked up only for the already-loaded authenticating user).

@@ -473,3 +473,34 @@ Junction table linking a production run to the cleaning/sanitizing product lots 
 **Audit columns on operational tables**: `acquisti`, `vendite`, `produzioni`, `bolle_reso`, `note_credito`, `lotti_imballaggi_primari`, and `lotti_detergenti` all carry `created_by BIGINT REFERENCES users(id)` and `updated_by BIGINT REFERENCES users(id)`, auto-populated by the `Auditable` trait via Eloquent model events.
 
 **`note_credito_requires_parent` CHECK constraint**: Ensures `vendita_id IS NOT NULL OR bolla_reso_id IS NOT NULL` — an orphaned credit note with both FK columns null is rejected at the database level.
+
+---
+
+## 3. Tables added 2026-07-01 (2FA, recall, notifications)
+
+These tables were added after the original schema. Full DDL is in `schema.sql`.
+
+### `users` — new columns (2FA)
+`two_factor_secret TEXT`, `two_factor_recovery_codes TEXT`, `two_factor_confirmed_at TIMESTAMPTZ`. Secret and recovery codes are stored **encrypted** (Laravel `encrypted` / `encrypted:array` casts on the `User` model). `two_factor_confirmed_at` non-null ⇒ 2FA active. 2FA is available to **admins only**.
+
+### `recalls` — stateful recall workflow
+| Column | Type | Notes |
+|---|---|---|
+| `id` | BIGSERIAL PK | |
+| `lotto` | VARCHAR(100) | production/lot under recall (indexed) |
+| `prodotto` | VARCHAR(200) nullable | descriptive product |
+| `motivo` | TEXT | reason |
+| `stato` | VARCHAR(20) | `aperto` \| `in_corso` \| `chiuso` (CHECK on pgsql; indexed) |
+| `data_apertura` / `data_chiusura` | DATE | |
+| `created_by` / `updated_by` | BIGINT → users | Auditable |
+
+### `recall_notifiche` — per-customer notification log
+FK `recall_id` (CASCADE), `cliente_id` (SET NULL), `vendita_riga_id` (SET NULL); `documento`, `quantita_kg`, `notificato` BOOLEAN, `notificato_at`, `note`. Auto-populated from the sales of the recalled lot when a recall is opened.
+
+### `app_notifications` — in-app notification store
+`chiave` (UNIQUE dedup key), `livello` (`info`/`warning`/`danger`), `titolo`, `messaggio`, `url`, `signature` (changes ⇒ re-surface after dismissal). Generated/pruned by `NotificationService::generate()` (command `notifiche:genera`, scheduled hourly).
+
+### `notification_reads` — per-user dismissals
+FK `notification_id` (CASCADE), `user_id` (CASCADE), `dismissed_at`; `UNIQUE(notification_id, user_id)`. A row with `dismissed_at` set hides the notification for that user until its `signature` changes.
+
+> `TracciabilitaController` and `SearchService` use `ILIKE` on PostgreSQL and fall back to case-insensitive `LIKE` on other drivers (SQLite/tests).

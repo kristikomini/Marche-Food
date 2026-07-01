@@ -450,3 +450,20 @@ WHERE a.id = 1001;
 | Mostrare gli acquisti di un fornitore nella scheda | `Fornitore.php` (aggiungi relazione `acquisti()`) + `FornitoreController.php` (edit: carica `$fornitore->load('acquisti')`) + `Form.vue` (mostra la lista) |
 | Impedire la cancellazione se ha acquisti | `FornitoreController.php` (destroy: controlla `$fornitore->acquisti()->exists()` prima di delete) |
 | Cercare anche per P.IVA | `FornitoreController.php` (index: aggiungi `->orWhere('piva', 'ilike', ...)`) |
+
+---
+
+## Estrazione AI del certificato (Epic 2)
+
+Nel form Fornitore (tipo `alimentare` o `imballaggio_primario`) è disponibile il
+caricamento di un certificato **HACCP/MOCA** (PDF o immagine). Il pulsante
+"Estrai dati" invia il file a `POST /fornitori/estrai-certificato` (solo admin),
+che tramite `CertificateExtractionService` interroga una vision LLM (Anthropic
+Claude, configurabile in `config/ai.php`) e restituisce `haccp_scadenza` e
+`moca_numero`, compilando automaticamente i campi del form (da verificare prima
+del salvataggio).
+
+- Richiede `ANTHROPIC_API_KEY`; senza chiave la funzione risponde 422 con un
+  messaggio e l'operatore compila a mano.
+- Vedi `INTEGRATIONS.md` per dettagli su richiesta/risposta e sulle implicazioni
+  di privacy nell'invio dei certificati a un servizio esterno.

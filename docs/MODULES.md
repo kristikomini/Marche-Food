@@ -312,3 +312,22 @@ The Artisan command `db:backup` (class `BackupDatabase`) runs daily at 03:00:
 | Dashboard | Acquisti, Vendite, Produzioni | (read-only) | — |
 | Import | Fornitori, Clienti | `acquisti`, `acquisti_righe`, `vendite`, `vendite_righe` | — |
 | Password Reset | `users`, `password_reset_tokens` | `password_reset_tokens`, `users.password` | Requires MAIL_* env vars |
+
+---
+
+## Modules added 2026-07-01
+
+| Module | Route(s) | Purpose |
+|---|---|---|
+| **Report Gestionale** | `/report`, `/report/csv`, `/report/pdf` | Date-range management report: purchase/sales/production volumes (conto-terzi excluded), per-supplier / per-customer, expiry list. `ReportService`. |
+| **Giacenze Magazzino** | `/magazzino`, `/magazzino/export` | Stock report: purchase-lot + semilavorato balances (received − consumed − sold). `InventoryService`. |
+| **Ricerca Globale** | `/cerca` | Cross-entity search (fornitori, clienti, prodotti, materie prime, lotti). `SearchService`. Topbar box. |
+| **Log Attività (Audit)** | `/audit` (admin) | "Who created/modified what" across the 7 audited tables. `AuditService`. |
+| **Recall (stateful)** | `/recall`, `POST /recall`, `/recall/{id}`, `PUT /recall/{id}/stato`, `POST /recall/{id}/notifiche/{n}` | Open a recall → auto-populate affected customers → mark notified → close. `recalls` + `recall_notifiche`. |
+| **Notifiche in-app** | `/notifiche`, `POST /notifiche/{n}/dismiss`, `POST /notifiche/dismiss-all` | DB-driven alerts center + topbar dropdown bell with per-user dismiss. `NotificationService`, command `notifiche:genera` (hourly). |
+| **Kiosk Produzione** | `/produzioni/kiosk`, `/produzioni/kiosk/lookup` | Tablet full-screen operator entry: scan/enter lot → keypad kg → submit via `ProduzioneController@store`. `KioskController`; QR via `public/vendor/html5-qrcode.min.js`. |
+| **Etichette lotto (QR)** | `/produzioni/{id}/etichetta` | Printable lot labels; QR opens `/tracciabilita?q=<lotto>`. `public/vendor/qrcode-generator.js`. |
+| **DDT/Fattura PDF** | `/acquisti/{id}/pdf`, `/vendite/{id}/pdf` | dompdf documents for purchases/sales. |
+| **2FA (admin)** | `/profilo/2fa/*`, `/2fa/challenge` | TOTP two-factor (RFC 6238) with recovery codes + two-step login. Admin-only. `TotpService`, `TwoFactorController`. |
+| **Estrazione AI certificati** | `POST /fornitori/estrai-certificato` (admin) | Claude Vision extracts `haccp_scadenza` + `moca_numero` from an uploaded certificate. `CertificateExtractionService`. |
+| **Optimistic locking** | on `PUT /acquisti|vendite|produzioni/{id}` | `updated_at` conflict guard (`Controller::assertNotStale`). |
