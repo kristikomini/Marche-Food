@@ -219,3 +219,30 @@ The items previously deferred from Phase 4 are now implemented.
 - **Frontend:** 44/45 Vue files compile via `@vue/compiler-sfc`. The one exception, `Recall/Index.vue`, is a **false negative from the sandbox mount cache** (it holds a truncated copy from an earlier overwrite); the real file is the correct 209-line version — verified via the editor/file API and template-validated in Phase 3, and it will compile in `npm run build`/CI.
 
 **Note on 2FA verification:** the login/session flow was validated by driving the controllers with a real session store and user resolver against a migrated database (HTTP feature tests can't run in this sandbox). Run `php artisan test` natively before go-live.
+
+---
+
+# Suggested Epics 1–7
+
+A follow-up backlog (7 epics) was reconciled and implemented.
+
+| Epic | Delivered |
+|---|---|
+| **4 — Admin 2FA (restrict to admins)** | 2FA enrollment routes gated with `admin` middleware; profile 2FA card admin-only. |
+| **5 — DB-driven notifications + dropdown + dismiss** | New `app_notifications` + `notification_reads` tables/models; `NotificationService` generates & prunes from domain conditions (dedup by `chiave`, re-surface on `signature` change); per-user dismiss; `notifiche:genera` command (scheduled hourly); topbar **dropdown** bell with dismiss / dismiss-all; `/notifiche` page. Shared list+count via Inertia. |
+| **3 — Native HTTP feature tests** | `ProduzioneHttpTest`, `ImportHttpTest`, `TracciabilitaHttpTest` (RefreshDatabase, real `$this->post/get`). Also fixed a cross-DB bug: `TracciabilitaController` used PostgreSQL `ilike` → made driver-aware so traceability works on SQLite (and the test passes in CI). |
+| **1 — Tablet Kiosk mode** | `Produzioni/Kiosk.vue` full-screen operator UI (scheda pick → scan/enter lot → numeric keypad → submit). `KioskController` (index + lot `lookup` resolving `acquisti_righe` + balance + name-matched materia prima). QR scanning via vendored `public/vendor/html5-qrcode.min.js` (camera) with hardware-scanner/manual fallback. Routes `/produzioni/kiosk`, `/produzioni/kiosk/lookup`; nav link. Submits through `ProduzioneController@store` (balance enforcement applies). |
+| **6 — Mobile card layouts** | `Acquisti/Index.vue` gains a real mobile card layout (DataTable hidden < 768px, cards shown); `Tracciabilita.vue` nodes stack; plus the global responsive CSS (grids stack, tables scroll). |
+| **7 — WCAG-AA pass** | Global `:focus-visible` outline; aria-labels extended to pagination/print/back icon buttons (40 more, 23 files) on top of the earlier 43; landmarks/skip-link/alt from before. (Contrast measurement + per-field id audit still want real tooling — noted.) |
+| **2 — AI certificate extraction** | `config/ai.php` + `CertificateExtractionService` (Anthropic Claude Vision, configurable). PDF/image → extract `haccp_scadenza` + `moca_numero`; pure `parseExtraction()` (fence/prose tolerant). `CertificatoController@estrai` (admin, `POST /fornitori/estrai-certificato`); upload control + auto-fill in `Fornitori/Form.vue`. Graceful "not configured" degrade. |
+
+## Verification (Epics)
+- **PHP lint:** 0 errors (app 77, tests 20, config 13, database 43).
+- **Unit suite:** **22 tests, 37 assertions — OK** (adds TOTP RFC vectors + certificate parser).
+- **`migrate:fresh`:** all migrations apply. Routes: **145**.
+- **Simulations (real code, migrated SQLite):** import rollback + traceability legs **7/7**; DB notifications (generate/prune/dismiss/re-surface) **9/9**; kiosk lookup + production **7/7**; AI extraction via `Http::fake` (request shape, parse, no-key, API-error) **6/6**; 2FA **8/8**; regressions (inventory/search/lock) green.
+- **Frontend:** 45/46 Vue compile via `@vue/compiler-sfc` (the 1 exception is the `Recall/Index.vue` stale-mount false negative; real file intact).
+
+**New env:** `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` (Epic 2). **New deps vendored (no build):** `public/vendor/html5-qrcode.min.js`.
+
+**Caveats unchanged:** run `npm run build` and `php artisan test` on the target machine/CI as the final gates. AI extraction needs a real `ANTHROPIC_API_KEY` and outbound network — the endpoint/parse/error paths are verified with a faked provider, but a live call can't be made from this sandbox.

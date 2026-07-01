@@ -378,4 +378,11 @@ function isScaduto(d) {
 .empty-icon  { font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem; }
 .empty-title { font-size: 1.1rem; font-weight: 700; color: #374151; margin: 0 0 0.5rem 0; }
 .empty-sub   { max-width: 480px; margin: 0 auto; font-size: 0.875rem; color: #94a3b8; line-height: 1.6; }
+
+/* Mobile refinement (Epic 6): stack/wrap trace nodes on small screens */
+@media (max-width: 768px) {
+  .node-body { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .node-meta, .node-lots, .node-actions, .section-header { flex-wrap: wrap; }
+  .trace-node { padding-left: 0.75rem; padding-right: 0.75rem; }
+}
 </style>

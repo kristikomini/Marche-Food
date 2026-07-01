@@ -51,7 +51,8 @@ class HandleInertiaRequests extends Middleware
                     'role' => $user->role,
                 ] : null,
             ],
-            'notificheCount' => $user ? app(NotificationService::class)->count() : 0,
+            'notifiche' => $user ? app(NotificationService::class)->forUser($user)->take(10)->values() : [],
+            'notificheCount' => $user ? app(NotificationService::class)->unreadCount($user) : 0,
         ];
     }
 }

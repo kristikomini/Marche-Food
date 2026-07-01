@@ -44,9 +44,9 @@
       <template #empty><div class="empty-state">Nessuna nota di credito trovata.</div></template>
     </DataTable>
     <div v-if="note.last_page > 1" class="pagination">
-      <Button icon="pi pi-chevron-left" outlined size="small" :disabled="!note.prev_page_url" @click="router.visit(note.prev_page_url)" />
+      <Button icon="pi pi-chevron-left" aria-label="Pagina precedente" outlined size="small" :disabled="!note.prev_page_url" @click="router.visit(note.prev_page_url)" />
       <span class="page-info">{{ note.current_page }} / {{ note.last_page }} ({{ note.total }})</span>
-      <Button icon="pi pi-chevron-right" outlined size="small" :disabled="!note.next_page_url" @click="router.visit(note.next_page_url)" />
+      <Button icon="pi pi-chevron-right" aria-label="Pagina successiva" outlined size="small" :disabled="!note.next_page_url" @click="router.visit(note.next_page_url)" />
     </div>
   </AppLayout>
 </template>

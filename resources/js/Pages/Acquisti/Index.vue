@@ -54,7 +54,7 @@
       />
     </div>
 
-    <DataTable :value="acquisti.data" class="mt-4" striped-rows size="small">
+    <DataTable :value="acquisti.data" class="mt-4 desktop-table" striped-rows size="small">
       <Column field="data_documento" header="Data" style="width: 100px">
         <template #body="{ data }">
           {{ formatDate(data.data_documento) }}
@@ -108,9 +108,28 @@
       </template>
     </DataTable>
 
+    <!-- Mobile card layout (Epic 6) -->
+    <div class="mobile-cards">
+      <div v-for="a in acquisti.data" :key="a.id" class="m-card">
+        <div class="m-card-top">
+          <Link :href="`/acquisti/${a.id}/edit`" class="row-link">{{ a.numero_documento }}</Link>
+          <Tag :value="a.tipo_documento" :severity="tipoSeverity[a.tipo_documento]" />
+        </div>
+        <div class="m-card-row"><span>Data</span><span>{{ formatDate(a.data_documento) }}</span></div>
+        <div class="m-card-row"><span>Fornitore</span><span>{{ a.fornitore?.ragione_sociale }}</span></div>
+        <div class="m-card-row"><span>Righe</span><span>{{ a.righe_count }}</span></div>
+        <div class="m-card-actions">
+          <a :href="`/acquisti/${a.id}/pdf`" target="_blank"><Button icon="pi pi-file-pdf" aria-label="Scarica PDF" size="small" outlined severity="secondary" /></a>
+          <Link :href="`/acquisti/${a.id}/edit`"><Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined /></Link>
+          <Button v-if="isAdmin" icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(a)" />
+        </div>
+      </div>
+      <div v-if="!acquisti.data.length" class="empty-state">Nessun acquisto trovato.</div>
+    </div>
+
     <div v-if="acquisti.last_page > 1" class="pagination">
       <Button
-        icon="pi pi-chevron-left"
+        icon="pi pi-chevron-left" aria-label="Pagina precedente"
         outlined
         size="small"
         :disabled="!acquisti.prev_page_url"
@@ -121,7 +140,7 @@
         ({{ acquisti.total }} acquisti)
       </span>
       <Button
-        icon="pi pi-chevron-right"
+        icon="pi pi-chevron-right" aria-label="Pagina successiva"
         outlined
         size="small"
         :disabled="!acquisti.next_page_url"
@@ -226,4 +245,12 @@ function confirmDelete(acquisto) {
 .pagination { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; justify-content: center; }
 .page-info { font-size: 0.875rem; color: #64748b; }
 .empty-state { padding: 2rem; text-align: center; color: #94a3b8; }
+
+.mobile-cards { display: none; }
+.m-card { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:1rem; margin-bottom:0.75rem; }
+.m-card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; font-weight:700; }
+.m-card-row { display:flex; justify-content:space-between; font-size:0.85rem; padding:0.25rem 0; border-bottom:1px solid #f6f8f6; }
+.m-card-row span:first-child { color:#94a3b8; }
+.m-card-actions { display:flex; gap:0.4rem; margin-top:0.6rem; }
+@media (max-width:768px) { .desktop-table { display:none; } .mobile-cards { display:block; } }
 </style>

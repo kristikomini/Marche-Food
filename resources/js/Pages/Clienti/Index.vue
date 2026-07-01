@@ -68,7 +68,7 @@
 
     <div v-if="clienti.last_page > 1" class="pagination">
       <Button
-        icon="pi pi-chevron-left"
+        icon="pi pi-chevron-left" aria-label="Pagina precedente"
         outlined
         size="small"
         :disabled="!clienti.prev_page_url"
@@ -79,7 +79,7 @@
         ({{ clienti.total }} clienti)
       </span>
       <Button
-        icon="pi pi-chevron-right"
+        icon="pi pi-chevron-right" aria-label="Pagina successiva"
         outlined
         size="small"
         :disabled="!clienti.next_page_url"

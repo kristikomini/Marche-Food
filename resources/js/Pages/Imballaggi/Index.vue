@@ -66,9 +66,9 @@
         </DataTable>
 
         <div v-if="primari.last_page > 1" class="pagination">
-          <Button icon="pi pi-chevron-left" outlined size="small" :disabled="!primari.prev_page_url" @click="router.visit(primari.prev_page_url)" />
+          <Button icon="pi pi-chevron-left" aria-label="Pagina precedente" outlined size="small" :disabled="!primari.prev_page_url" @click="router.visit(primari.prev_page_url)" />
           <span class="page-info">{{ primari.current_page }} / {{ primari.last_page }} ({{ primari.total }})</span>
-          <Button icon="pi pi-chevron-right" outlined size="small" :disabled="!primari.next_page_url" @click="router.visit(primari.next_page_url)" />
+          <Button icon="pi pi-chevron-right" aria-label="Pagina successiva" outlined size="small" :disabled="!primari.next_page_url" @click="router.visit(primari.next_page_url)" />
         </div>
       </TabPanel>
 
@@ -133,9 +133,9 @@
         </DataTable>
 
         <div v-if="detergenti.last_page > 1" class="pagination">
-          <Button icon="pi pi-chevron-left" outlined size="small" :disabled="!detergenti.prev_page_url" @click="router.visit(detergenti.prev_page_url)" />
+          <Button icon="pi pi-chevron-left" aria-label="Pagina precedente" outlined size="small" :disabled="!detergenti.prev_page_url" @click="router.visit(detergenti.prev_page_url)" />
           <span class="page-info">{{ detergenti.current_page }} / {{ detergenti.last_page }} ({{ detergenti.total }})</span>
-          <Button icon="pi pi-chevron-right" outlined size="small" :disabled="!detergenti.next_page_url" @click="router.visit(detergenti.next_page_url)" />
+          <Button icon="pi pi-chevron-right" aria-label="Pagina successiva" outlined size="small" :disabled="!detergenti.next_page_url" @click="router.visit(detergenti.next_page_url)" />
         </div>
       </TabPanel>
     </Tabs>

@@ -13,6 +13,13 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        // Epic 4: 2FA is available to admins only.
+        if (! $user->isAdmin()) {
+            return Inertia::render('Profilo', [
+                'twoFactor' => ['enabled' => false, 'pending' => false, 'adminOnly' => true],
+            ]);
+        }
+
         $twoFactor = [
             'enabled' => $user->hasTwoFactorEnabled(),
             // Setup in progress: secret set but not yet confirmed.

@@ -62,9 +62,9 @@
     </DataTable>
 
     <div v-if="produzioni.last_page > 1" class="pagination">
-      <Button icon="pi pi-chevron-left" outlined size="small" :disabled="!produzioni.prev_page_url" @click="router.visit(produzioni.prev_page_url)" />
+      <Button icon="pi pi-chevron-left" aria-label="Pagina precedente" outlined size="small" :disabled="!produzioni.prev_page_url" @click="router.visit(produzioni.prev_page_url)" />
       <span class="page-info">{{ produzioni.current_page }} / {{ produzioni.last_page }} ({{ produzioni.total }})</span>
-      <Button icon="pi pi-chevron-right" outlined size="small" :disabled="!produzioni.next_page_url" @click="router.visit(produzioni.next_page_url)" />
+      <Button icon="pi pi-chevron-right" aria-label="Pagina successiva" outlined size="small" :disabled="!produzioni.next_page_url" @click="router.visit(produzioni.next_page_url)" />
     </div>
   </AppLayout>
 </template>

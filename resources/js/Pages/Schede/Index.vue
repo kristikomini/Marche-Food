@@ -46,7 +46,7 @@
         <template #body="{ data }">
           <div style="display:flex;gap:0.4rem">
             <Link :href="`/schede/${data.id}/print`" target="_blank">
-              <Button icon="pi pi-print" size="small" outlined severity="secondary" v-tooltip="'Stampa'" />
+              <Button icon="pi pi-print" aria-label="Stampa" size="small" outlined severity="secondary" v-tooltip="'Stampa'" />
             </Link>
             <template v-if="isAdmin">
               <Link :href="`/schede/${data.id}/edit`"><Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined /></Link>
@@ -59,9 +59,9 @@
     </DataTable>
 
     <div v-if="schede.last_page > 1" class="pagination">
-      <Button icon="pi pi-chevron-left" outlined size="small" :disabled="!schede.prev_page_url" @click="router.visit(schede.prev_page_url)" />
+      <Button icon="pi pi-chevron-left" aria-label="Pagina precedente" outlined size="small" :disabled="!schede.prev_page_url" @click="router.visit(schede.prev_page_url)" />
       <span class="page-info">{{ schede.current_page }} / {{ schede.last_page }} ({{ schede.total }})</span>
-      <Button icon="pi pi-chevron-right" outlined size="small" :disabled="!schede.next_page_url" @click="router.visit(schede.next_page_url)" />
+      <Button icon="pi pi-chevron-right" aria-label="Pagina successiva" outlined size="small" :disabled="!schede.next_page_url" @click="router.visit(schede.next_page_url)" />
     </div>
   </AppLayout>
 </template>

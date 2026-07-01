@@ -31,6 +31,8 @@ use App\Http\Controllers\MagazzinoController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\KioskController;
+use App\Http\Controllers\CertificatoController;
 
 // ─── Health / readiness probe (public, no auth) ─────────────────────────────────
 Route::get('/health', [HealthController::class, 'show'])->name('health');
@@ -60,6 +62,8 @@ Route::middleware('auth')->group(function () {
 
     // Notifiche (centro avvisi)
     Route::get('notifiche', [NotificationController::class, 'index'])->name('notifiche.index');
+    Route::post('notifiche/{notification}/dismiss', [NotificationController::class, 'dismiss'])->name('notifiche.dismiss');
+    Route::post('notifiche/dismiss-all', [NotificationController::class, 'dismissAll'])->name('notifiche.dismiss-all');
 
     // Ricerca globale
     Route::get('cerca', [SearchController::class, 'index'])->name('cerca');
@@ -90,6 +94,10 @@ Route::middleware('auth')->group(function () {
     Route::get('vendite/{vendita}/pdf', [ReportController::class, 'venditaPdf'])->name('vendite.pdf');
     Route::get('produzioni/{produzione}/etichetta', [ReportController::class, 'produzioneEtichetta'])->name('produzioni.etichetta');
 
+    // Kiosk mode (tablet, factory floor)
+    Route::get('produzioni/kiosk', [KioskController::class, 'index'])->name('produzioni.kiosk');
+    Route::get('produzioni/kiosk/lookup', [KioskController::class, 'lookup'])->name('produzioni.kiosk.lookup');
+
     // CSV exports
     Route::get('acquisti/export',   [AcquistoController::class,   'export'])->name('acquisti.export');
     Route::get('vendite/export',    [VenditaController::class,    'export'])->name('vendite.export');
@@ -98,9 +106,12 @@ Route::middleware('auth')->group(function () {
     // Profile
     Route::get('profilo', [ProfileController::class, 'show'])->name('profilo');
     Route::put('profilo/password', [ProfileController::class, 'updatePassword'])->name('profilo.password');
-    Route::post('profilo/2fa/enable',  [TwoFactorController::class, 'enable'])->name('profilo.2fa.enable');
-    Route::post('profilo/2fa/confirm', [TwoFactorController::class, 'confirm'])->name('profilo.2fa.confirm');
-    Route::delete('profilo/2fa',       [TwoFactorController::class, 'disable'])->name('profilo.2fa.disable');
+    // 2FA enrollment: admins only (Epic 4)
+    Route::middleware('admin')->group(function () {
+        Route::post('profilo/2fa/enable',  [TwoFactorController::class, 'enable'])->name('profilo.2fa.enable');
+        Route::post('profilo/2fa/confirm', [TwoFactorController::class, 'confirm'])->name('profilo.2fa.confirm');
+        Route::delete('profilo/2fa',       [TwoFactorController::class, 'disable'])->name('profilo.2fa.disable');
+    });
 
     // ── ANAGRAFICA: index for all, CRUD for admin only ──────────────────────
 
@@ -111,6 +122,9 @@ Route::middleware('auth')->group(function () {
     Route::get('destinazione-ingredienti', [DestinazioneIngredientiController::class, 'index'])->name('destinazione-ingredienti.index');
 
     Route::middleware('admin')->group(function () {
+        // AI certificate extraction (Epic 2)
+        Route::post('fornitori/estrai-certificato', [CertificatoController::class, 'estrai'])->name('fornitori.estrai-certificato');
+
         Route::resource('fornitori', FornitoreController::class)
             ->except(['show', 'index'])
             ->parameters(['fornitori' => 'fornitore']);

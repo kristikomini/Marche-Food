@@ -4,10 +4,10 @@
       <h1 class="page-title">{{ isEdit ? 'Modifica Acquisto' : 'Nuovo Acquisto' }}</h1>
       <div style="display:flex;gap:0.5rem;align-items:center">
         <Link v-if="isEdit" :href="`/acquisti/${props.acquisto.id}/print`" target="_blank">
-          <Button label="Stampa" icon="pi pi-print" outlined severity="secondary" />
+          <Button label="Stampa" icon="pi pi-print" aria-label="Stampa" outlined severity="secondary" />
         </Link>
         <Link href="/acquisti">
-          <Button label="Annulla" outlined icon="pi pi-arrow-left" />
+          <Button label="Annulla" outlined icon="pi pi-arrow-left" aria-label="Indietro" />
         </Link>
       </div>
     </div>

@@ -44,9 +44,9 @@
       <template #empty><div class="empty-state">Nessuna bolla reso trovata.</div></template>
     </DataTable>
     <div v-if="bolle.last_page > 1" class="pagination">
-      <Button icon="pi pi-chevron-left" outlined size="small" :disabled="!bolle.prev_page_url" @click="router.visit(bolle.prev_page_url)" />
+      <Button icon="pi pi-chevron-left" aria-label="Pagina precedente" outlined size="small" :disabled="!bolle.prev_page_url" @click="router.visit(bolle.prev_page_url)" />
       <span class="page-info">{{ bolle.current_page }} / {{ bolle.last_page }} ({{ bolle.total }})</span>
-      <Button icon="pi pi-chevron-right" outlined size="small" :disabled="!bolle.next_page_url" @click="router.visit(bolle.next_page_url)" />
+      <Button icon="pi pi-chevron-right" aria-label="Pagina successiva" outlined size="small" :disabled="!bolle.next_page_url" @click="router.visit(bolle.next_page_url)" />
     </div>
   </AppLayout>
 </template>

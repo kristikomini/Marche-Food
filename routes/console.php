@@ -13,3 +13,6 @@ Schedule::command('haccp:alert-scadenze')->dailyAt('07:00');
 
 // Daily DB backup at 03:00
 Schedule::command('db:backup')->dailyAt('03:00');
+
+// Rigenera le notifiche in-app ogni ora
+Schedule::command('notifiche:genera')->hourly();

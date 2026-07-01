@@ -31,9 +31,9 @@
       <template #empty><div class="empty-state">Nessuna materia prima trovata.</div></template>
     </DataTable>
     <div v-if="materie.last_page > 1" class="pagination">
-      <Button icon="pi pi-chevron-left" outlined size="small" :disabled="!materie.prev_page_url" @click="router.visit(materie.prev_page_url)" />
+      <Button icon="pi pi-chevron-left" aria-label="Pagina precedente" outlined size="small" :disabled="!materie.prev_page_url" @click="router.visit(materie.prev_page_url)" />
       <span class="page-info">{{ materie.current_page }} / {{ materie.last_page }} ({{ materie.total }})</span>
-      <Button icon="pi pi-chevron-right" outlined size="small" :disabled="!materie.next_page_url" @click="router.visit(materie.next_page_url)" />
+      <Button icon="pi pi-chevron-right" aria-label="Pagina successiva" outlined size="small" :disabled="!materie.next_page_url" @click="router.visit(materie.next_page_url)" />
     </div>
   </AppLayout>
 </template>

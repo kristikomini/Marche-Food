@@ -2,7 +2,7 @@
   <AppLayout>
     <div class="page-header">
       <h1 class="page-title">{{ isEdit ? 'Modifica Prodotto' : 'Nuovo Prodotto' }}</h1>
-      <Link href="/prodotti"><Button label="Annulla" outlined icon="pi pi-arrow-left" /></Link>
+      <Link href="/prodotti"><Button label="Annulla" outlined icon="pi pi-arrow-left" aria-label="Indietro" /></Link>
     </div>
     <form @submit.prevent="submit" class="form-card">
       <section class="form-section">

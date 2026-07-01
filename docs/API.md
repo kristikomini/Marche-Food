@@ -112,7 +112,12 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 | Method | Path | Auth | Query | Description |
 |---|---|---|---|---|
 | `GET` | `/cerca` | `auth` | `q` (min 2 chars) | Cross-entity search: fornitori, clienti, prodotti, materie prime, lotti (produzione/acquisto) |
-| `GET` | `/notifiche` | `auth` | — | In-app alerts center (expiring/expired lots, HACCP certs, open recalls); badge count shared on every page |
+| `GET` | `/notifiche` | `auth` | — | In-app alerts center (DB-driven); list + badge shared on every page |
+| `POST` | `/notifiche/{notification}/dismiss` | `auth` | — | Dismiss one notification for the current user |
+| `POST` | `/notifiche/dismiss-all` | `auth` | — | Dismiss all notifications for the current user |
+| `GET` | `/produzioni/kiosk` | `auth` | — | Tablet Kiosk full-screen production entry UI |
+| `GET` | `/produzioni/kiosk/lookup` | `auth` | `code` | Resolve a scanned lot code → purchase lot + balance (JSON) |
+| `POST` | `/fornitori/estrai-certificato` | `admin` | `file` (pdf/img) | AI extraction of `haccp_scadenza` + `moca_numero` from a certificate (JSON) |
 
 **Concurrency:** `PUT /acquisti/{id}`, `/vendite/{id}`, `/produzioni/{id}` accept the loaded `updated_at`; if the record changed since it was loaded the save is rejected with an `updated_at` validation error (optimistic locking).
 

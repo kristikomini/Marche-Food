@@ -14,10 +14,10 @@
 
     <div v-else class="notif-list">
       <Link v-for="(n, i) in items" :key="i" :href="n.url" :class="['notif', n.livello]">
-        <i :class="['pi', n.icona, 'notif-icon']" aria-hidden="true" />
+        <i :class="['pi', iconFor(n.livello), 'notif-icon']" aria-hidden="true" />
         <div class="notif-body">
           <div class="notif-title">{{ n.titolo }}</div>
-          <div class="notif-detail">{{ n.dettaglio }}</div>
+          <div class="notif-detail">{{ n.messaggio }}</div>
         </div>
         <i class="pi pi-arrow-right" aria-hidden="true" />
       </Link>
@@ -30,6 +30,7 @@ import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 defineProps({ items: { type: Array, default: () => [] } });
+function iconFor(l){ return { danger:'pi-exclamation-circle', warning:'pi-clock', info:'pi-info-circle' }[l] || 'pi-bell'; }
 </script>
 
 <style scoped>

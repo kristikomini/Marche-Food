@@ -39,8 +39,8 @@
       </div>
     </div>
 
-    <!-- Two-factor authentication card -->
-    <div class="card tfa-card">
+    <!-- Two-factor authentication card (admins only) -->
+    <div v-if="user.role === 'admin'" class="card tfa-card">
       <h2 class="section-title">Autenticazione a due fattori (2FA)</h2>
 
       <!-- Disabled -->

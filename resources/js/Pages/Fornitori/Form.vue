@@ -3,7 +3,7 @@
     <div class="page-header">
       <h1 class="page-title">{{ isEdit ? 'Modifica Fornitore' : 'Nuovo Fornitore' }}</h1>
       <Link href="/fornitori">
-        <Button label="Annulla" outlined icon="pi pi-arrow-left" />
+        <Button label="Annulla" outlined icon="pi pi-arrow-left" aria-label="Indietro" />
       </Link>
     </div>
 
@@ -73,6 +73,17 @@
         </div>
       </section>
 
+      <!-- ESTRAZIONE AI CERTIFICATO (Epic 2) -->
+      <section v-if="['alimentare','imballaggio_primario'].includes(form.tipo)" class="form-section">
+        <h2 class="section-title">Estrazione automatica da certificato (AI)</h2>
+        <p class="ai-hint">Carica il certificato (PDF o immagine): l'AI compila automaticamente scadenza e numero. Verifica sempre i dati prima di salvare.</p>
+        <div class="ai-row">
+          <input ref="certFile" type="file" accept=".pdf,image/png,image/jpeg" aria-label="Certificato da analizzare" @change="onCertPick" />
+          <Button label="Estrai dati" icon="pi pi-bolt" :loading="aiLoading" :disabled="!certPicked" @click="extractCert" type="button" />
+        </div>
+        <div v-if="aiMsg" :class="['ai-msg', aiOk ? 'ok' : 'err']">{{ aiMsg }}</div>
+      </section>
+
       <!-- CERTIFICAZIONI HACCP (solo alimentare) -->
       <section v-if="form.tipo === 'alimentare'" class="form-section">
         <h2 class="section-title">Certificazioni HACCP</h2>
@@ -129,7 +140,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -201,6 +212,36 @@ function submit() {
     form.post('/fornitori');
   }
 }
+
+// AI certificate extraction (Epic 2)
+const certFile = ref(null);
+const certPicked = ref(false);
+const aiLoading = ref(false);
+const aiMsg = ref('');
+const aiOk = ref(false);
+function onCertPick() { certPicked.value = !!(certFile.value && certFile.value.files && certFile.value.files.length); }
+function xsrfToken() { const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/); return m ? decodeURIComponent(m[1]) : ''; }
+async function extractCert() {
+  if (!certFile.value?.files?.length) return;
+  aiLoading.value = true; aiMsg.value = '';
+  const fd = new FormData();
+  fd.append('file', certFile.value.files[0]);
+  try {
+    const res = await fetch('/fornitori/estrai-certificato', {
+      method: 'POST', body: fd, credentials: 'same-origin',
+      headers: { 'X-XSRF-TOKEN': xsrfToken(), 'Accept': 'application/json' },
+    });
+    const data = await res.json();
+    if (!data.ok) { aiOk.value = false; aiMsg.value = data.error || 'Estrazione non riuscita.'; return; }
+    if (data.haccp_scadenza) form.haccp_scadenza = new Date(data.haccp_scadenza);
+    if (data.moca_numero) form.moca_numero = data.moca_numero;
+    aiOk.value = true; aiMsg.value = 'Dati estratti e compilati. Controlla prima di salvare.';
+  } catch (e) {
+    aiOk.value = false; aiMsg.value = 'Errore di rete durante l\'estrazione.';
+  } finally {
+    aiLoading.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -252,4 +293,10 @@ function submit() {
   display: flex;
   justify-content: flex-end;
 }
+
+.ai-hint { font-size: 0.82rem; color: #64748b; margin: 0 0 0.75rem 0; }
+.ai-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+.ai-msg { margin-top: 0.6rem; font-size: 0.85rem; }
+.ai-msg.ok { color: #166534; }
+.ai-msg.err { color: #b91c1c; }
 </style>

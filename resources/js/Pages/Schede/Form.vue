@@ -4,9 +4,9 @@
       <h1 class="page-title">{{ isEdit ? 'Modifica Scheda' : 'Nuova Scheda di Produzione' }}</h1>
       <div style="display:flex;gap:0.5rem;align-items:center">
         <Link v-if="isEdit" :href="`/schede/${props.scheda.id}/print`" target="_blank">
-          <Button label="Stampa" icon="pi pi-print" outlined severity="secondary" />
+          <Button label="Stampa" icon="pi pi-print" aria-label="Stampa" outlined severity="secondary" />
         </Link>
-        <Link href="/schede"><Button label="Annulla" outlined icon="pi pi-arrow-left" /></Link>
+        <Link href="/schede"><Button label="Annulla" outlined icon="pi pi-arrow-left" aria-label="Indietro" /></Link>
       </div>
     </div>
 

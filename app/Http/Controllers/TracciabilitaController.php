@@ -6,6 +6,7 @@ use App\Models\AcquistoRiga;
 use App\Models\Produzione;
 use App\Models\VenditaRiga;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class TracciabilitaController extends Controller
@@ -32,16 +33,18 @@ class TracciabilitaController extends Controller
         }
 
         $term = "%{$q}%";
+        // PostgreSQL uses ILIKE; SQLite (tests) uses case-insensitive LIKE.
+        $op = DB::connection()->getDriverName() === 'pgsql' ? $op : 'like';
 
         // ── 1. Forward trace: purchase lots ──────────────────────────────────
         $righeQuery = AcquistoRiga::with([
                 'acquisto.fornitore',
                 'produzioniMateriePrime.produzione.scheda.prodotto',
             ])
-            ->where(function ($query) use ($term) {
-                $query->where('lotto', 'ilike', $term)
-                      ->orWhere('lotto_esterno', 'ilike', $term)
-                      ->orWhere('nome_prodotto', 'ilike', $term);
+            ->where(function ($query) use ($term, $op) {
+                $query->where('lotto', $op, $term)
+                      ->orWhere('lotto_esterno', $op, $term)
+                      ->orWhere('nome_prodotto', $op, $term);
             })
             ->orderBy('data_in', 'desc');
 
@@ -54,9 +57,9 @@ class TracciabilitaController extends Controller
                 'materiePrime.materiaPrima',
                 'materiePrime.acquistoRiga.acquisto.fornitore',
             ])
-            ->where(function ($query) use ($term) {
-                $query->where('lotto_produzione', 'ilike', $term)
-                      ->orWhereHas('scheda.prodotto', fn($q) => $q->where('nome', 'ilike', $term));
+            ->where(function ($query) use ($term, $op) {
+                $query->where('lotto_produzione', $op, $term)
+                      ->orWhereHas('scheda.prodotto', fn($q) => $q->where('nome', $op, $term));
             })
             ->orderBy('data_produzione', 'desc');
 
@@ -65,10 +68,10 @@ class TracciabilitaController extends Controller
 
         // ── 3. GAP-D6: sales leg — find finished lots delivered to customers ─
         $venditeQuery = VenditaRiga::with(['vendita.cliente'])
-            ->where(function ($query) use ($term) {
-                $query->where('lotto', 'ilike', $term)
-                      ->orWhere('lotto_esterno', 'ilike', $term)
-                      ->orWhere('nome_prodotto', 'ilike', $term);
+            ->where(function ($query) use ($term, $op) {
+                $query->where('lotto', $op, $term)
+                      ->orWhere('lotto_esterno', $op, $term)
+                      ->orWhere('nome_prodotto', $op, $term);
             })
             ->orderBy('id', 'desc');
 
