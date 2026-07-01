@@ -14,9 +14,9 @@ Sistema gestionale web per la tracciabilità alimentare conforme HACCP di **Marc
 
 ## Requisiti
 
-- PHP 8.3+
-- PostgreSQL 16+
-- Node.js 20+
+- PHP 8.4+ (il `composer.json` dichiara `^8.3`, ma le dipendenze bloccate nel `composer.lock` richiedono PHP ≥ 8.4.1 — vedi `vendor/composer/platform_check.php`; il Docker di produzione usa `php:8.4-apache`)
+- PostgreSQL 16+ (produzione: PostgreSQL 18)
+- Node.js 20+ (build Docker: Node 22)
 - Composer 2
 
 ## Installazione (locale)
@@ -148,11 +148,28 @@ La gestione utenti (creazione, modifica password, cambio ruolo) è accessibile s
 
 ## Stack Tecnico
 
-- **Backend:** Laravel 13 + PHP 8.3
+- **Backend:** Laravel 13 (13.16) + PHP 8.4
 - **Frontend:** Vue 3 + Inertia.js v3 (no API separata)
 - **UI:** PrimeVue (tema Aura)
 - **Database:** PostgreSQL
 - **Build:** Vite
-- **Container:** Docker (Apache + PHP-FPM)
+- **Container:** Docker (Apache + mod_php)
 
 Per lo schema SQL completo vedere [schema.sql](schema.sql).
+
+## Documentazione
+
+| Documento | Contenuto |
+|-----------|-----------|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack, architettura, flussi di richiesta |
+| [docs/DATABASE.md](docs/DATABASE.md) | ERD e descrizione tabelle |
+| [docs/MODULES.md](docs/MODULES.md) | Mappa e descrizione dei moduli |
+| [docs/API.md](docs/API.md) | Mappa rotte e formato richieste |
+| [docs/WORKFLOWS.md](docs/WORKFLOWS.md) | Regole di business: tracciabilità, bilanci lotti, semilavorati, conto terzi, audit |
+| [docs/INDEXING.md](docs/INDEXING.md) | Strategia di indicizzazione |
+| [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) | Integrazioni e import CSV |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Deploy su Hetzner + Coolify, health check, backup, hardening |
+| [docs/GAPS.md](docs/GAPS.md) | 21 gap storici risolti (giugno 2026) |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Gap analysis deployment/piattaforma e piano a fasi |
+| [docs/CHANGELOG-2026-07-01.md](docs/CHANGELOG-2026-07-01.md) | Modifiche della sessione di hardening (luglio 2026) |
+| [docs/fornitori.md](docs/fornitori.md) | Approfondimento sul modulo Fornitori |

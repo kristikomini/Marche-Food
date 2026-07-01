@@ -156,7 +156,7 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 | `GET` | `/acquisti/{id}/print` | `auth` | — | Print view (DDT-style layout) |
 | `GET` | `/acquisti/export` | `auth` | — | Download all acquisti_righe as UTF-8 BOM CSV (semicolon-delimited) |
 
-**Acquisto body:** `fornitore_id`, `numero_documento`, `data_documento`, `tipo_documento` (DDT\|Fattura\|Bolla), `note`, `righe[]` (array, min 1): each riga has `nome_prodotto`, `quantita_kg` (required, >0), `quantita_pz`, `um`, `lotto`, `lotto_esterno`, `scadenza`, `data_in`, `data_out`, `nota_credito_ref`.
+**Acquisto body:** `fornitore_id`, `numero_documento`, `data_documento`, `tipo_documento` (DDT\|Fattura\|Bolla), `is_conto_terzi` (boolean; esclude il documento da magazzino e KPI finanziari), `note`, `righe[]` (array, min 1): each riga has `id` (nullable, per il diff-sync in edit), `nome_prodotto`, `quantita_kg` (required, >0), `quantita_pz`, `um`, `lotto`, `lotto_esterno`, `scadenza`, `data_in`, `data_out`, `nota_credito_ref`.
 
 ---
 

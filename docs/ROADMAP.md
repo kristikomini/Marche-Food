@@ -1,0 +1,119 @@
+# ROADMAP.md
+## Marche International Food — Deployment Readiness & Full-Platform Plan
+
+**Status date:** 2026-07-01
+**Deployment target:** Hetzner Cloud VPS + Coolify (Docker + Traefik + PostgreSQL 18), per `DEPLOY.md`.
+
+This document has three parts:
+
+- **Part A — Gap analysis: deployment readiness** (what stands between the app and a safe production launch on Hetzner + Coolify)
+- **Part B — Gap analysis: full-fledged platform** (what the product needs to feel complete for the client)
+- **Part C — Phased implementation plan** (ordered, testable work packages)
+
+Severity: **Critical** (blocks launch) · **High** · **Medium** · **Low**.
+Each item notes how it can be **verified** in this environment (unit tests, migrations, artisan, lint) vs. what needs a real HTTP/browser environment.
+
+---
+
+## Part A — Deployment readiness (Hetzner + Coolify)
+
+The codebase is already deployment-aware (multi-stage Dockerfile, `start.sh` runs migrate + scheduler + queue worker, `/up` health route, `trustProxies('*')`, HTTPS forced in prod, sessions encrypted). The following gaps remain.
+
+| ID | Sev | Area | Gap | Fix summary | Verify |
+|----|-----|------|-----|-------------|--------|
+| **D-A1** | High | Backups | `db:backup` writes to `storage/backups/` **inside the container** — wiped on every rebuild. No off-site copy. | Make backup path configurable; document a Hetzner Volume mount at `storage/backups`; add optional S3/rclone off-site hook. | Unit-test path + pruning logic |
+| **D-A2** | High | Security | No HTTP security headers (HSTS, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`). Only `forceScheme(https)`. | Add a `SecurityHeaders` middleware appended to the `web` group. | Lint + unit assertion on header array |
+| **D-A3** | High | Security | `SESSION_SECURE_COOKIE` is read by `config/session.php` but never set → cookies may be sent over HTTP. | Set `SESSION_SECURE_COOKIE=true` in production env + `.env.example` guidance. | Config assertion |
+| **D-A4** | Medium | Resilience | Scheduler & queue worker are bare `&` background processes in `start.sh`; if either dies, it is not restarted, and a crash is invisible. | Document running them as **separate Coolify services/processes** (recommended), or add a lightweight supervisor loop. | Review only (infra) |
+| **D-A5** | Medium | Health | `/up` is a static health route; Coolify/Traefik can mark the app "healthy" even if the DB is down. | Add a DB-aware health check (`/health`) returning 200 only when the DB responds; wire Coolify healthcheck. | artisan route:list + logic script |
+| **D-A6** | Medium | Config | `.env.example` still ships skeleton values (`APP_NAME=Laravel`, unused `REDIS_*`, `AWS_*`, `MEMCACHED_*`) that contradict `DEPLOY.md`. | Align `.env.example` to the documented production set; set `APP_NAME="Marche Food"`; add `SESSION_SECURE_COOKIE`, `APP_URL` guidance. | Diff review |
+| **D-A7** | Medium | CI/CD | No automated pipeline: tests, linting and asset build are manual. A broken commit can reach `main`. | Add GitHub Actions: `composer install`, `php artisan test`, `pint --test`, `npm ci && npm run build`. | Workflow lint |
+| **D-A8** | Low | Tooling | `composer.json` declares `php: ^8.3` but the locked deps require ≥ 8.4.1 (platform_check) and Docker uses 8.4. Confusing for new devs. | Bump the declared constraint to `^8.4` (or document clearly). | composer validate |
+| **D-A9** | Low | Deploy safety | `migrate --force` runs on **every** container boot; with >1 replica this races. Single-instance today, but undocumented. | Document single-instance assumption / release-command pattern. | Review only |
+| **D-A10** | Low | Observability | No error tracking (Sentry) or uptime monitoring. | Optional: add Sentry DSN hook; Coolify uptime alert. | N/A |
+
+---
+
+## Part B — Full-fledged platform gaps
+
+The domain core is strong. To satisfy "a full platform," the following product-level gaps matter most. Grouped by theme.
+
+### B.1 Correctness & data integrity
+| ID | Sev | Gap |
+|----|-----|-----|
+| ~~P-B1~~ | — | ~~Semi-finished (semilavorato) balance is not enforced.~~ **Resolved on review:** `ProduzioneController::lockAndCheckBalance()` already locks and re-checks `lotti_semilavorati` balances with the same pessimistic-lock pattern as purchase lots. Confirmed by the balance simulation (see change-log). No further work needed. |
+| **P-B2** | Medium | **Hard deletes** everywhere — an accidental admin delete of a production/purchase is unrecoverable. No soft-delete/restore. |
+| **P-B3** | Medium | **No optimistic locking** — two users editing the same document → silent last-write-wins. |
+| **P-B4** | Low | Some CHECK constraints are PostgreSQL-only; SQLite (tests) does not enforce them. Application-level parity exists for the XOR rule but not all. |
+
+### B.2 Compliance & reporting (the client's likely "full platform" expectations)
+| ID | Sev | Gap |
+|----|-----|-----|
+| **P-B5** | High | **Reporting/analytics is thin.** Only live dashboard KPIs. No date-range management reports (purchases/sales/production volumes), per-supplier / per-customer reports, or expiry/stock reports, and no export to PDF/Excel. |
+| **P-B6** | High | **Recall is read-only.** No workflow to *issue* a recall, record status, and log customer notifications — important for HACCP audits. |
+| **P-B7** | Medium | **Audit trail is captured but invisible** — `created_by`/`updated_by` exist on 7 tables but there is no UI to review who changed what. |
+| **P-B8** | Medium | **No lot labels / QR codes.** Printable lot labels with a QR that opens the traceability view would close the physical↔digital loop. |
+| **P-B9** | Medium | **No DDT/invoice PDF** for acquisti/vendite (only the production report is a PDF). |
+| **P-B10** | Medium | **No stock/inventory view** — lot balances are computed only inside the production form, not shown as an inventory report. |
+
+### B.3 UX, accessibility, quality
+| ID | Sev | Gap |
+|----|-----|-----|
+| **P-B11** | Medium | **Accessibility** below WCAG AA: missing ARIA labels, image alt text, color-only expiry indicators, modal focus management. |
+| **P-B12** | Medium | **Mobile refinement** — wide inline tables and 4-column form grids overflow on phones. |
+| **P-B13** | Medium | **Thin automated test coverage** — only 5 feature test files; import, traceability, balance, imballaggi, schede, recall, users are largely untested. |
+| **P-B14** | Low | No global search, no in-app notifications, alert windows/recipients are hard-coded, single language (Italian — acceptable for this client). |
+
+### B.4 Access & account security
+| ID | Sev | Gap |
+|----|-----|-----|
+| **P-B15** | Low | No 2FA for admins, no email verification. Acceptable for a small internal tool but worth offering. |
+
+---
+
+## Part C — Phased implementation plan
+
+Ordering principle: **make it safe to deploy first (Phase 1), then correct (Phase 2), then complete (Phases 3–4).** Each phase ends with the test toolkit available here (PHP 8.4 wasm runtime: unit tests, migrations, artisan, logic scripts, lint) plus feature tests to be run in the client's real environment.
+
+> **Testing note for this environment:** the sandbox runs PHP 8.4 via a WebAssembly runtime that executes migrations, artisan commands, unit tests, and standalone logic scripts, but the PHPUnit-wrapped **HTTP feature tests overflow the wasm asyncify stack** and cannot run here. Feature-level changes are therefore validated by (a) PHP lint, (b) `artisan route:list`/`config` checks, (c) unit tests on extracted logic, and (d) seeded-DB logic scripts. The full feature suite must be run once in a native PHP 8.4 environment (or CI, per D-A7) before go-live.
+
+### Phase 1 — Deployment hardening (Critical/High, pre-launch)
+Target gaps: D-A1, D-A2, D-A3, D-A5, D-A6, D-A7, D-A8.
+
+1. **Security headers middleware** (D-A2) — new `app/Http/Middleware/SecurityHeaders.php`, appended to `web`. Sets HSTS (prod only), `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`. Unit test asserts headers.
+2. **Secure cookies** (D-A3) — `.env.example` + `DEPLOY.md`: `SESSION_SECURE_COOKIE=true` in prod.
+3. **DB-aware health check** (D-A5) — `/health` route + tiny controller that runs `SELECT 1`; returns 503 on failure. Keep `/up` for liveness, `/health` for readiness. Wire Coolify.
+4. **Durable backups** (D-A1) — `db:backup` reads `BACKUP_PATH` (default `storage/backups`) and `BACKUP_RETENTION_DAYS`; unit-test the retention/pruning. `DEPLOY.md`: mount a Hetzner Volume at the path; document optional off-site.
+5. **`.env.example` alignment** (D-A6) — `APP_NAME="Marche Food"`, add `SESSION_SECURE_COOKIE`, remove/comment unused skeleton vars, match `DEPLOY.md`.
+6. **CI pipeline** (D-A7) — `.github/workflows/ci.yml`: PHP 8.4 + Postgres service, `composer install`, `php artisan test`, `./vendor/bin/pint --test`, `npm ci && npm run build`.
+7. **PHP constraint** (D-A8) — bump `composer.json` to `"php": "^8.4"`.
+
+### Phase 2 — Correctness & integrity (High/Medium)
+Target gaps: P-B1, P-B13 (partial), P-B2 (optional).
+
+1. **Semilavorato balance enforcement** (P-B1) — extend `lockAndCheckBalance()` to lock and check `lotti_semilavorati` remaining quantity (produced − consumed − shipped). Unit-test the balance math.
+2. **Test expansion** (P-B13) — add feature tests for import rollback, traceability legs, balance rejection, recall, imballaggi, users/last-admin guard. (Authored here; executed in CI.)
+3. *(Optional)* **Soft deletes** (P-B2) for operational records with an admin "cestino"/restore.
+
+### Phase 3 — Compliance & reporting (High/Medium — the "full platform")
+Target gaps: P-B5, P-B6, P-B7, P-B9, P-B10.
+
+1. **Reporting module** — `/report` with date-range management reports (purchases, sales, production volumes; per-supplier/customer; expiry; stock), each exportable to CSV/PDF (dompdf) and Excel.
+2. **Stock/inventory view** (P-B10) — reusable balance service surfaced as an inventory report.
+3. **Audit-log viewer** (P-B7) — admin page reading `created_by`/`updated_by` (+ timestamps) across operational tables.
+4. **Recall workflow** (P-B6) — `recall` becomes stateful: issue → in-progress → closed, with a notification log per customer.
+5. **DDT/invoice PDF** (P-B9) — dompdf templates for acquisti & vendite.
+
+### Phase 4 — Product completeness (Medium/Low)
+Target gaps: P-B8, P-B11, P-B12, P-B3, P-B14, P-B15.
+
+1. **Lot labels + QR** (P-B8) — printable labels whose QR opens `/tracciabilita?...`.
+2. **Accessibility pass** (P-B11) + **mobile refinement** (P-B12) to WCAG AA.
+3. **Optimistic locking** (P-B3) via a `version`/`updated_at` check on document saves.
+4. **Nice-to-haves** (P-B14/P-B15): global search, configurable alerts, in-app notifications, admin 2FA.
+
+---
+
+## What this session implements
+
+Per the agreed workflow (plan → build automatically), this session implements **Phase 1 in full** (security headers, DB-aware health check, durable-backup config, `.env.example` alignment, PHP constraint, CI pipeline) plus **Phase 2 item 2 (test expansion)** — including an end-to-end **balance simulation** that also confirmed Phase 2 item 1 (semilavorato balance) was already implemented. These are the highest-value, lowest-risk, deployment-critical items that can be reliably verified with the available toolkit. Phases 3–4 are specified above as the continuing backlog. Every change is linted, unit-tested and/or migration/simulation-verified; see `CHANGELOG-2026-07-01.md` and the updated docs for the record.

@@ -3,12 +3,25 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 
 class BackupDatabase extends Command
 {
     protected $signature   = 'db:backup';
-    protected $description = 'Esegue un backup del database PostgreSQL in storage/app/backups/';
+    protected $description = 'Esegue un backup del database PostgreSQL (percorso e retention configurabili in config/backup.php)';
+
+    /**
+     * Given the existing backup files (any order) and how many to keep,
+     * return the list of files that should be deleted (oldest first).
+     * Extracted as a pure function so it can be unit-tested.
+     *
+     * @param  array<int,string>  $files
+     * @return array<int,string>
+     */
+    public static function filesToPrune(array $files, int $keep): array
+    {
+        sort($files); // filenames are timestamped, so lexical sort == chronological
+        return array_slice($files, 0, max(0, count($files) - max(0, $keep)));
+    }
 
     public function handle(): int
     {
@@ -19,7 +32,8 @@ class BackupDatabase extends Command
         $password = config('database.connections.pgsql.password');
 
         $filename  = 'backup_' . now()->format('Y-m-d_His') . '.sql.gz';
-        $backupDir = storage_path('app/backups');
+        $backupDir = rtrim((string) config('backup.path', storage_path('app/backups')), '/');
+        $retention = (int) config('backup.retention', 14);
 
         if (!is_dir($backupDir)) {
             mkdir($backupDir, 0755, true);
@@ -27,11 +41,11 @@ class BackupDatabase extends Command
 
         $filepath = "{$backupDir}/{$filename}";
 
-        $cmd = "PGPASSWORD=" . escapeshellarg($password)
-            . " pg_dump -h " . escapeshellarg($host)
+        $cmd = "PGPASSWORD=" . escapeshellarg((string) $password)
+            . " pg_dump -h " . escapeshellarg((string) $host)
             . " -p " . (int) $port
-            . " -U " . escapeshellarg($user)
-            . " " . escapeshellarg($db)
+            . " -U " . escapeshellarg((string) $user)
+            . " " . escapeshellarg((string) $db)
             . " | gzip > " . escapeshellarg($filepath);
 
         exec($cmd, $output, $exitCode);
@@ -41,18 +55,16 @@ class BackupDatabase extends Command
             return Command::FAILURE;
         }
 
-        // Keep only the last 14 backups
+        // Retention: keep only the most recent N backups.
         $files = glob("{$backupDir}/backup_*.sql.gz");
         if (is_array($files)) {
-            sort($files);
-            $toDelete = array_slice($files, 0, max(0, count($files) - 14));
-            foreach ($toDelete as $old) {
-                unlink($old);
+            foreach (self::filesToPrune($files, $retention) as $old) {
+                @unlink($old);
             }
         }
 
         $size = round(filesize($filepath) / 1024, 1);
-        $this->info("Backup completato: {$filename} ({$size} KB)");
+        $this->info("Backup completato: {$filename} ({$size} KB) in {$backupDir}");
 
         return Command::SUCCESS;
     }

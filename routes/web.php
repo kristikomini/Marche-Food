@@ -25,6 +25,10 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\RecallController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\HealthController;
+
+// ─── Health / readiness probe (public, no auth) ─────────────────────────────────
+Route::get('/health', [HealthController::class, 'show'])->name('health');
 
 // ─── Auth (guest only) ───────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {

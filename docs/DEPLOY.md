@@ -17,7 +17,7 @@ flowchart TB
 
             subgraph AppContainer["Docker Container — marche-food-app"]
                 Apache[Apache 2.4\nmod_rewrite]
-                PHP[PHP 8.4 FPM\nLaravel 13]
+                PHP[PHP 8.4 mod_php\nLaravel 13]
                 Assets[Vite Assets\n/public/build/]
             end
 
@@ -93,6 +93,7 @@ DB_PASSWORD=STRONG_RANDOM_PASSWORD
 SESSION_DRIVER=database
 SESSION_LIFETIME=120
 SESSION_ENCRYPT=true
+SESSION_SECURE_COOKIE=true       # HTTPS-only cookies (required behind Traefik TLS)
 CACHE_STORE=database
 QUEUE_CONNECTION=database
 
@@ -103,6 +104,10 @@ LOG_LEVEL=warning
 
 # ── Security ─────────────────────────────────────────────────────────────────
 BCRYPT_ROUNDS=12
+
+# ── Backup (db:backup) ───────────────────────────────────────────────────────
+BACKUP_PATH=/var/www/html/storage/app/backups   # mount a Hetzner Volume here
+BACKUP_RETENTION=14
 
 # ── Mail (SMTP — required for password reset + HACCP expiry alerts) ──────────
 MAIL_MAILER=smtp
@@ -167,7 +172,7 @@ The database queue driver is configured (`QUEUE_CONNECTION=database`). In develo
 | Task | Command | Schedule | Purpose |
 |---|---|---|---|
 | HACCP expiry alert | `haccp:alert-scadenze` | Daily 07:00 | Emails admin a digest of lots expiring within 30 days |
-| Database backup | `db:backup` | Daily 03:00 | Runs `pg_dump`, stores gzip file in `storage/backups/`, prunes files older than 14 days |
+| Database backup | `db:backup` | Daily 03:00 | Runs `pg_dump`, stores gzip file in `BACKUP_PATH` (default `storage/app/backups`), keeps the most recent `BACKUP_RETENTION` (default 14) |
 
 **Mail dependency**: `haccp:alert-scadenze` requires `MAIL_*` env vars to be set. If mail is not configured the command will throw and log an error but will not crash the container.
 
@@ -177,7 +182,7 @@ The database queue driver is configured (`QUEUE_CONNECTION=database`). In develo
 
 - **Uploaded files**: CSV imports are read from PHP's temp directory and never persisted. No file storage volume is needed.
 - **Logs**: Set `LOG_CHANNEL=stderr` in Coolify's environment variable panel. Logs are then captured by Docker and visible in Coolify's container log viewer, surviving container rebuilds. The default `stack` driver writes to `storage/logs/laravel.log` which is lost on rebuild — do not rely on it in production.
-- **Database backups**: Automated. The `db:backup` Artisan command runs `pg_dump` daily at 03:00, saves a gzip file to `storage/backups/` inside the container, and prunes backups older than 14 days. **Important**: `storage/backups/` is inside the container and is wiped on rebuild. For durable backups, either mount a Hetzner Volume at that path, or add an off-site copy step (e.g., `rclone`) to the command.
+- **Database backups**: Automated. The `db:backup` Artisan command runs `pg_dump` daily at 03:00, saves a gzip file to the path in `BACKUP_PATH` (default `storage/app/backups`), and keeps the most recent `BACKUP_RETENTION` files (default 14). **Both are configurable** via `config/backup.php` / env. **Important**: the default path is inside the container and is wiped on rebuild — in production **mount a Hetzner Volume at `BACKUP_PATH`**, and optionally add an off-site copy step (e.g. `rclone`) for disaster recovery.
 - **PDF generation**: dompdf renders HACCP reports server-side. No temp files are persisted — PDFs are streamed directly to the browser response.
 
 ---
@@ -193,3 +198,26 @@ docker logs <container_id> --tail 100 -f
 # Laravel application log (inside container):
 docker exec <container_id> tail -f /var/www/html/storage/logs/laravel.log
 ```
+
+---
+
+## 8. Health checks & application hardening
+
+### Health / readiness probes
+Two endpoints are available for orchestration:
+
+| Path | Auth | Purpose |
+|---|---|---|
+| `/up` | public | Laravel built-in **liveness** probe (process is up). |
+| `/health` | public | **Readiness** probe (`HealthController`): also runs `SELECT 1`; returns HTTP **200** with `{"status":"ok","checks":{"app":"ok","database":"ok"}}` when healthy, **503** when the database is unreachable. |
+
+Configure Coolify's health check to poll `GET /health` so an instance whose database is down is not marked healthy. `/up` is fine for a bare liveness check.
+
+### HTTP security headers
+The `SecurityHeaders` middleware (appended to the `web` group in `bootstrap/app.php`) adds `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, and — in **production over HTTPS** — `Strict-Transport-Security` (HSTS, 1 year, includeSubDomains). No configuration needed.
+
+### Secure cookies
+Set `SESSION_SECURE_COOKIE=true` in production (already in the env template above) so session cookies are only sent over HTTPS. `SESSION_ENCRYPT=true` and `trustProxies('*')` (for Traefik) are already configured.
+
+### Continuous integration
+`.github/workflows/ci.yml` runs on every push/PR to `main`: installs PHP 8.4 + a PostgreSQL 18 service, builds the Vite assets, runs Laravel Pint (`--test`), and executes the full `php artisan test` suite. Keep `main` green before deploying — Coolify deploys from `main`.
