@@ -181,7 +181,7 @@
                 <td>
                   <Button
                     type="button"
-                    icon="pi pi-trash"
+                    icon="pi pi-trash" aria-label="Elimina"
                     size="small"
                     text
                     severity="danger"

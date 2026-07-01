@@ -124,6 +124,10 @@
           </form>
         </div>
         <div class="topbar-right">
+          <Link href="/notifiche" class="notif-bell" :aria-label="'Notifiche: ' + notificheCount + ' avvisi'">
+            <i class="pi pi-bell" aria-hidden="true" />
+            <span v-if="notificheCount > 0" class="notif-badge">{{ notificheCount }}</span>
+          </Link>
           <span class="user-role-badge" :class="isAdmin ? 'badge-admin' : 'badge-operator'">
             {{ isAdmin ? 'Admin' : 'Operatore' }}
           </span>
@@ -166,6 +170,7 @@ function globalSearch() {
 
 const auth = computed(() => page.props.auth?.user);
 const isAdmin = computed(() => auth.value?.role === 'admin');
+const notificheCount = computed(() => page.props.notificheCount ?? 0);
 
 watchEffect(() => {
   if (page.props.flash?.success) {
@@ -463,4 +468,9 @@ function isActive(path) {
 
 .skip-link { position:absolute; left:-999px; top:0; z-index:1000; background:#1c3d28; color:#fff; padding:0.5rem 1rem; border-radius:0 0 6px 0; }
 .skip-link:focus { left:0; }
+
+.notif-bell { position:relative; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; color:#4b5563; text-decoration:none; }
+.notif-bell:hover { background:#f0faf2; color:#2a6941; }
+.notif-bell i { font-size:1.05rem; }
+.notif-badge { position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 4px; background:#dc2626; color:#fff; font-size:0.62rem; font-weight:700; border-radius:99px; display:flex; align-items:center; justify-content:center; }
 </style>

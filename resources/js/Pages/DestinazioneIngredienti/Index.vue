@@ -56,7 +56,7 @@
           </Column>
           <Column v-if="isAdmin" header="Rimuovi" style="width:80px">
             <template #body="{ data }">
-              <Button icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDelete(data)" />
+              <Button icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(data)" />
             </template>
           </Column>
           <template #empty><div class="empty-state">Nessun collegamento definito.</div></template>

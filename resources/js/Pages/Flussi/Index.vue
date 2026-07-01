@@ -45,8 +45,8 @@
           <Column header="Azioni" style="width:100px">
             <template #body="{ data }">
               <div style="display:flex;gap:0.4rem">
-                <Button icon="pi pi-pencil" size="small" outlined @click="startEdit(data)" />
-                <Button icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDelete(data)" />
+                <Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined @click="startEdit(data)" />
+                <Button icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(data)" />
               </div>
             </template>
           </Column>

@@ -49,8 +49,8 @@
               <Button icon="pi pi-print" size="small" outlined severity="secondary" v-tooltip="'Stampa'" />
             </Link>
             <template v-if="isAdmin">
-              <Link :href="`/schede/${data.id}/edit`"><Button icon="pi pi-pencil" size="small" outlined /></Link>
-              <Button icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDelete(data)" />
+              <Link :href="`/schede/${data.id}/edit`"><Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined /></Link>
+              <Button icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(data)" />
             </template>
           </div>
         </template>

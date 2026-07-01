@@ -183,3 +183,39 @@ Implemented after the deployment-hardening work above.
 - **Labels:** QR library generates a valid SVG in a browser-like VM context; label view renders lot/product/QR/traceability URL and N copies — **5/5** + lib check.
 - **Regression:** inventory **6/6** after the controller edits.
 - **Frontend:** all 8 touched/new Vue files compile via `@vue/compiler-sfc`. Run `npm run build`/CI on the target machine as the final gate.
+
+---
+
+# Deferred items (completed follow-up)
+
+The items previously deferred from Phase 4 are now implemented.
+
+## Admin two-factor authentication (TOTP)
+- `app/Services/TotpService.php` — dependency-free RFC 6238 TOTP / RFC 4226 HOTP + Base32; **validated against the RFC 6238 test vectors** (`tests/Unit/TotpServiceTest.php`, 9 tests).
+- Migration `2026_07_01_000003_add_two_factor_to_users.php` — `two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at` on `users`; secret & codes stored **encrypted** (User model casts).
+- `TwoFactorController` (Auth): enrollment (`enable`/`confirm`/`disable`) and the mid-login challenge (`showChallenge`/`verifyChallenge`, accepts a TOTP code **or** a one-time recovery code).
+- `LoginController` now defers login when 2FA is enabled → `/2fa/challenge`. `ProfileController` exposes 2FA state.
+- Frontend: `Profilo.vue` 2FA card (enrollment QR rendered client-side from the vendored QR lib, manual key, recovery-code display, enable/confirm/disable) and `Auth/TwoFactorChallenge.vue` login page.
+- Routes: `POST /profilo/2fa/{enable,confirm}`, `DELETE /profilo/2fa`, `GET|POST /2fa/challenge` (throttled).
+
+## In-app notifications
+- `app/Services/NotificationService.php` — live "alerts center" deriving cards for expired lots, expiring lots, expiring HACCP certificates, and open recalls (windows from `config/haccp.php`; badge count cached 60s).
+- `NotificationController` + `resources/js/Pages/Notifiche/Index.vue`; badge count shared to every page via `HandleInertiaRequests`; topbar **bell with count** in `AppLayout.vue`. Route `GET /notifiche`.
+
+## Accessibility pass
+- `aria-label` added to **43 icon-only action buttons** across **18 index pages** (Modifica/Elimina/PDF/Etichette/Reimposta password/…), via a controlled transform, each file re-compiled.
+- Combined with the earlier layout wins (skip-link, landmarks, alt text, decorative `aria-hidden`).
+
+## Mobile refinement
+- Global responsive rules in `resources/css/app.css`: stack `.form-grid-4`/`.form-grid`/`.stat-grid` to one column and enable horizontal scroll on data tables below 768px (overrides scoped styles via `!important`).
+
+## Verification
+- **PHP lint:** 0 errors (app 71, tests 15, config 12, database 42).
+- **Unit suite:** **17 tests, 25 assertions — OK** (incl. TOTP RFC vectors).
+- **`migrate:fresh`:** all migrations apply (incl. 2FA). Routes: **140**.
+- **2FA simulation:** enable → confirm (accept valid / reject wrong) → login challenge with TOTP code → login with recovery code (consumed) → disable — **8/8** (encryption exercised).
+- **Notifications simulation:** four alert categories detected with correct levels; cached count matches — **8/8**.
+- **Regressions:** global search **8/8**, optimistic-lock **3/3**.
+- **Frontend:** 44/45 Vue files compile via `@vue/compiler-sfc`. The one exception, `Recall/Index.vue`, is a **false negative from the sandbox mount cache** (it holds a truncated copy from an earlier overwrite); the real file is the correct 209-line version — verified via the editor/file API and template-validated in Phase 3, and it will compile in `npm run build`/CI.
+
+**Note on 2FA verification:** the login/session flow was validated by driving the controllers with a real session store and user resolver against a migrated database (HTTP feature tests can't run in this sandbox). Run `php artisan test` natively before go-live.

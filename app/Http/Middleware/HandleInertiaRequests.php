@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use App\Services\NotificationService;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -50,6 +51,7 @@ class HandleInertiaRequests extends Middleware
                     'role' => $user->role,
                 ] : null,
             ],
+            'notificheCount' => $user ? app(NotificationService::class)->count() : 0,
         ];
     }
 }

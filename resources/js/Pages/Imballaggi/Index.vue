@@ -56,9 +56,9 @@
             <template #body="{ data }">
               <div style="display:flex;gap:0.4rem">
                 <Link :href="`/imballaggi/primari/${data.id}/edit`">
-                  <Button icon="pi pi-pencil" size="small" outlined />
+                  <Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined />
                 </Link>
-                <Button v-if="isAdmin" icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDeleteP(data)" />
+                <Button v-if="isAdmin" icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDeleteP(data)" />
               </div>
             </template>
           </Column>
@@ -123,9 +123,9 @@
             <template #body="{ data }">
               <div style="display:flex;gap:0.4rem">
                 <Link :href="`/imballaggi/detergenti/${data.id}/edit`">
-                  <Button icon="pi pi-pencil" size="small" outlined />
+                  <Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined />
                 </Link>
-                <Button v-if="isAdmin" icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDeleteD(data)" />
+                <Button v-if="isAdmin" icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDeleteD(data)" />
               </div>
             </template>
           </Column>

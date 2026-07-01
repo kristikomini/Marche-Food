@@ -78,7 +78,7 @@
                 <td>
                   <Select v-model="r.um" :options="umOpts" option-label="label" option-value="value" placeholder="—" fluid size="small" />
                 </td>
-                <td><Button type="button" icon="pi pi-trash" size="small" text severity="danger" @click="removeRiga('ricette', i)" /></td>
+                <td><Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="removeRiga('ricette', i)" /></td>
               </tr>
               <tr v-if="!form.ricette.length">
                 <td colspan="5" style="text-align:center;color:#94a3b8;padding:1rem">Nessun ingrediente aggiunto.</td>
@@ -109,7 +109,7 @@
                 <td><Select v-model="r.materia_prima_id" :options="materie" option-label="nome" option-value="id" placeholder="Seleziona..." filter fluid size="small" /></td>
                 <td><InputNumber v-model="r.litri_grammi" :min-fraction-digits="3" :max-fraction-digits="3" fluid size="small" /></td>
                 <td><Select v-model="r.um" :options="umOpts" option-label="label" option-value="value" placeholder="—" fluid size="small" /></td>
-                <td><Button type="button" icon="pi pi-trash" size="small" text severity="danger" @click="removeRiga('ricette_marinature', i)" /></td>
+                <td><Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="removeRiga('ricette_marinature', i)" /></td>
               </tr>
               <tr v-if="!form.ricette_marinature.length">
                 <td colspan="4" style="text-align:center;color:#94a3b8;padding:1rem">Nessun ingrediente aggiunto.</td>
@@ -151,7 +151,7 @@
                 </td>
                 <td><InputText v-model="f.valore_controllo" placeholder="es. ≤ 4°C" fluid size="small" /></td>
                 <td><InputNumber v-model="f.tempo_minuti" :min="0" fluid size="small" /></td>
-                <td><Button type="button" icon="pi pi-trash" size="small" text severity="danger" @click="form.scheda_flussi.splice(i, 1)" /></td>
+                <td><Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="form.scheda_flussi.splice(i, 1)" /></td>
               </tr>
               <tr v-if="!form.scheda_flussi.length">
                 <td colspan="4" style="text-align:center;color:#94a3b8;padding:1rem">Nessuna fase aggiunta.</td>

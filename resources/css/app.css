@@ -7,3 +7,21 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* ── Responsive refinements (mobile) ─────────────────────────────────────── */
+@media (max-width: 768px) {
+    /* Stack multi-column form / stat grids on small screens */
+    .form-grid-4,
+    .form-grid,
+    .stat-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Let wide data tables scroll horizontally instead of overflowing the page */
+    .p-datatable-wrapper,
+    .p-datatable-table-container,
+    .table-wrap {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+}

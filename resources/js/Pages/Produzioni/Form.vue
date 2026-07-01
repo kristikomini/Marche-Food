@@ -106,7 +106,7 @@
                   <span v-else class="balance-empty">—</span>
                 </td>
                 <td>
-                  <Button type="button" icon="pi pi-trash" size="small" text severity="danger" @click="removeMateriaPrima(i)" />
+                  <Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="removeMateriaPrima(i)" />
                 </td>
               </tr>
               <tr v-if="!form.materie_prime.length">
@@ -160,7 +160,7 @@
                   <InputText v-model="r.note" fluid size="small" />
                 </td>
                 <td>
-                  <Button type="button" icon="pi pi-trash" size="small" text severity="danger" @click="removeImballaggio(i)" />
+                  <Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="removeImballaggio(i)" />
                 </td>
               </tr>
               <tr v-if="!form.imballaggi.length">
@@ -214,7 +214,7 @@
                   <InputText v-model="r.note" fluid size="small" />
                 </td>
                 <td>
-                  <Button type="button" icon="pi pi-trash" size="small" text severity="danger" @click="removeDetergente(i)" />
+                  <Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="removeDetergente(i)" />
                 </td>
               </tr>
               <tr v-if="!form.detergenti.length">

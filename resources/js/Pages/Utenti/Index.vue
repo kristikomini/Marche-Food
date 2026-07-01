@@ -56,14 +56,14 @@
           <template #body="{ data }">
             <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
               <Button
-                icon="pi pi-pencil"
+                icon="pi pi-pencil" aria-label="Modifica"
                 size="small"
                 outlined
                 label="Modifica"
                 @click="openEdit(data)"
               />
               <Button
-                icon="pi pi-key"
+                icon="pi pi-key" aria-label="Reimposta password"
                 size="small"
                 outlined
                 severity="warn"
@@ -72,7 +72,7 @@
               />
               <Button
                 v-if="data.id !== currentUserId"
-                icon="pi pi-trash"
+                icon="pi pi-trash" aria-label="Elimina"
                 size="small"
                 outlined
                 severity="danger"
@@ -125,7 +125,7 @@
       </div>
       <template #footer>
         <Button label="Annulla" outlined @click="showReset = false" />
-        <Button label="Reimposta" icon="pi pi-key" severity="warn" @click="submitReset" :loading="resetForm.processing" />
+        <Button label="Reimposta" icon="pi pi-key" aria-label="Reimposta password" severity="warn" @click="submitReset" :loading="resetForm.processing" />
       </template>
     </Dialog>
   </AppLayout>

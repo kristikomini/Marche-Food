@@ -86,14 +86,14 @@
         <template #body="{ data }">
           <div style="display:flex; gap:0.4rem">
             <a :href="`/acquisti/${data.id}/pdf`" target="_blank">
-              <Button icon="pi pi-file-pdf" size="small" outlined severity="secondary" v-tooltip.top="'Scarica PDF'" />
+              <Button icon="pi pi-file-pdf" aria-label="Scarica PDF" size="small" outlined severity="secondary" v-tooltip.top="'Scarica PDF'" />
             </a>
             <Link :href="`/acquisti/${data.id}/edit`">
-              <Button icon="pi pi-pencil" size="small" outlined />
+              <Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined />
             </Link>
             <Button
               v-if="isAdmin"
-              icon="pi pi-trash"
+              icon="pi pi-trash" aria-label="Elimina"
               size="small"
               outlined
               severity="danger"

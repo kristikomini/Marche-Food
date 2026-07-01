@@ -47,14 +47,14 @@
       <Column header="Azioni" style="width:170px">
         <template #body="{ data }">
           <div style="display:flex;gap:0.4rem">
-            <Link :href="`/produzioni/${data.id}/edit`"><Button icon="pi pi-pencil" size="small" outlined /></Link>
+            <Link :href="`/produzioni/${data.id}/edit`"><Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined /></Link>
             <a :href="`/produzioni/${data.id}/etichetta`" target="_blank">
-              <Button icon="pi pi-qrcode" size="small" outlined severity="secondary" v-tooltip="'Etichette QR'" />
+              <Button icon="pi pi-qrcode" aria-label="Etichette QR" size="small" outlined severity="secondary" v-tooltip="'Etichette QR'" />
             </a>
             <a :href="`/produzioni/${data.id}/pdf`" target="_blank">
-              <Button icon="pi pi-file-pdf" size="small" outlined severity="danger" v-tooltip="'Scarica PDF'" />
+              <Button icon="pi pi-file-pdf" aria-label="Scarica PDF" size="small" outlined severity="danger" v-tooltip="'Scarica PDF'" />
             </a>
-            <Button v-if="isAdmin" icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDelete(data)" />
+            <Button v-if="isAdmin" icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(data)" />
           </div>
         </template>
       </Column>

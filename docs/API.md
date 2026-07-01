@@ -47,6 +47,16 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 | `POST` | `/forgot-password` | Guest only | `email` | Send password-reset email. `throttle:5,1` |
 | `GET` | `/reset-password/{token}` | Guest only | — | Render ResetPassword.vue |
 | `POST` | `/reset-password` | Guest only | `token`, `email`, `password`, `password_confirmation` | Validate token and set new password |
+| `GET` | `/2fa/challenge` | Guest (mid-login) | — | Two-factor challenge page (requires pending `2fa.user` session) |
+| `POST` | `/2fa/challenge` | Guest (mid-login) | `code` or `recovery_code` | Verify TOTP / recovery code and complete login. `throttle:10,1` |
+
+**Two-factor management (authenticated):**
+
+| Method | Path | Auth | Body | Description |
+|---|---|---|---|---|
+| `POST` | `/profilo/2fa/enable` | `auth` | — | Generate an (unconfirmed) TOTP secret; profile shows QR + manual key |
+| `POST` | `/profilo/2fa/confirm` | `auth` | `code` | Confirm with a valid code; enables 2FA and issues 8 recovery codes |
+| `DELETE` | `/profilo/2fa` | `auth` | — | Disable 2FA and clear the secret/recovery codes |
 
 ---
 
@@ -102,6 +112,7 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 | Method | Path | Auth | Query | Description |
 |---|---|---|---|---|
 | `GET` | `/cerca` | `auth` | `q` (min 2 chars) | Cross-entity search: fornitori, clienti, prodotti, materie prime, lotti (produzione/acquisto) |
+| `GET` | `/notifiche` | `auth` | — | In-app alerts center (expiring/expired lots, HACCP certs, open recalls); badge count shared on every page |
 
 **Concurrency:** `PUT /acquisti/{id}`, `/vendite/{id}`, `/produzioni/{id}` accept the loaded `updated_at`; if the record changed since it was loaded the save is rejected with an `updated_at` validation error (optimistic locking).
 

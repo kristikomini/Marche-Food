@@ -23,12 +23,14 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TracciabilitaController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\RecallController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\MagazzinoController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\NotificationController;
 
 // ─── Health / readiness probe (public, no auth) ─────────────────────────────────
 Route::get('/health', [HealthController::class, 'show'])->name('health');
@@ -43,6 +45,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/forgot-password', [ForgotPasswordController::class, 'send'])->name('password.email')->middleware('throttle:5,1');
     Route::get('/reset-password/{token}', [ResetPasswordController::class, 'show'])->name('password.reset');
     Route::post('/reset-password',        [ResetPasswordController::class, 'reset'])->name('password.update');
+
+    // Two-factor login challenge (mid-login, before session is authenticated)
+    Route::get('/2fa/challenge',  [TwoFactorController::class, 'showChallenge'])->name('2fa.challenge');
+    Route::post('/2fa/challenge', [TwoFactorController::class, 'verifyChallenge'])->name('2fa.verify')->middleware('throttle:10,1');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
@@ -51,6 +57,9 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 Route::middleware('auth')->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Notifiche (centro avvisi)
+    Route::get('notifiche', [NotificationController::class, 'index'])->name('notifiche.index');
 
     // Ricerca globale
     Route::get('cerca', [SearchController::class, 'index'])->name('cerca');
@@ -89,6 +98,9 @@ Route::middleware('auth')->group(function () {
     // Profile
     Route::get('profilo', [ProfileController::class, 'show'])->name('profilo');
     Route::put('profilo/password', [ProfileController::class, 'updatePassword'])->name('profilo.password');
+    Route::post('profilo/2fa/enable',  [TwoFactorController::class, 'enable'])->name('profilo.2fa.enable');
+    Route::post('profilo/2fa/confirm', [TwoFactorController::class, 'confirm'])->name('profilo.2fa.confirm');
+    Route::delete('profilo/2fa',       [TwoFactorController::class, 'disable'])->name('profilo.2fa.disable');
 
     // ── ANAGRAFICA: index for all, CRUD for admin only ──────────────────────
 
