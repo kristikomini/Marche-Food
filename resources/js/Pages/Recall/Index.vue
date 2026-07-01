@@ -3,8 +3,32 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Rapporto di Richiamo (Recall)</h1>
-        <p class="page-sub">Inserisci un lotto di produzione per identificare tutti i clienti che hanno ricevuto quel prodotto.</p>
+        <p class="page-sub">Cerca un lotto per identificare i clienti impattati, poi apri un recall tracciato con notifiche.</p>
       </div>
+    </div>
+
+    <!-- Active recalls -->
+    <div v-if="recalls.length" class="result-card mb-4">
+      <div class="result-header">
+        <i class="pi pi-megaphone result-icon recall" />
+        <div>
+          <div class="result-title">Recall registrati</div>
+          <div class="result-sub">{{ recalls.length }} recall</div>
+        </div>
+      </div>
+      <table class="result-table">
+        <thead><tr><th>Lotto</th><th>Prodotto</th><th>Stato</th><th>Notifiche</th><th>Aperto il</th><th></th></tr></thead>
+        <tbody>
+          <tr v-for="r in recalls" :key="r.id">
+            <td><strong>{{ r.lotto }}</strong></td>
+            <td>{{ r.prodotto || '—' }}</td>
+            <td><span :class="['tag', r.stato]">{{ statoLabel(r.stato) }}</span></td>
+            <td>{{ r.notificate_count }} / {{ r.notifiche_count }}</td>
+            <td>{{ formatDate(r.data_apertura) }}</td>
+            <td><Link :href="`/recall/${r.id}`" class="link">Apri <i class="pi pi-arrow-right" /></Link></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Search -->
@@ -22,14 +46,12 @@
 
     <!-- Results -->
     <template v-if="q">
-      <!-- No results -->
       <div v-if="!produzioni.length && !venditeRighe.length" class="empty-state">
         <i class="pi pi-inbox" />
         <p>Nessun risultato per <strong>{{ q }}</strong></p>
       </div>
 
       <template v-else>
-        <!-- Matching Productions -->
         <div v-if="produzioni.length" class="result-card mb-4">
           <div class="result-header">
             <i class="pi pi-cog result-icon production" />
@@ -39,33 +61,29 @@
             </div>
           </div>
           <table class="result-table">
-            <thead>
-              <tr><th>Lotto Produzione</th><th>Data</th><th>Prodotto</th><th>Q.tà (kg)</th></tr>
-            </thead>
+            <thead><tr><th>Lotto Produzione</th><th>Data</th><th>Prodotto</th><th>Q.tà (kg)</th><th></th></tr></thead>
             <tbody>
               <tr v-for="p in produzioni" :key="p.id">
                 <td><strong>{{ p.lotto_produzione }}</strong></td>
                 <td>{{ formatDate(p.data_produzione) }}</td>
                 <td>{{ p.scheda?.prodotto?.nome ?? '—' }}</td>
                 <td>{{ p.quantita_prodotta_kg ? Number(p.quantita_prodotta_kg).toFixed(3) + ' kg' : '—' }}</td>
+                <td><Button label="Apri recall" size="small" severity="danger" icon="pi pi-megaphone" @click="openRecallDialog(p.lotto_produzione, p.scheda?.prodotto?.nome)" /></td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Sales (recall targets) -->
         <div v-if="venditeRighe.length" class="result-card">
           <div class="result-header">
             <i class="pi pi-users result-icon customer" />
             <div>
               <div class="result-title">Clienti che hanno ricevuto il prodotto</div>
-              <div class="result-sub">{{ venditeRighe.length }} vendita/e — questi clienti devono essere contattati in caso di richiamo</div>
+              <div class="result-sub">{{ venditeRighe.length }} vendita/e — da contattare in caso di richiamo</div>
             </div>
           </div>
           <table class="result-table">
-            <thead>
-              <tr><th>Cliente</th><th>N° Documento</th><th>Data Vendita</th><th>Prodotto</th><th>Lotto</th><th>Q.tà (kg)</th></tr>
-            </thead>
+            <thead><tr><th>Cliente</th><th>N° Documento</th><th>Data Vendita</th><th>Prodotto</th><th>Lotto</th><th>Q.tà (kg)</th></tr></thead>
             <tbody>
               <tr v-for="r in venditeRighe" :key="r.id" class="recall-row">
                 <td><strong>{{ r.vendita?.cliente?.ragione_sociale ?? '—' }}</strong></td>
@@ -85,38 +103,74 @@
         </div>
       </template>
     </template>
+
+    <!-- Open recall dialog -->
+    <Dialog v-model:visible="dialogVisible" modal header="Apri recall" :style="{ width: '440px' }">
+      <div class="dlg">
+        <div class="field">
+          <label>Lotto</label>
+          <InputText v-model="form.lotto" fluid />
+        </div>
+        <div class="field">
+          <label>Prodotto</label>
+          <InputText v-model="form.prodotto" fluid />
+        </div>
+        <div class="field">
+          <label>Motivo del richiamo *</label>
+          <Textarea v-model="form.motivo" rows="3" fluid />
+          <small v-if="form.errors.motivo" class="err">{{ form.errors.motivo }}</small>
+        </div>
+      </div>
+      <template #footer>
+        <Button label="Annulla" text @click="dialogVisible = false" />
+        <Button label="Apri recall" severity="danger" icon="pi pi-megaphone" :loading="form.processing" @click="submitRecall" />
+      </template>
+    </Dialog>
   </AppLayout>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
+import Dialog from 'primevue/dialog';
+import Textarea from 'primevue/textarea';
 
 const props = defineProps({
   q:            { type: String, default: '' },
   produzioni:   { type: Array, default: () => [] },
   venditeRighe: { type: Array, default: () => [] },
+  recalls:      { type: Array, default: () => [] },
 });
 
 const query     = ref(props.q);
 const searching = ref(false);
+const dialogVisible = ref(false);
+
+const form = useForm({ lotto: '', prodotto: '', motivo: '' });
 
 function search() {
   searching.value = true;
-  router.get('/recall', { q: query.value }, {
-    preserveState: true,
-    onFinish: () => { searching.value = false; },
-  });
+  router.get('/recall', { q: query.value }, { preserveState: true, onFinish: () => { searching.value = false; } });
 }
-
+function openRecallDialog(lotto, prodotto) {
+  form.reset();
+  form.clearErrors();
+  form.lotto = lotto || '';
+  form.prodotto = prodotto || '';
+  dialogVisible.value = true;
+}
+function submitRecall() {
+  form.post('/recall', { onSuccess: () => { dialogVisible.value = false; } });
+}
+function statoLabel(s) { return { aperto: 'Aperto', in_corso: 'In corso', chiuso: 'Chiuso' }[s] ?? s; }
 function formatDate(d) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric' });
+  return new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 </script>
 
@@ -129,11 +183,12 @@ function formatDate(d) {
 .mb-4 { margin-bottom:1rem; }
 .empty-state { text-align:center; padding:3rem; color:#94a3b8; }
 .empty-state i { font-size:2.5rem; display:block; margin-bottom:0.75rem; }
-.result-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+.result-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; margin-bottom:1rem; }
 .result-header { display:flex; align-items:center; gap:1rem; padding:1rem 1.5rem; border-bottom:1px solid #f1f5f9; }
 .result-icon { font-size:1.4rem; width:40px; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
 .result-icon.production { background:#f0fdf4; color:#2a6941; }
 .result-icon.customer { background:#fff7ed; color:#c2410c; }
+.result-icon.recall { background:#fee2e2; color:#b91c1c; }
 .result-title { font-weight:700; color:#1e293b; font-size:0.95rem; }
 .result-sub { font-size:0.8rem; color:#64748b; }
 .result-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
@@ -142,4 +197,13 @@ function formatDate(d) {
 .recall-row td:first-child { color:#c2410c; }
 .recall-warning { margin-top:1rem; background:#fff7ed; border:1px solid #fdba74; border-radius:8px; padding:1rem 1.25rem; font-size:0.875rem; color:#9a3412; display:flex; gap:0.75rem; align-items:flex-start; }
 .recall-warning i { font-size:1.1rem; flex-shrink:0; margin-top:1px; }
+.link { color:#2a6941; text-decoration:none; font-weight:600; font-size:0.82rem; }
+.tag { font-size:0.72rem; font-weight:700; padding:0.15rem 0.55rem; border-radius:99px; }
+.tag.aperto { background:#fee2e2; color:#b91c1c; }
+.tag.in_corso { background:#ffedd5; color:#b45309; }
+.tag.chiuso { background:#dcfce7; color:#166534; }
+.dlg { display:flex; flex-direction:column; gap:0.9rem; }
+.field { display:flex; flex-direction:column; gap:0.3rem; }
+.field label { font-size:0.78rem; color:#475569; font-weight:600; }
+.err { color:#b91c1c; font-size:0.78rem; }
 </style>

@@ -26,6 +26,8 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\RecallController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\MagazzinoController;
+use App\Http\Controllers\AuditController;
 
 // ─── Health / readiness probe (public, no auth) ─────────────────────────────────
 Route::get('/health', [HealthController::class, 'show'])->name('health');
@@ -53,11 +55,26 @@ Route::middleware('auth')->group(function () {
     Route::get('tracciabilita', [TracciabilitaController::class, 'index'])->name('tracciabilita');
     Route::get('tracciabilita/search', [TracciabilitaController::class, 'search'])->name('tracciabilita.search');
 
-    // Recall report
+    // Recall report + stateful workflow
     Route::get('recall', [RecallController::class, 'index'])->name('recall.index');
+    Route::post('recall', [RecallController::class, 'store'])->name('recall.store');
+    Route::get('recall/{recall}', [RecallController::class, 'show'])->name('recall.show');
+    Route::put('recall/{recall}/stato', [RecallController::class, 'updateStato'])->name('recall.stato');
+    Route::post('recall/{recall}/notifiche/{notifica}', [RecallController::class, 'markNotificato'])->name('recall.notifica');
+
+    // Reportistica gestionale
+    Route::get('report', [ReportController::class, 'index'])->name('report.index');
+    Route::get('report/pdf', [ReportController::class, 'pdf'])->name('report.pdf');
+    Route::get('report/csv', [ReportController::class, 'csv'])->name('report.csv');
+
+    // Giacenze di magazzino
+    Route::get('magazzino', [MagazzinoController::class, 'index'])->name('magazzino.index');
+    Route::get('magazzino/export', [MagazzinoController::class, 'export'])->name('magazzino.export');
 
     // PDF download
     Route::get('produzioni/{produzione}/pdf', [ReportController::class, 'produzionePdf'])->name('produzioni.pdf');
+    Route::get('acquisti/{acquisto}/pdf', [ReportController::class, 'acquistoPdf'])->name('acquisti.pdf');
+    Route::get('vendite/{vendita}/pdf', [ReportController::class, 'venditaPdf'])->name('vendite.pdf');
 
     // CSV exports
     Route::get('acquisti/export',   [AcquistoController::class,   'export'])->name('acquisti.export');
@@ -163,6 +180,9 @@ Route::middleware('auth')->group(function () {
         Route::post('import/vendite',  [ImportController::class, 'importVendite'])->name('import.vendite');
         Route::get('import/template-acquisti', [ImportController::class, 'downloadTemplateAcquisti'])->name('import.template-acquisti');
         Route::get('import/template-vendite',  [ImportController::class, 'downloadTemplateVendite'])->name('import.template-vendite');
+
+        // Audit log (chi ha fatto cosa)
+        Route::get('audit', [AuditController::class, 'index'])->name('audit.index');
 
         // Gestione utenti
         Route::resource('utenti', UtenteController::class)

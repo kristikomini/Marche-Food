@@ -66,9 +66,12 @@
           <span class="badge">{{ data.righe_count }}</span>
         </template>
       </Column>
-      <Column header="Azioni" style="width: 110px">
+      <Column header="Azioni" style="width: 150px">
         <template #body="{ data }">
           <div style="display:flex; gap:0.4rem">
+            <a :href="`/vendite/${data.id}/pdf`" target="_blank">
+              <Button icon="pi pi-file-pdf" size="small" outlined severity="secondary" v-tooltip.top="'Scarica PDF'" />
+            </a>
             <Link :href="`/vendite/${data.id}/edit`">
               <Button icon="pi pi-pencil" size="small" outlined />
             </Link>

@@ -95,14 +95,16 @@ Target gaps: P-B1, P-B13 (partial), P-B2 (optional).
 2. **Test expansion** (P-B13) — add feature tests for import rollback, traceability legs, balance rejection, recall, imballaggi, users/last-admin guard. (Authored here; executed in CI.)
 3. *(Optional)* **Soft deletes** (P-B2) for operational records with an admin "cestino"/restore.
 
-### Phase 3 — Compliance & reporting (High/Medium — the "full platform")
+### Phase 3 — Compliance & reporting (High/Medium — the "full platform") ✅ IMPLEMENTED (2026-07-01)
 Target gaps: P-B5, P-B6, P-B7, P-B9, P-B10.
 
-1. **Reporting module** — `/report` with date-range management reports (purchases, sales, production volumes; per-supplier/customer; expiry; stock), each exportable to CSV/PDF (dompdf) and Excel.
-2. **Stock/inventory view** (P-B10) — reusable balance service surfaced as an inventory report.
-3. **Audit-log viewer** (P-B7) — admin page reading `created_by`/`updated_by` (+ timestamps) across operational tables.
-4. **Recall workflow** (P-B6) — `recall` becomes stateful: issue → in-progress → closed, with a notification log per customer.
-5. **DDT/invoice PDF** (P-B9) — dompdf templates for acquisti & vendite.
+1. ✅ **Reporting module** — `/report` with date-range management reports (purchases, sales, production volumes; per-supplier/customer; expiry), exportable to **CSV and PDF** (dompdf). `ReportService` + `ReportController`. *(Excel export deferred as a nice-to-have.)*
+2. ✅ **Stock/inventory view** (P-B10) — `/magazzino` backed by a reusable `InventoryService` (purchase-lot + semilavorato balances) with CSV export.
+3. ✅ **Audit-log viewer** (P-B7) — admin `/audit` reading `created_by`/`updated_by` (+ timestamps) across the 7 operational tables via `AuditService`.
+4. ✅ **Recall workflow** (P-B6) — `recall` is now stateful: aperto → in_corso → chiuso, with an auto-populated per-customer notification log (`recalls` + `recall_notifiche` tables).
+5. ✅ **DDT/invoice PDF** (P-B9) — dompdf templates + routes for acquisti (`/acquisti/{id}/pdf`) & vendite (`/vendite/{id}/pdf`).
+
+See `CHANGELOG-2026-07-01.md` § "Phase 3" for the full record and verification.
 
 ### Phase 4 — Product completeness (Medium/Low)
 Target gaps: P-B8, P-B11, P-B12, P-B3, P-B14, P-B15.

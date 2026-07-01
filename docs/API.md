@@ -67,11 +67,34 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 
 ---
 
-### Recall
+### Recall (stateful workflow)
+
+| Method | Path | Auth | Body / Query | Description |
+|---|---|---|---|---|
+| `GET` | `/recall` | `auth` | `q` | Search tool (productions + customer sales of a lot) **and** list of registered recalls |
+| `POST` | `/recall` | `auth` | `lotto`, `prodotto`, `motivo` | Open a recall; auto-populates `recall_notifiche` from sales of the lot |
+| `GET` | `/recall/{id}` | `auth` | — | Recall detail with per-customer notification list and progress |
+| `PUT` | `/recall/{id}/stato` | `auth` | `stato` (aperto\|in_corso\|chiuso) | Change recall state (sets `data_chiusura` when chiuso) |
+| `POST` | `/recall/{id}/notifiche/{notifica}` | `auth` | `notificato` (bool) | Mark a customer notification done/undone (auto-advances to in_corso) |
+
+### Reportistica & Magazzino
 
 | Method | Path | Auth | Query | Description |
 |---|---|---|---|---|
-| `GET` | `/recall` | `auth` | `q` | Find productions matching the lot, then all customer sales of that lot |
+| `GET` | `/report` | `auth` | `da`, `a` | Management report: totals (acquisti/vendite/produzioni, conto-terzi excluded), per-supplier / per-customer, expiry list |
+| `GET` | `/report/csv` | `auth` | `da`, `a` | Management report as CSV |
+| `GET` | `/report/pdf` | `auth` | `da`, `a` | Management report as PDF (dompdf) |
+| `GET` | `/magazzino` | `auth` | `solo_giacenza` (bool) | Stock report: purchase-lot + semilavorato balances |
+| `GET` | `/magazzino/export` | `auth` | `solo_giacenza` | Stock report as CSV |
+| `GET` | `/audit` | `admin` | — | Audit log: who created/modified operational records |
+
+### Document PDFs
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/acquisti/{id}/pdf` | `auth` | DDT/purchase document as PDF (dompdf) |
+| `GET` | `/vendite/{id}/pdf` | `auth` | Sales document (DDT/invoice) as PDF (dompdf) |
+| `GET` | `/produzioni/{id}/pdf` | `auth` | HACCP production report as PDF (dompdf) |
 
 ---
 

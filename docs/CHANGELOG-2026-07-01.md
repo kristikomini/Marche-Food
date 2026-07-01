@@ -95,8 +95,49 @@ workflow before go-live.**
 - **Roadmap Phase 2 (partial):** broaden the *executed* feature-test coverage
   (import rollback, traceability legs, recall, imballaggi, users) — authored
   incrementally; CI runs them natively.
-- **Roadmap Phase 3 (full platform):** reporting/analytics module + exports,
-  stock/inventory view, audit-log viewer UI, stateful recall workflow,
-  DDT/invoice PDFs.
+- ~~**Roadmap Phase 3 (full platform)**~~ — **implemented in this session, see below.**
 - **Roadmap Phase 4:** lot labels + QR, WCAG-AA accessibility pass, mobile
   refinement, optimistic locking, global search, admin 2FA.
+
+---
+
+# Phase 3 — Compliance & reporting ("full platform")
+
+Implemented after the deployment-hardening work above.
+
+## New backend
+
+| Area | Files | Notes |
+|---|---|---|
+| Inventory / stock | `app/Services/InventoryService.php`, `app/Http/Controllers/MagazzinoController.php` | Purchase-lot + semilavorato balances (received − consumed − sold), summary, CSV export. `/magazzino`. |
+| Reporting | `app/Services/ReportService.php`, `app/Http/Controllers/ReportController.php` | Date-range totals (acquisti/vendite/produzioni, conto-terzi excluded), per-supplier / per-customer breakdowns, expiry report. `/report` + `/report/csv` + `/report/pdf`. |
+| Audit viewer | `app/Services/AuditService.php`, `app/Http/Controllers/AuditController.php` | Admin `/audit` — "who created/modified what" across the 7 audited tables. |
+| Recall workflow | `app/Models/Recall.php`, `app/Models/RecallNotifica.php`, extended `RecallController`, migration `2026_07_01_000002_create_recalls_tables.php` | Stateful recall (aperto → in_corso → chiuso) with per-customer notification log auto-populated from sales of the lot. `/recall` (store/show/stato/notifica). |
+| Document PDFs | `resources/views/pdf/acquisto.blade.php`, `pdf/vendita.blade.php`, `pdf/report.blade.php`; `ReportController@acquistoPdf/@venditaPdf/@pdf` | DDT/invoice PDFs for acquisti & vendite, plus the management-report PDF. |
+
+## New frontend
+
+- `resources/js/Pages/Magazzino/Index.vue` — stock report with summary cards + filter.
+- `resources/js/Pages/Report/Index.vue` — date-range KPIs, per-supplier/customer tables, expiry, CSV/PDF buttons.
+- `resources/js/Pages/Audit/Index.vue` — activity log table.
+- `resources/js/Pages/Recall/Show.vue` — recall detail with notification progress + close action.
+- `resources/js/Pages/Recall/Index.vue` — extended with the recalls list + "open recall" dialog.
+- PDF buttons added to `Acquisti/Index.vue` and `Vendite/Index.vue`.
+- Nav links (Report Gestionale, Giacenze Magazzino, admin Log Attività) added to `AppLayout.vue`; `tooltip` directive registered in `app.js`.
+
+## New routes (12)
+`/report`, `/report/csv`, `/report/pdf`, `/magazzino`, `/magazzino/export`, `/audit` (admin),
+`POST /recall`, `/recall/{recall}`, `PUT /recall/{recall}/stato`, `POST /recall/{recall}/notifiche/{notifica}`,
+`/acquisti/{id}/pdf`, `/vendite/{id}/pdf`. Total app routes: 132.
+
+## Verification (all passed)
+
+- **PHP lint:** 0 parse errors across `app/` (65 files), `tests/`, `database/`, `config/`.
+- **Unit suite:** 8 tests, 14 assertions — OK.
+- **`migrate:fresh`:** all 32 migrations apply (incl. `recalls`/`recall_notifiche`).
+- **Inventory simulation:** balances = received − consumed − sold, semilavorato balance, summary — **6/6**.
+- **Reporting simulation:** totals exclude conto terzi, per-supplier/customer correct, expiry list, and **all three PDFs render** through dompdf (`%PDF` header) — **10/10**.
+- **Recall simulation:** open recall auto-creates 2 notifications from sales; marking one advances state to in_corso; closing sets `data_chiusura`; audit service lists records with the creator's name — **7/7**.
+- **Frontend:** the 4 new Vue pages compile cleanly via `@vue/compiler-sfc`. A full `npm run build` could not run in-sandbox (the vendored `node_modules` ships the user's Windows-native Vite/rolldown binary, not a Linux one) — run `npm run build` / CI on the target machine as the final check. New repo tests: `tests/Feature/InventoryServiceTest.php` (CI).
+
+**Environment note:** as during the earlier phase, PHPUnit HTTP feature tests overflow the WebAssembly stack and were validated instead by standalone simulations driving the real controllers/services against a migrated SQLite database.

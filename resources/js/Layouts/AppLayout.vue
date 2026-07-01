@@ -77,6 +77,14 @@
           <i class="pi pi-exclamation-triangle" /> Rapporto Recall
         </Link>
 
+        <div class="nav-section-label">Reportistica</div>
+        <Link href="/report" :class="['nav-item', isActive('/report')]">
+          <i class="pi pi-chart-bar" /> Report Gestionale
+        </Link>
+        <Link href="/magazzino" :class="['nav-item', isActive('/magazzino')]">
+          <i class="pi pi-inbox" /> Giacenze Magazzino
+        </Link>
+
         <div class="nav-section-label">Account</div>
         <Link href="/profilo" :class="['nav-item', isActive('/profilo')]">
           <i class="pi pi-lock" /> Cambia Password
@@ -89,6 +97,9 @@
           </Link>
           <Link href="/import" :class="['nav-item', isActive('/import')]">
             <i class="pi pi-database" /> Import Dati Storici
+          </Link>
+          <Link href="/audit" :class="['nav-item', isActive('/audit')]">
+            <i class="pi pi-history" /> Log Attività
           </Link>
         </template>
       </nav>
