@@ -14,16 +14,33 @@ class InviaAlertScadenze extends Command
     protected $signature   = 'haccp:alert-scadenze';
     protected $description = 'Invia email alert agli admin per lotti in scadenza e certificati HACCP';
 
+    /**
+     * Merge admin emails with the configured extra recipients (deduped).
+     * Extracted for unit testing.
+     *
+     * @param  array<int,string>  $adminEmails
+     * @return array<int,string>
+     */
+    public static function recipients(array $adminEmails): array
+    {
+        $extra = (array) config('haccp.alert_destinatari_extra', []);
+
+        return array_values(array_unique(array_filter(array_merge($adminEmails, $extra))));
+    }
+
     public function handle(): void
     {
-        $today = now()->toDateString();
-        $in30  = now()->addDays(30)->toDateString();
-        $in60  = now()->addDays(60)->toDateString();
+        $giorniLotti = (int) config('haccp.alert_giorni_lotti', 30);
+        $giorniCert  = (int) config('haccp.alert_giorni_certificati', 60);
+
+        $today   = now()->toDateString();
+        $inLotti = now()->addDays($giorniLotti)->toDateString();
+        $inCert  = now()->addDays($giorniCert)->toDateString();
 
         $inScadenza = AcquistoRiga::with(['acquisto.fornitore:id,ragione_sociale'])
             ->whereNull('data_out')
             ->whereNotNull('scadenza')
-            ->whereBetween('scadenza', [$today, $in30])
+            ->whereBetween('scadenza', [$today, $inLotti])
             ->orderBy('scadenza')
             ->get()
             ->toArray();
@@ -39,7 +56,7 @@ class InviaAlertScadenze extends Command
         $certificatiInScadenza = Fornitore::where('attivo', true)
             ->where('haccp_certificato', true)
             ->whereNotNull('haccp_scadenza')
-            ->where('haccp_scadenza', '<=', $in60)
+            ->where('haccp_scadenza', '<=', $inCert)
             ->orderBy('haccp_scadenza')
             ->get(['id', 'ragione_sociale', 'tipo', 'haccp_scadenza'])
             ->toArray();
@@ -49,9 +66,10 @@ class InviaAlertScadenze extends Command
             return;
         }
 
-        $admins = User::where('role', 'admin')->pluck('email');
+        $adminEmails = User::where('role', 'admin')->pluck('email')->all();
+        $recipients  = self::recipients($adminEmails);
 
-        foreach ($admins as $email) {
+        foreach ($recipients as $email) {
             Mail::to($email)->send(new AlertScadenzeMail(
                 $inScadenza,
                 $scaduti,
@@ -59,6 +77,6 @@ class InviaAlertScadenze extends Command
             ));
         }
 
-        $this->info("Alert scadenze inviato a {$admins->count()} admin.");
+        $this->info('Alert scadenze inviato a ' . count($recipients) . ' destinatari.');
     }
 }

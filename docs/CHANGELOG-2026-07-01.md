@@ -141,3 +141,45 @@ Implemented after the deployment-hardening work above.
 - **Frontend:** the 4 new Vue pages compile cleanly via `@vue/compiler-sfc`. A full `npm run build` could not run in-sandbox (the vendored `node_modules` ships the user's Windows-native Vite/rolldown binary, not a Linux one) — run `npm run build` / CI on the target machine as the final check. New repo tests: `tests/Feature/InventoryServiceTest.php` (CI).
 
 **Environment note:** as during the earlier phase, PHPUnit HTTP feature tests overflow the WebAssembly stack and were validated instead by standalone simulations driving the real controllers/services against a migrated SQLite database.
+
+---
+
+# Phase 4 — Product completeness
+
+## Optimistic locking (P-B3)
+- `app/Http/Controllers/Controller.php` — new `assertNotStale($model, $request)` helper: compares the submitted `updated_at` against the record's current value (UNIX-second precision, timezone-safe) and throws a validation error if the record changed since it was loaded. Backward-compatible (skips when no `updated_at` is submitted).
+- Guard called at the top of `update()` in `AcquistoController`, `VenditaController`, `ProduzioneController`.
+- Forms send the loaded `updated_at` (`Acquisti/Form.vue`, `Vendite/Form.vue`, `Produzioni/Form.vue`); `AppLayout.vue` shows a global "Conflitto di modifica" toast when `errors.updated_at` is present.
+
+## Global search (P-B14)
+- `app/Services/SearchService.php` (driver-aware ILIKE/LIKE) + `app/Http/Controllers/SearchController.php`; searches fornitori, clienti, prodotti, materie prime, and lot codes (productions + purchases, linked to traceability).
+- `resources/js/Pages/Ricerca/Index.vue` results page; topbar search box + "Ricerca Globale" nav link in `AppLayout.vue`. Route `GET /cerca`.
+
+## Configurable expiry alerts (P-B14)
+- `config/haccp.php` — `alert_giorni_lotti` (30), `alert_giorni_certificati` (60), `alert_destinatari_extra` (from `HACCP_ALERT_EMAILS`).
+- `InviaAlertScadenze` now reads these; `recipients()` merges admins + extras (deduped). Env documented in `.env.example`.
+
+## Lot labels + QR (P-B8)
+- `public/vendor/qrcode-generator.js` (vendored MIT lib, renders QR client-side — no build step needed).
+- `resources/views/labels/produzione.blade.php` — printable label sheet; each label's QR opens `/tracciabilita?q=<lotto>`. `?copie=N` for multiple labels.
+- `ReportController@produzioneEtichetta`, route `GET /produzioni/{id}/etichetta`, QR button on `Produzioni/Index.vue`.
+
+## Accessibility (P-B11, partial)
+- `AppLayout.vue`: skip-to-content link, descriptive logo `alt`, `<nav aria-label>`, `#main-content` target, search `aria-label`, decorative-icon `aria-hidden`. Per-page WCAG-AA pass remains on the backlog.
+
+## Deferred
+- **Admin 2FA (P-B15)**, in-app notifications, and a full mobile-refinement pass — deferred: they need full HTTP/browser test coverage this sandbox can't run. Tracked in `ROADMAP.md`.
+
+## New routes (2)
+`GET /cerca`, `GET /produzioni/{id}/etichetta`. Total app routes: **134**.
+
+## Verification (all passed)
+- **PHP lint:** 0 parse errors (app 67, tests 14, config 12, database 41).
+- **Unit suite:** 8 tests OK. New CI tests: `tests/Feature/AlertRecipientsTest.php`.
+- **`migrate:fresh`:** all migrations apply.
+- **Optimistic-lock simulation:** stale edit rejected, current edit succeeds, missing `updated_at` allowed — **3/3**.
+- **Global-search simulation:** all six result groups found, lot links point to traceability, short query returns nothing — **8/8**.
+- **Alerts simulation:** default windows 30/60, recipient merge/dedupe — **4/4**.
+- **Labels:** QR library generates a valid SVG in a browser-like VM context; label view renders lot/product/QR/traceability URL and N copies — **5/5** + lib check.
+- **Regression:** inventory **6/6** after the controller edits.
+- **Frontend:** all 8 touched/new Vue files compile via `@vue/compiler-sfc`. Run `npm run build`/CI on the target machine as the final gate.

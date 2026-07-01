@@ -101,6 +101,9 @@ class VenditaController extends Controller
 
     public function update(Request $request, Vendita $vendita)
     {
+        // Optimistic locking: reject if the record changed since it was loaded.
+        $this->assertNotStale($vendita, $request);
+
         $data = $this->validateRequest($request);
 
         $existingIds  = $vendita->righe()->pluck('id')->all();

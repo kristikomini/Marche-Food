@@ -28,6 +28,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\MagazzinoController;
 use App\Http\Controllers\AuditController;
+use App\Http\Controllers\SearchController;
 
 // ─── Health / readiness probe (public, no auth) ─────────────────────────────────
 Route::get('/health', [HealthController::class, 'show'])->name('health');
@@ -50,6 +51,9 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 Route::middleware('auth')->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Ricerca globale
+    Route::get('cerca', [SearchController::class, 'index'])->name('cerca');
 
     // Tracciabilità lotti
     Route::get('tracciabilita', [TracciabilitaController::class, 'index'])->name('tracciabilita');
@@ -75,6 +79,7 @@ Route::middleware('auth')->group(function () {
     Route::get('produzioni/{produzione}/pdf', [ReportController::class, 'produzionePdf'])->name('produzioni.pdf');
     Route::get('acquisti/{acquisto}/pdf', [ReportController::class, 'acquistoPdf'])->name('acquisti.pdf');
     Route::get('vendite/{vendita}/pdf', [ReportController::class, 'venditaPdf'])->name('vendite.pdf');
+    Route::get('produzioni/{produzione}/etichetta', [ReportController::class, 'produzioneEtichetta'])->name('produzioni.etichetta');
 
     // CSV exports
     Route::get('acquisti/export',   [AcquistoController::class,   'export'])->name('acquisti.export');

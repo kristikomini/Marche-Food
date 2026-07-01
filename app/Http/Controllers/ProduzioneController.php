@@ -105,6 +105,9 @@ class ProduzioneController extends Controller
 
     public function update(Request $request, Produzione $produzione)
     {
+        // Optimistic locking: reject if the record changed since it was loaded.
+        $this->assertNotStale($produzione, $request);
+
         $data = $this->validateRequest($request, $produzione->id);
 
         // GAP-D3: cross-check submitted ingredients against the scheda recipe

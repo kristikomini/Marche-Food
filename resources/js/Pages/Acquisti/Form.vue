@@ -260,6 +260,7 @@ function parseDate(d) {
 }
 
 const form = useForm({
+  updated_at:      props.acquisto?.updated_at ?? null,
   fornitore_id:    props.acquisto?.fornitore_id    ?? null,
   numero_documento: props.acquisto?.numero_documento ?? '',
   data_documento:  props.acquisto?.data_documento  ? new Date(props.acquisto.data_documento) : null,

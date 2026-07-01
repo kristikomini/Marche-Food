@@ -95,6 +95,15 @@ List endpoints return Laravel's default paginator with 25 rows per page (`Length
 | `GET` | `/acquisti/{id}/pdf` | `auth` | DDT/purchase document as PDF (dompdf) |
 | `GET` | `/vendite/{id}/pdf` | `auth` | Sales document (DDT/invoice) as PDF (dompdf) |
 | `GET` | `/produzioni/{id}/pdf` | `auth` | HACCP production report as PDF (dompdf) |
+| `GET` | `/produzioni/{id}/etichetta` | `auth` | Printable lot labels with a QR to `/tracciabilita?q=<lotto>` (`?copie=N`) |
+
+### Global search
+
+| Method | Path | Auth | Query | Description |
+|---|---|---|---|---|
+| `GET` | `/cerca` | `auth` | `q` (min 2 chars) | Cross-entity search: fornitori, clienti, prodotti, materie prime, lotti (produzione/acquisto) |
+
+**Concurrency:** `PUT /acquisti/{id}`, `/vendite/{id}`, `/produzioni/{id}` accept the loaded `updated_at`; if the record changed since it was loaded the save is rejected with an `updated_at` validation error (optimistic locking).
 
 ---
 

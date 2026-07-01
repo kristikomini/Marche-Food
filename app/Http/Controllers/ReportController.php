@@ -97,6 +97,21 @@ class ReportController extends Controller
         return $pdf->download('acquisto_' . str_replace(['/', ' '], '_', $acquisto->numero_documento) . '.pdf');
     }
 
+    public function produzioneEtichetta(\Illuminate\Http\Request $request, Produzione $produzione)
+    {
+        $produzione->load('scheda.prodotto');
+        $copie = max(1, min(60, (int) $request->input('copie', 1)));
+
+        return view('labels.produzione', [
+            'lotto'          => $produzione->lotto_produzione,
+            'prodotto'       => $produzione->scheda?->prodotto?->nome,
+            'dataProduzione' => \Carbon\Carbon::parse($produzione->data_produzione)->format('d/m/Y'),
+            'quantita'       => $produzione->quantita_prodotta_kg,
+            'traceUrl'       => url('/tracciabilita?q=' . urlencode($produzione->lotto_produzione)),
+            'copie'          => $copie,
+        ]);
+    }
+
     public function venditaPdf(Vendita $vendita)
     {
         $vendita->load(['cliente', 'righe']);

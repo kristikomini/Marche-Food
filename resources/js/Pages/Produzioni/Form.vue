@@ -384,6 +384,7 @@ function emptyDetergente() {
 
 const form = useForm({
   scheda_id:            props.produzione?.scheda_id            ?? null,
+  updated_at:           props.produzione?.updated_at            ?? null,
   lotto_produzione:     props.produzione?.lotto_produzione     ?? '',
   data_produzione:      props.produzione?.data_produzione      ? new Date(props.produzione.data_produzione) : null,
   quantita_prodotta_kg: props.produzione?.quantita_prodotta_kg ? Number(props.produzione.quantita_prodotta_kg) : null,

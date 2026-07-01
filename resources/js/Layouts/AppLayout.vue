@@ -1,19 +1,20 @@
 <template>
   <div class="app-shell">
+    <a href="#main-content" class="skip-link">Vai al contenuto</a>
     <!-- Mobile sidebar overlay -->
     <div v-if="sidebarOpen" class="sidebar-overlay" @click="sidebarOpen = false" />
 
     <!-- Sidebar -->
     <aside class="sidebar" :class="{ 'sidebar-open': sidebarOpen }">
       <div class="sidebar-logo">
-        <img src="/favicon.png" alt="MIF" class="logo-img" />
+        <img src="/favicon.png" alt="Marche International Food" class="logo-img" />
         <div class="logo-text">
           <span class="logo-main">Marche Int. Food</span>
           <span class="logo-sub">S.r.l.</span>
         </div>
       </div>
 
-      <nav class="sidebar-nav" @click="sidebarOpen = false">
+      <nav class="sidebar-nav" aria-label="Navigazione principale" @click="sidebarOpen = false">
         <Link href="/" :class="['nav-item', page.url === '/' ? 'active' : '']">
           <i class="pi pi-home" /> Dashboard
         </Link>
@@ -70,6 +71,9 @@
         </template>
 
         <div class="nav-section-label">Tracciabilità</div>
+        <Link href="/cerca" :class="['nav-item', isActive('/cerca')]" @click="sidebarOpen = false">
+          <i class="pi pi-search" /> Ricerca Globale
+        </Link>
         <Link href="/tracciabilita" :class="['nav-item', isActive('/tracciabilita')]" @click="sidebarOpen = false">
           <i class="pi pi-search" /> Ricerca Lotti
         </Link>
@@ -114,6 +118,10 @@
             <i class="pi pi-bars" />
           </button>
           <span class="topbar-title">Marche International Food S.r.l.</span>
+          <form class="global-search" @submit.prevent="globalSearch" role="search">
+            <i class="pi pi-search" aria-hidden="true" />
+            <input v-model="globalQuery" type="search" placeholder="Cerca..." aria-label="Ricerca globale" />
+          </form>
         </div>
         <div class="topbar-right">
           <span class="user-role-badge" :class="isAdmin ? 'badge-admin' : 'badge-operator'">
@@ -132,7 +140,7 @@
       <Toast position="top-right" />
       <ConfirmDialog />
 
-      <main class="content">
+      <main id="main-content" class="content" tabindex="-1">
         <slot />
       </main>
     </div>
@@ -141,7 +149,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { useToast } from 'primevue/usetoast';
 import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
@@ -150,6 +158,11 @@ import { watchEffect } from 'vue';
 const page = usePage();
 const toast = useToast();
 const sidebarOpen = ref(false);
+const globalQuery = ref('');
+function globalSearch() {
+  if (globalQuery.value.trim().length < 2) return;
+  router.get('/cerca', { q: globalQuery.value }, { preserveState: true });
+}
 
 const auth = computed(() => page.props.auth?.user);
 const isAdmin = computed(() => auth.value?.role === 'admin');
@@ -160,6 +173,10 @@ watchEffect(() => {
   }
   if (page.props.flash?.error) {
     toast.add({ severity: 'error', summary: 'Errore', detail: page.props.flash.error, life: 4000 });
+  }
+  // Optimistic-locking conflict (surfaced globally so every form benefits)
+  if (page.props.errors?.updated_at) {
+    toast.add({ severity: 'warn', summary: 'Conflitto di modifica', detail: page.props.errors.updated_at, life: 6000 });
   }
 });
 
@@ -438,4 +455,12 @@ function isActive(path) {
     display: none;
   }
 }
+
+.global-search { display:flex; align-items:center; gap:0.4rem; background:#f4f7f4; border:1px solid #e2e8f0; border-radius:6px; padding:0.25rem 0.6rem; margin-left:1rem; }
+.global-search i { color:#94a3b8; font-size:0.8rem; }
+.global-search input { border:none; background:transparent; outline:none; font-size:0.82rem; width:150px; color:#374151; }
+@media (max-width:768px){ .global-search { display:none; } }
+
+.skip-link { position:absolute; left:-999px; top:0; z-index:1000; background:#1c3d28; color:#fff; padding:0.5rem 1rem; border-radius:0 0 6px 0; }
+.skip-link:focus { left:0; }
 </style>

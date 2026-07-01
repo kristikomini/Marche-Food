@@ -94,6 +94,9 @@ class AcquistoController extends Controller
 
     public function update(Request $request, Acquisto $acquisto)
     {
+        // Optimistic locking: reject if the record changed since it was loaded.
+        $this->assertNotStale($acquisto, $request);
+
         $data = $this->validateRequest($request);
 
         // Determine which existing righe the user is removing

@@ -106,13 +106,15 @@ Target gaps: P-B5, P-B6, P-B7, P-B9, P-B10.
 
 See `CHANGELOG-2026-07-01.md` § "Phase 3" for the full record and verification.
 
-### Phase 4 — Product completeness (Medium/Low)
+### Phase 4 — Product completeness (Medium/Low) ✅ MOSTLY IMPLEMENTED (2026-07-01)
 Target gaps: P-B8, P-B11, P-B12, P-B3, P-B14, P-B15.
 
-1. **Lot labels + QR** (P-B8) — printable labels whose QR opens `/tracciabilita?...`.
-2. **Accessibility pass** (P-B11) + **mobile refinement** (P-B12) to WCAG AA.
-3. **Optimistic locking** (P-B3) via a `version`/`updated_at` check on document saves.
-4. **Nice-to-haves** (P-B14/P-B15): global search, configurable alerts, in-app notifications, admin 2FA.
+1. ✅ **Lot labels + QR** (P-B8) — `/produzioni/{id}/etichetta` prints labels whose QR opens `/tracciabilita?q=<lotto>` (client-side QR via vendored `public/vendor/qrcode-generator.js`, `?copie=N` for sheets).
+2. ⚙️ **Accessibility** (P-B11) — layout-level wins done (skip-link, descriptive logo alt, nav landmark, `#main-content`, search `aria-label`, decorative-icon `aria-hidden`). **Remaining:** per-page WCAG-AA pass (color-only expiry indicators, form field labels/ids, modal focus management) — carried forward.
+3. ✅ **Optimistic locking** (P-B3) — `updated_at` conflict guard on acquisti/vendite/produzioni edits (`Controller::assertNotStale`); forms send the loaded `updated_at`; a global toast surfaces conflicts.
+4. **Nice-to-haves** (P-B14/P-B15): ✅ **global search** (`/cerca` + topbar box), ✅ **configurable alerts** (windows + extra recipients via `config/haccp.php`). **Deferred:** in-app notifications, mobile refinement pass, and **admin 2FA** (P-B15) — meaningful auth work best done with full HTTP test coverage, which this sandbox can't execute; left as backlog.
+
+See `CHANGELOG-2026-07-01.md` § "Phase 4" for details and verification.
 
 ---
 

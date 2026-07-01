@@ -250,6 +250,7 @@ function parseDate(d) {
 }
 
 const form = useForm({
+  updated_at:      props.vendita?.updated_at ?? null,
   cliente_id:      props.vendita?.cliente_id      ?? null,
   numero_documento: props.vendita?.numero_documento ?? '',
   data_documento:  props.vendita?.data_documento  ? new Date(props.vendita.data_documento) : null,
