@@ -62,7 +62,7 @@
               </div>
             </template>
           </Column>
-          <template #empty><div class="empty-state">Nessun lotto trovato.</div></template>
+          <template #empty><EmptyState icon="pi pi-box" title="Nessun lotto" /></template>
         </DataTable>
 
         <div v-if="primari.last_page > 1" class="pagination">
@@ -129,7 +129,7 @@
               </div>
             </template>
           </Column>
-          <template #empty><div class="empty-state">Nessun lotto trovato.</div></template>
+          <template #empty><EmptyState icon="pi pi-box" title="Nessun lotto" /></template>
         </DataTable>
 
         <div v-if="detergenti.last_page > 1" class="pagination">
@@ -147,6 +147,7 @@ import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import Tabs from 'primevue/tabs';
 import TabList from 'primevue/tablist';
 import Tab from 'primevue/tab';

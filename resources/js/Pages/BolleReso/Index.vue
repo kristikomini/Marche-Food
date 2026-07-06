@@ -41,7 +41,7 @@
           </div>
         </template>
       </Column>
-      <template #empty><div class="empty-state">Nessuna bolla reso trovata.</div></template>
+      <template #empty><EmptyState icon="pi pi-reply" title="Nessuna bolla reso" /></template>
     </DataTable>
     <div v-if="bolle.last_page > 1" class="pagination">
       <Button icon="pi pi-chevron-left" aria-label="Pagina precedente" outlined size="small" :disabled="!bolle.prev_page_url" @click="router.visit(bolle.prev_page_url)" />
@@ -56,6 +56,7 @@ import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';

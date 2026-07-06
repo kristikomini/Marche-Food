@@ -43,7 +43,9 @@
               </td>
             </tr>
             <tr v-if="!items.length">
-              <td colspan="4" class="empty">Il cestino è vuoto.</td>
+              <td colspan="4">
+                <EmptyState icon="pi pi-trash" title="Il cestino è vuoto" message="Non ci sono documenti eliminati." />
+              </td>
             </tr>
           </tbody>
         </table>
@@ -56,6 +58,7 @@
 import { router } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import Button from 'primevue/button';
 
 defineProps({

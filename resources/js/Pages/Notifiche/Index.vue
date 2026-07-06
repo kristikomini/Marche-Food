@@ -7,10 +7,7 @@
       </div>
     </div>
 
-    <div v-if="!items.length" class="empty-state">
-      <i class="pi pi-check-circle" />
-      <p>Nessun avviso attivo. Tutto in regola.</p>
-    </div>
+    <EmptyState v-if="!items.length" icon="pi pi-bell" title="Nessun avviso attivo" message="Tutto in regola." />
 
     <div v-else class="notif-list">
       <Link v-for="(n, i) in items" :key="i" :href="n.url" :class="['notif', n.livello]">
@@ -28,6 +25,7 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 
 defineProps({ items: { type: Array, default: () => [] } });
 function iconFor(l){ return { danger:'pi-exclamation-circle', warning:'pi-clock', info:'pi-info-circle' }[l] || 'pi-bell'; }

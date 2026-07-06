@@ -62,7 +62,7 @@
       </Column>
 
       <template #empty>
-        <div class="empty-state">Nessun cliente trovato.</div>
+        <EmptyState icon="pi pi-users" title="Nessun cliente" />
       </template>
     </DataTable>
 
@@ -94,6 +94,7 @@ import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';

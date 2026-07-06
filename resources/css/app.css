@@ -9,7 +9,11 @@
    Every colour is named ONCE here and consumed via var(--token) everywhere.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-@theme {
+/* The `--font-*` prefix is Tailwind v4's font-family theme namespace, so Tailwind
+   MANAGES these and tree-shakes any that aren't referenced by a generated utility
+   class. The app sets `font-family: var(--font-*)` directly (never the utility),
+   so we use `@theme static` to force all three to always be emitted to :root. */
+@theme static {
     --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
     --font-display: 'Fraunces Variable', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;

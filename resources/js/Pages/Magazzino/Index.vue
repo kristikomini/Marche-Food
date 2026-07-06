@@ -59,7 +59,7 @@
               <td :class="{ expired: isExpired(r.scadenza) }">{{ formatDate(r.scadenza) }}</td>
               <td>{{ r.is_conto_terzi ? 'Sì' : '—' }}</td>
             </tr>
-            <tr v-if="!acquisti.length"><td colspan="9" class="empty">Nessun lotto in giacenza.</td></tr>
+            <tr v-if="!acquisti.length"><td colspan="9"><EmptyState icon="pi pi-inbox" title="Nessun lotto in giacenza" /></td></tr>
           </tbody>
         </table>
       </div>
@@ -88,7 +88,7 @@
               <td class="r">{{ fmt(r.consumato_kg) }}</td>
               <td class="r"><span :class="['bal', Number(r.balance_kg) > 0 ? 'pos' : 'zero']">{{ fmt(r.balance_kg) }}</span></td>
             </tr>
-            <tr v-if="!semilavorati.length"><td colspan="6" class="empty">Nessun semilavorato in giacenza.</td></tr>
+            <tr v-if="!semilavorati.length"><td colspan="6"><EmptyState icon="pi pi-inbox" title="Nessun semilavorato in giacenza" /></td></tr>
           </tbody>
         </table>
       </div>
@@ -100,6 +100,7 @@
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import ToggleSwitch from 'primevue/toggleswitch';
 
 const props = defineProps({

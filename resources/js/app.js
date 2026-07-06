@@ -1,3 +1,4 @@
+import '../css/app.css';
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import PrimeVue from 'primevue/config';
@@ -59,6 +60,11 @@ const MarchePreset = definePreset(Aura, {
 });
 
 createInertiaApp({
+    // Brand-coloured top loading bar during navigations.
+    progress: {
+        color: '#2e6b57',
+        showSpinner: false,
+    },
     resolve: name => {
         const pages = import.meta.glob('./Pages/**/*.vue', { eager: true });
         return pages[`./Pages/${name}.vue`];

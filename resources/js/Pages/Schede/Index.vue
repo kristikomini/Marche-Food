@@ -55,7 +55,7 @@
           </div>
         </template>
       </Column>
-      <template #empty><div class="empty-state">Nessuna scheda trovata.</div></template>
+      <template #empty><EmptyState icon="pi pi-file-edit" title="Nessuna scheda" /></template>
     </DataTable>
 
     <div v-if="schede.last_page > 1" class="pagination">
@@ -71,6 +71,7 @@ import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';

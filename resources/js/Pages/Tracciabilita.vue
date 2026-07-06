@@ -312,7 +312,7 @@ function isScaduto(d) {
 
 <style scoped>
 .page-header { margin-bottom: 1.5rem; }
-.page-title  { font-size: 1.5rem; font-weight: 700; color: var(--ink); margin: 0 0 0.25rem 0; }
+.page-title  { font-size: 1.9rem; font-weight: 600; color: var(--pine-strong); margin: 0 0 0.25rem 0; letter-spacing: -0.01em; }
 .page-sub    { font-size: 0.85rem; color: var(--ink-2); margin: 0; }
 
 /* ── Search ─────────────────────────────────────────────────────── */
@@ -336,9 +336,11 @@ function isScaduto(d) {
 
 .trace-node {
   display: flex; align-items: flex-start; gap: 0.85rem;
-  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-  padding: 0.85rem 1rem;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.85rem 1rem; box-shadow: var(--shadow-1);
+  transition: box-shadow .15s, transform .12s;
 }
+.trace-node:hover { box-shadow: var(--shadow-2); }
 .trace-purchase   { border-left: 3px solid var(--pine); }
 .trace-production { border-left: 3px solid var(--ambra); }
 .trace-sale       { border-left: 3px solid var(--info); }
@@ -369,7 +371,7 @@ function isScaduto(d) {
 .badge-product   { background: var(--ambra-tint); color: var(--ambra); }
 .badge-customer  { background: var(--info-tint); color: var(--info); }
 
-.truncation-warning { background: var(--warn-tint); border: 1px solid var(--warn-tint); border-radius: 6px; padding: 0.5rem 0.85rem; font-size: 0.78rem; color: var(--warn); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
+.truncation-warning { background: var(--warn-tint); border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--border)); border-radius: 6px; padding: 0.5rem 0.85rem; font-size: 0.78rem; color: var(--warn); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
 
 .lot-chip     { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; }
 .lot-internal { background: var(--info-tint); color: var(--info); }
@@ -378,13 +380,26 @@ function isScaduto(d) {
 .lot-expiry   { background: var(--warn-tint); color: var(--warn); }
 .lot-expired  { background: var(--danger-tint); color: var(--danger); }
 
-/* ── Children (connector) ───────────────────────────────────────── */
-.trace-children  { margin-left: 1.75rem; margin-top: 0.35rem; }
-.connector-line  { width: 2px; height: 0.6rem; background: var(--border-strong); margin-left: 1rem; }
-.trace-child-label { font-size: 0.75rem; color: var(--ink-2); font-weight: 600; margin: 0.2rem 0 0.4rem 0; display: flex; align-items: center; gap: 0.3rem; }
-.trace-child-label i { font-size: 0.65rem; }
+/* ── Children — continuous timeline rail ────────────────────────── */
+.trace-children  {
+  position: relative;
+  margin-left: 1.15rem;
+  margin-top: 0;
+  padding-left: 1.7rem;
+  padding-top: 0.5rem;
+  border-left: 2px solid var(--border-strong);
+}
+/* horizontal tick from the rail to each child node */
+.trace-children > .trace-node { position: relative; margin-bottom: 0.65rem; }
+.trace-children > .trace-node::before {
+  content: ''; position: absolute; left: -1.7rem; top: 1.5rem;
+  width: 1.7rem; height: 2px; background: var(--border-strong);
+}
+.connector-line  { display: none; }
+.trace-child-label { font-size: 0.75rem; color: var(--ink-2); font-weight: 600; margin: 0 0 0.6rem 0; display: flex; align-items: center; gap: 0.3rem; }
+.trace-child-label i { font-size: 0.65rem; color: var(--pine); }
 
-.trace-no-use { margin-left: 1.75rem; margin-top: 0.35rem; font-size: 0.78rem; color: var(--ink-3); display: flex; align-items: center; gap: 0.4rem; }
+.trace-no-use { margin-left: 1.15rem; margin-top: 0.4rem; padding-left: 1.7rem; font-size: 0.78rem; color: var(--ink-3); display: flex; align-items: center; gap: 0.4rem; border-left: 2px solid var(--border); }
 
 .text-muted { color: var(--ink-3); }
 .allergeni-row { display:flex; flex-wrap:wrap; align-items:center; gap:0.3rem; margin-top:0.4rem; }
@@ -395,13 +410,14 @@ function isScaduto(d) {
 .mono { font-family: var(--font-mono); }
 
 /* ── Empty states ───────────────────────────────────────────────── */
-.no-results { text-align: center; padding: 3rem 1rem; }
-.no-results p { color: var(--ink-2); font-size: 0.95rem; margin: 0.5rem 0; }
+.no-results { text-align: center; padding: 3rem 1rem; display: flex; flex-direction: column; align-items: center; }
+.no-results > .pi { display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 16px; background: var(--surface-2); color: var(--ink-3); font-size: 1.7rem !important; margin-bottom: 0.75rem; }
+.no-results p { color: var(--ink-2); font-size: 0.95rem; margin: 0.4rem 0; }
 .no-results-sub { color: var(--ink-3); font-size: 0.82rem; }
 
-.empty-state { text-align: center; padding: 4rem 1rem; }
-.empty-icon  { font-size: 3rem; color: var(--ink-3); margin-bottom: 1rem; }
-.empty-title { font-size: 1.1rem; font-weight: 700; color: var(--ink-2); margin: 0 0 0.5rem 0; }
+.empty-state { text-align: center; padding: 4rem 1rem; display: flex; flex-direction: column; align-items: center; }
+.empty-icon  { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; border-radius: 18px; background: var(--pine-tint); color: var(--pine); font-size: 2rem; margin-bottom: 1rem; }
+.empty-title { font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; color: var(--ink); margin: 0 0 0.5rem 0; }
 .empty-sub   { max-width: 480px; margin: 0 auto; font-size: 0.875rem; color: var(--ink-3); line-height: 1.6; }
 
 /* Mobile refinement (Epic 6): stack/wrap trace nodes on small screens */

@@ -81,7 +81,7 @@
             </div>
           </template>
         </Column>
-        <template #empty><div class="empty-state">Nessun utente trovato.</div></template>
+        <template #empty><EmptyState icon="pi pi-user-edit" title="Nessun utente" /></template>
       </DataTable>
     </div>
 
@@ -136,6 +136,7 @@ import { ref, computed } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';

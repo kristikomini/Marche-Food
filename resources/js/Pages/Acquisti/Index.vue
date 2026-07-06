@@ -107,7 +107,7 @@
       </Column>
 
       <template #empty>
-        <div class="empty-state">Nessun acquisto trovato.</div>
+        <EmptyState icon="pi pi-download" title="Nessun acquisto" />
       </template>
     </DataTable>
 
@@ -128,7 +128,7 @@
           <Button v-if="isAdmin" icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(a)" />
         </div>
       </div>
-      <div v-if="!acquisti.data.length" class="empty-state">Nessun acquisto trovato.</div>
+      <EmptyState v-if="!acquisti.data.length" icon="pi pi-download" title="Nessun acquisto" />
     </div>
 
     <div v-if="acquisti.last_page > 1" class="pagination">
@@ -159,6 +159,7 @@ import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
