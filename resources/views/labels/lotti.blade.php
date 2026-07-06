@@ -8,16 +8,16 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f7f4; color: #1e293b; padding: 16px; }
   .toolbar { max-width: 900px; margin: 0 auto 16px; display: flex; justify-content: space-between; align-items: center; }
-  .toolbar h1 { font-size: 1rem; color: #1c3d28; }
-  .btn { background: #2a6941; color: #fff; border: none; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; }
+  .toolbar h1 { font-size: 1rem; color: #1f5040; }
+  .btn { background: #2e6b57; color: #fff; border: none; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; }
   .sheet { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .label { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; display: flex; gap: 12px; align-items: center; page-break-inside: avoid; }
   .label .qr { width: 96px; height: 96px; flex-shrink: 0; }
   .label .qr img, .label .qr svg { width: 96px; height: 96px; }
   .label .info { flex: 1; min-width: 0; }
-  .label .brand { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: #2a6941; font-weight: 700; }
+  .label .brand { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: #2e6b57; font-weight: 700; }
   .label .prod { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 2px 0; }
-  .label .lot { font-family: monospace; font-size: 1rem; font-weight: 700; color: #1c3d28; }
+  .label .lot { font-family: monospace; font-size: 1rem; font-weight: 700; color: #1f5040; }
   .label .meta { font-size: 0.72rem; color: #64748b; margin-top: 4px; }
   .label .meta .allergeni { color: #b91c1c; font-weight: 600; }
   .label .meta .allergeni-tracce { color: #b45309; }

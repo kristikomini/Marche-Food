@@ -123,7 +123,8 @@ function submit() {
 /* ── Brand Panel ─────────────────────────────── */
 .brand-panel {
   flex: 1;
-  background: linear-gradient(165deg, var(--pine-deep) 0%, var(--pine-strong) 62%, var(--pine) 100%);
+  /* Literal brand greens so the panel stays dark-on-dawn regardless of app theme */
+  background: linear-gradient(165deg, #123528 0%, #1f5040 62%, #2e6b57 100%);
   display: flex;
   flex-direction: column;
   align-items: center;

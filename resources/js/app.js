@@ -55,6 +55,28 @@ const MarchePreset = definePreset(Aura, {
                     950: '#14120e',
                 },
             },
+            dark: {
+                primary: {
+                    color: '#74bba1',
+                    contrastColor: '#0f2a21',
+                    hoverColor: '#93cdb6',
+                    activeColor: '#a9d9c6',
+                },
+                surface: {
+                    0:   '#ffffff',
+                    50:  '#faf8f4',
+                    100: '#f4f1ea',
+                    200: '#e7e1d6',
+                    300: '#d8d0c1',
+                    400: '#b8ae9c',
+                    500: '#928b7e',
+                    600: '#6e685d',
+                    700: '#57514a',
+                    800: '#3a362f',
+                    900: '#201d17',
+                    950: '#17150f',
+                },
+            },
         },
     },
 });

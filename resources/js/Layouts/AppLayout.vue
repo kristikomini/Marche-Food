@@ -130,6 +130,9 @@
           </form>
         </div>
         <div class="topbar-right">
+          <button class="theme-toggle" type="button" :aria-label="isDark ? 'Attiva tema chiaro' : 'Attiva tema scuro'" @click="toggleTheme">
+            <i :class="isDark ? 'pi pi-sun' : 'pi pi-moon'" aria-hidden="true" />
+          </button>
           <div class="notif-wrap">
             <button class="notif-bell" type="button" :aria-label="'Notifiche: ' + notificheCount + ' non lette'" aria-haspopup="true" :aria-expanded="notifOpen ? 'true' : 'false'" @click="notifOpen = !notifOpen">
               <i class="pi pi-bell" aria-hidden="true" />
@@ -196,6 +199,14 @@ function globalSearch() {
 
 const auth = computed(() => page.props.auth?.user);
 const isAdmin = computed(() => auth.value?.role === 'admin');
+
+// Light/dark theme — `.dark` on <html>, persisted; pre-applied in app.blade.php to avoid FOUC.
+const isDark = ref(typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
+function toggleTheme() {
+  isDark.value = !isDark.value;
+  document.documentElement.classList.toggle('dark', isDark.value);
+  try { localStorage.setItem('mif-theme', isDark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+}
 const notificheCount = computed(() => page.props.notificheCount ?? 0);
 const notifiche = computed(() => page.props.notifiche ?? []);
 const notifOpen = ref(false);
@@ -501,6 +512,9 @@ function isActive(path) {
 .skip-link { position:absolute; left:-999px; top:0; z-index:1000; background:var(--pine-strong); color:#fff; padding:0.5rem 1rem; border-radius:0 0 6px 0; }
 .skip-link:focus { left:0; }
 
+
+.theme-toggle { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; color:var(--ink-2); background:none; border:none; cursor:pointer; font-size:0.95rem; }
+.theme-toggle:hover { background:var(--pine-tint); color:var(--pine); }
 
 .notif-wrap { position:relative; }
 .notif-bell { position:relative; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; color:var(--ink-2); background:none; border:none; cursor:pointer; }

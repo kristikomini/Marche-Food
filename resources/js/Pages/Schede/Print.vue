@@ -168,14 +168,14 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f4; color: #
 
 .toolbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  background: #2a6941; padding: 0.5rem 1.5rem;
+  background: #2e6b57; padding: 0.5rem 1.5rem;
   display: flex; gap: 1rem; align-items: center;
 }
 .print-btn, .back-btn {
   padding: 0.4rem 1rem; border-radius: 4px; border: none; cursor: pointer;
   font-size: 0.85rem; font-weight: 600; text-decoration: none;
 }
-.print-btn { background: #fff; color: #2a6941; }
+.print-btn { background: #fff; color: #2e6b57; }
 .back-btn { background: rgba(255,255,255,0.15); color: #fff; }
 
 .print-page { padding-top: 52px; }
@@ -189,27 +189,27 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f4; color: #
 .doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
 .company { display: flex; align-items: center; gap: 0.75rem; }
 .logo { width: 44px; height: 44px; object-fit: contain; }
-.company-name { font-size: 1rem; font-weight: 700; color: #1c3d28; }
+.company-name { font-size: 1rem; font-weight: 700; color: #1f5040; }
 .company-sub { font-size: 0.72rem; color: #5a8c6a; }
 .doc-meta { text-align: right; }
 .doc-type { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; }
-.doc-num { font-size: 1.2rem; font-weight: 800; color: #1c3d28; }
+.doc-num { font-size: 1.2rem; font-weight: 800; color: #1f5040; }
 .doc-date { font-size: 0.82rem; color: #374151; }
 .doc-status { display: inline-block; margin-top: 0.25rem; padding: 0.1rem 0.5rem; border-radius: 99px; font-size: 0.68rem; font-weight: 700; }
 .status-active { background: #dcfce7; color: #166534; }
 .status-inactive { background: #fee2e2; color: #991b1b; }
 
-.divider { border: none; border-top: 2px solid #2a6941; margin: 0.75rem 0; }
+.divider { border: none; border-top: 2px solid #2e6b57; margin: 0.75rem 0; }
 
 .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1rem 0 1.5rem; }
 .info-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 0.2rem; }
 .info-val { font-size: 0.9rem; font-weight: 600; color: #1e293b; }
 .info-sub { font-size: 0.75rem; color: #64748b; }
 
-.section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #2a6941; margin: 0 0 0.5rem 0; border-bottom: 1px solid #e8f0e8; padding-bottom: 0.25rem; }
+.section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #2e6b57; margin: 0 0 0.5rem 0; border-bottom: 1px solid #e8f0e8; padding-bottom: 0.25rem; }
 
 .righe { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-.righe th { background: #1c3d28; color: #fff; padding: 0.35rem 0.5rem; text-align: center; font-weight: 600; font-size: 0.72rem; }
+.righe th { background: #1f5040; color: #fff; padding: 0.35rem 0.5rem; text-align: center; font-weight: 600; font-size: 0.72rem; }
 .righe th.left { text-align: left; }
 .righe td { padding: 0.3rem 0.5rem; border-bottom: 1px solid #e8f0e8; }
 .righe tr:nth-child(even) td { background: #f8fdf8; }
@@ -221,7 +221,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f4; color: #
 
 .signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 2rem; }
 .sig-label { font-size: 0.72rem; color: #64748b; margin-bottom: 0.75rem; }
-.sig-line { border-top: 1px solid #1c3d28; }
+.sig-line { border-top: 1px solid #1f5040; }
 
 .doc-footer { margin-top: 1.5rem; display: flex; justify-content: space-between; font-size: 0.72rem; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 0.5rem; }
 
