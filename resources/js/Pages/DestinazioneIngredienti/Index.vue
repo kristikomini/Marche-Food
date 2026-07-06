@@ -56,7 +56,7 @@
           </Column>
           <Column v-if="isAdmin" header="Rimuovi" style="width:80px">
             <template #body="{ data }">
-              <Button icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDelete(data)" />
+              <Button icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(data)" />
             </template>
           </Column>
           <template #empty><div class="empty-state">Nessun collegamento definito.</div></template>
@@ -100,17 +100,17 @@ function confirmDelete(d) {
 
 <style scoped>
 .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem; }
-.page-title { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0; }
-.desc { color:#64748b; margin:0 0 1.5rem 0; font-size:0.875rem; }
+.page-title { font-size:1.5rem; font-weight:700; color:var(--ink); margin:0; }
+.desc { color:var(--ink-2); margin:0 0 1.5rem 0; font-size:0.875rem; }
 .layout { display:grid; grid-template-columns:340px 1fr; gap:1.5rem; align-items:start; }
-.add-card { background:#fff; border-radius:8px; border:1px solid #e2e8f0; padding:1.25rem; }
-.table-card { background:#fff; border-radius:8px; border:1px solid #e2e8f0; overflow:hidden; }
-.section-title { font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748b; margin:0 0 1rem 0; }
+.add-card { background:var(--surface); border-radius:8px; border:1px solid var(--border); padding:1.25rem; }
+.table-card { background:var(--surface); border-radius:8px; border:1px solid var(--border); overflow:hidden; }
+.section-title { font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-2); margin:0 0 1rem 0; }
 .add-form { display:flex; flex-direction:column; gap:0.75rem; }
 .field { display:flex; flex-direction:column; gap:0.3rem; }
-.field label { font-size:0.85rem; font-weight:600; color:#374151; }
-.error { color:#dc2626; font-size:0.78rem; min-height:1em; }
+.field label { font-size:0.85rem; font-weight:600; color:var(--ink-2); }
+.error { color:var(--danger); font-size:0.78rem; min-height:1em; }
 .prodotto-name { font-weight:600; display:block; }
-.prodotto-code { font-size:0.78rem; color:#64748b; }
-.empty-state { padding:2rem; text-align:center; color:#94a3b8; }
+.prodotto-code { font-size:0.78rem; color:var(--ink-2); }
+.empty-state { padding:2rem; text-align:center; color:var(--ink-3); }
 </style>

@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LottoImballaggioPrimario extends Model
 {
+    use Auditable, SoftDeletes;
+
     protected $table = 'lotti_imballaggi_primari';
 
     protected $fillable = [

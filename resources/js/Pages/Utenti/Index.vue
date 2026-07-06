@@ -56,14 +56,14 @@
           <template #body="{ data }">
             <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
               <Button
-                icon="pi pi-pencil"
+                icon="pi pi-pencil" aria-label="Modifica"
                 size="small"
                 outlined
                 label="Modifica"
                 @click="openEdit(data)"
               />
               <Button
-                icon="pi pi-key"
+                icon="pi pi-key" aria-label="Reimposta password"
                 size="small"
                 outlined
                 severity="warn"
@@ -72,7 +72,7 @@
               />
               <Button
                 v-if="data.id !== currentUserId"
-                icon="pi pi-trash"
+                icon="pi pi-trash" aria-label="Elimina"
                 size="small"
                 outlined
                 severity="danger"
@@ -81,7 +81,7 @@
             </div>
           </template>
         </Column>
-        <template #empty><div class="empty-state">Nessun utente trovato.</div></template>
+        <template #empty><EmptyState icon="pi pi-user-edit" title="Nessun utente" /></template>
       </DataTable>
     </div>
 
@@ -125,7 +125,7 @@
       </div>
       <template #footer>
         <Button label="Annulla" outlined @click="showReset = false" />
-        <Button label="Reimposta" icon="pi pi-key" severity="warn" @click="submitReset" :loading="resetForm.processing" />
+        <Button label="Reimposta" icon="pi pi-key" aria-label="Reimposta password" severity="warn" @click="submitReset" :loading="resetForm.processing" />
       </template>
     </Dialog>
   </AppLayout>
@@ -136,6 +136,7 @@ import { ref, computed } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
@@ -212,16 +213,16 @@ function confirmDelete(u) {
 
 <style scoped>
 .page-header { display:flex; align-items:center; margin-bottom:1.5rem; }
-.page-title { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0; }
-.card { background:#fff; border-radius:8px; border:1px solid #e2e8f0; padding:1.5rem; }
+.page-title { font-size:1.5rem; font-weight:700; color:var(--ink); margin:0; }
+.card { background:var(--surface); border-radius:8px; border:1px solid var(--border); padding:1.5rem; }
 .mb-4 { margin-bottom:1rem; }
-.section-title { font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748b; margin:0 0 1rem 0; }
+.section-title { font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-2); margin:0 0 1rem 0; }
 .form-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem; align-items:end; }
 .field { display:flex; flex-direction:column; gap:0.3rem; }
-.field label { font-size:0.85rem; font-weight:600; color:#374151; }
+.field label { font-size:0.85rem; font-weight:600; color:var(--ink-2); }
 .field-action { justify-content:flex-end; }
-.error { color:#dc2626; font-size:0.78rem; min-height:1rem; }
+.error { color:var(--danger); font-size:0.78rem; min-height:1rem; }
 .dialog-form { display:flex; flex-direction:column; gap:0.85rem; padding:0.5rem 0; }
-.dialog-note { margin:0 0 0.5rem 0; color:#374151; font-size:0.875rem; }
-.empty-state { padding:2rem; text-align:center; color:#94a3b8; }
+.dialog-note { margin:0 0 0.5rem 0; color:var(--ink-2); font-size:0.875rem; }
+.empty-state { padding:2rem; text-align:center; color:var(--ink-3); }
 </style>

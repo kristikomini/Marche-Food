@@ -9,6 +9,7 @@ use App\Models\VenditaRiga;
 use App\Models\Fornitore;
 use App\Models\Cliente;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ImportController extends Controller
@@ -39,57 +40,75 @@ class ImportController extends Controller
             $grouped[$key][] = ['row' => $row, 'line' => $line];
         }
 
-        foreach ($grouped as $key => $items) {
-            $first  = $items[0]['row'];
-            $codice = trim($first['fornitore_codice'] ?? '');
+        // GAP-T2: wrap all inserts in a single transaction — all succeed or nothing is committed
+        DB::beginTransaction();
+        try {
+            foreach ($grouped as $key => $items) {
+                $first  = $items[0]['row'];
+                $codice = trim($first['fornitore_codice'] ?? '');
 
-            $fornitore = Fornitore::where('codice', $codice)->first();
-            if (!$fornitore) {
-                $errors[] = "Riga {$items[0]['line']}: fornitore '{$codice}' non trovato.";
-                continue;
-            }
-
-            $dataDoc = $this->parseDate($first['data_documento'] ?? '');
-            if (!$dataDoc) {
-                $errors[] = "Riga {$items[0]['line']}: data_documento non valida.";
-                continue;
-            }
-
-            $tipo = strtoupper(trim($first['tipo_documento'] ?? 'DDT'));
-            if (!in_array($tipo, ['DDT', 'Fattura', 'Bolla'])) $tipo = 'DDT';
-
-            $acquisto = Acquisto::create([
-                'fornitore_id'    => $fornitore->id,
-                'numero_documento' => trim($first['numero_documento']),
-                'data_documento'  => $dataDoc,
-                'tipo_documento'  => $tipo,
-                'note'            => trim($first['note_documento'] ?? '') ?: null,
-            ]);
-
-            foreach ($items as $item) {
-                $r = $item['row'];
-                $kgVal = str_replace(',', '.', trim($r['quantita_kg'] ?? '0'));
-                if (!is_numeric($kgVal) || (float)$kgVal <= 0) {
-                    $errors[] = "Riga {$item['line']}: quantita_kg non valida, riga saltata.";
+                $fornitore = Fornitore::where('codice', $codice)->first();
+                if (!$fornitore) {
+                    $errors[] = "Riga {$items[0]['line']}: fornitore '{$codice}' non trovato.";
                     continue;
                 }
 
-                $acquisto->righe()->create([
-                    'nome_prodotto' => trim($r['nome_prodotto'] ?? ''),
-                    'quantita_kg'   => (float)$kgVal,
-                    'quantita_pz'   => is_numeric($r['quantita_pz'] ?? '') ? (float)str_replace(',', '.', $r['quantita_pz']) : null,
-                    'lotto'         => trim($r['lotto'] ?? '') ?: null,
-                    'lotto_esterno' => trim($r['lotto_esterno'] ?? '') ?: null,
-                    'scadenza'      => $this->parseDate($r['scadenza'] ?? '') ?: null,
-                    'data_in'       => $this->parseDate($r['data_in'] ?? '') ?: $dataDoc,
+                $dataDoc = $this->parseDate($first['data_documento'] ?? '');
+                if (!$dataDoc) {
+                    $errors[] = "Riga {$items[0]['line']}: data_documento non valida.";
+                    continue;
+                }
+
+                // GAP-D5: normalize tipo_documento to canonical casing
+                $tipo = match (strtoupper(trim($first['tipo_documento'] ?? ''))) {
+                    'DDT'     => 'DDT',
+                    'FATTURA' => 'Fattura',
+                    'BOLLA'   => 'Bolla',
+                    default   => 'DDT',
+                };
+
+                $acquisto = Acquisto::create([
+                    'fornitore_id'     => $fornitore->id,
+                    'numero_documento' => trim($first['numero_documento']),
+                    'data_documento'   => $dataDoc,
+                    'tipo_documento'   => $tipo,
+                    'note'             => trim($first['note_documento'] ?? '') ?: null,
                 ]);
-                $imported++;
+
+                foreach ($items as $item) {
+                    $r = $item['row'];
+                    $kgVal = str_replace(',', '.', trim($r['quantita_kg'] ?? '0'));
+                    if (!is_numeric($kgVal) || (float)$kgVal <= 0) {
+                        $errors[] = "Riga {$item['line']}: quantita_kg non valida.";
+                        continue;
+                    }
+
+                    $acquisto->righe()->create([
+                        'nome_prodotto' => trim($r['nome_prodotto'] ?? ''),
+                        'quantita_kg'   => (float)$kgVal,
+                        'quantita_pz'   => is_numeric($r['quantita_pz'] ?? '') ? (float)str_replace(',', '.', $r['quantita_pz']) : null,
+                        'lotto'         => trim($r['lotto'] ?? '') ?: null,
+                        'lotto_esterno' => trim($r['lotto_esterno'] ?? '') ?: null,
+                        'scadenza'      => $this->parseDate($r['scadenza'] ?? '') ?: null,
+                        'data_in'       => $this->parseDate($r['data_in'] ?? '') ?: $dataDoc,
+                    ]);
+                    $imported++;
+                }
             }
+
+            if (!empty($errors)) {
+                DB::rollBack();
+                $msg = 'Importazione annullata (rollback completo). Correggere gli errori e riprovare. Errori: ' . implode('; ', array_slice($errors, 0, 5));
+                return back()->with('error', $msg);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Errore imprevisto durante l\'importazione: ' . $e->getMessage());
         }
 
         $msg = "Importati {$imported} righe acquisto in " . count($grouped) . " documenti.";
-        if ($errors) $msg .= ' Avvisi: ' . implode('; ', array_slice($errors, 0, 5));
-
         return redirect()->route('import.index')->with('success', $msg);
     }
 
@@ -113,57 +132,75 @@ class ImportController extends Controller
             $grouped[$key][] = ['row' => $row, 'line' => $i + 2];
         }
 
-        foreach ($grouped as $key => $items) {
-            $first  = $items[0]['row'];
-            $codice = trim($first['cliente_codice'] ?? '');
+        // GAP-T2: all-or-nothing transaction
+        DB::beginTransaction();
+        try {
+            foreach ($grouped as $key => $items) {
+                $first  = $items[0]['row'];
+                $codice = trim($first['cliente_codice'] ?? '');
 
-            $cliente = Cliente::where('codice_cliente', $codice)->first();
-            if (!$cliente) {
-                $errors[] = "Cliente '{$codice}' non trovato.";
-                continue;
-            }
-
-            $dataDoc = $this->parseDate($first['data_documento'] ?? '');
-            if (!$dataDoc) {
-                $errors[] = "data_documento non valida per documento {$first['numero_documento']}.";
-                continue;
-            }
-
-            $tipo = strtoupper(trim($first['tipo_documento'] ?? 'DDT'));
-            if (!in_array($tipo, ['DDT', 'FI', 'NC'])) $tipo = 'DDT';
-
-            $vendita = Vendita::create([
-                'cliente_id'      => $cliente->id,
-                'numero_documento' => trim($first['numero_documento']),
-                'data_documento'  => $dataDoc,
-                'tipo_documento'  => $tipo,
-                'note'            => trim($first['note_documento'] ?? '') ?: null,
-            ]);
-
-            foreach ($items as $item) {
-                $r = $item['row'];
-                $kgVal = str_replace(',', '.', trim($r['quantita_kg'] ?? '0'));
-                if (!is_numeric($kgVal) || (float)$kgVal <= 0) {
-                    $errors[] = "Riga {$item['line']}: quantita_kg non valida, saltata.";
+                $cliente = Cliente::where('codice_cliente', $codice)->first();
+                if (!$cliente) {
+                    $errors[] = "Cliente '{$codice}' non trovato.";
                     continue;
                 }
 
-                $vendita->righe()->create([
-                    'nome_prodotto' => trim($r['nome_prodotto'] ?? ''),
-                    'pezzatura_gr'  => is_numeric($r['pezzatura_gr'] ?? '') ? (float)str_replace(',', '.', $r['pezzatura_gr']) : null,
-                    'quantita_kg'   => (float)$kgVal,
-                    'quantita_pz'   => is_numeric($r['quantita_pz'] ?? '') ? (float)str_replace(',', '.', $r['quantita_pz']) : null,
-                    'lotto'         => trim($r['lotto'] ?? '') ?: null,
-                    'lotto_esterno' => trim($r['lotto_esterno'] ?? '') ?: null,
-                    'scadenza'      => $this->parseDate($r['scadenza'] ?? '') ?: null,
+                $dataDoc = $this->parseDate($first['data_documento'] ?? '');
+                if (!$dataDoc) {
+                    $errors[] = "data_documento non valida per documento {$first['numero_documento']}.";
+                    continue;
+                }
+
+                // GAP-D5: normalize tipo_documento to canonical values
+                $tipo = match (strtoupper(trim($first['tipo_documento'] ?? ''))) {
+                    'DDT' => 'DDT',
+                    'FI'  => 'FI',
+                    'NC'  => 'NC',
+                    default => 'DDT',
+                };
+
+                $vendita = Vendita::create([
+                    'cliente_id'       => $cliente->id,
+                    'numero_documento' => trim($first['numero_documento']),
+                    'data_documento'   => $dataDoc,
+                    'tipo_documento'   => $tipo,
+                    'note'             => trim($first['note_documento'] ?? '') ?: null,
                 ]);
-                $imported++;
+
+                foreach ($items as $item) {
+                    $r = $item['row'];
+                    $kgVal = str_replace(',', '.', trim($r['quantita_kg'] ?? '0'));
+                    if (!is_numeric($kgVal) || (float)$kgVal <= 0) {
+                        $errors[] = "Riga {$item['line']}: quantita_kg non valida.";
+                        continue;
+                    }
+
+                    $vendita->righe()->create([
+                        'nome_prodotto' => trim($r['nome_prodotto'] ?? ''),
+                        'pezzatura_gr'  => is_numeric($r['pezzatura_gr'] ?? '') ? (float)str_replace(',', '.', $r['pezzatura_gr']) : null,
+                        'quantita_kg'   => (float)$kgVal,
+                        'quantita_pz'   => is_numeric($r['quantita_pz'] ?? '') ? (float)str_replace(',', '.', $r['quantita_pz']) : null,
+                        'lotto'         => trim($r['lotto'] ?? '') ?: null,
+                        'lotto_esterno' => trim($r['lotto_esterno'] ?? '') ?: null,
+                        'scadenza'      => $this->parseDate($r['scadenza'] ?? '') ?: null,
+                    ]);
+                    $imported++;
+                }
             }
+
+            if (!empty($errors)) {
+                DB::rollBack();
+                $msg = 'Importazione annullata (rollback completo). Correggere gli errori e riprovare. Errori: ' . implode('; ', array_slice($errors, 0, 5));
+                return back()->with('error', $msg);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Errore imprevisto durante l\'importazione: ' . $e->getMessage());
         }
 
         $msg = "Importate {$imported} righe vendita in " . count($grouped) . " documenti.";
-        if ($errors) $msg .= ' Avvisi: ' . implode('; ', array_slice($errors, 0, 5));
-
         return redirect()->route('import.index')->with('success', $msg);
     }
 

@@ -63,7 +63,7 @@ class NotaCreditoController extends Controller
     {
         $noteCredito->delete();
 
-        return redirect()->route('note-credito.index')->with('success', 'Nota di credito eliminata.');
+        return redirect()->route('note-credito.index')->with('success', 'Nota di credito spostata nel cestino.');
     }
 
     private function venditeList()

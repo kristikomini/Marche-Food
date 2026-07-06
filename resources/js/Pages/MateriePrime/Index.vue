@@ -20,20 +20,29 @@
           <span v-else>{{ data.nome }}</span>
         </template>
       </Column>
-      <Column v-if="isAdmin" header="Azioni" style="width:100px">
+      <Column header="Allergeni">
         <template #body="{ data }">
-          <div style="display:flex;gap:0.4rem">
-            <Link :href="`/materie-prime/${data.id}/edit`"><Button icon="pi pi-pencil" size="small" outlined /></Link>
-            <Button icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDelete(data)" />
+          <div class="allergen-chips">
+            <span v-for="code in (data.allergeni || [])" :key="code" class="chip chip-contiene">{{ allergeniLabels[code] || code }}</span>
+            <span v-for="code in (data.allergeni_tracce || [])" :key="`t-${code}`" class="chip chip-tracce">tracce: {{ allergeniLabels[code] || code }}</span>
+            <span v-if="!(data.allergeni || []).length && !(data.allergeni_tracce || []).length" class="text-muted">—</span>
           </div>
         </template>
       </Column>
-      <template #empty><div class="empty-state">Nessuna materia prima trovata.</div></template>
+      <Column v-if="isAdmin" header="Azioni" style="width:100px">
+        <template #body="{ data }">
+          <div style="display:flex;gap:0.4rem">
+            <Link :href="`/materie-prime/${data.id}/edit`"><Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined /></Link>
+            <Button icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(data)" />
+          </div>
+        </template>
+      </Column>
+      <template #empty><EmptyState icon="pi pi-list" title="Nessuna materia prima" /></template>
     </DataTable>
     <div v-if="materie.last_page > 1" class="pagination">
-      <Button icon="pi pi-chevron-left" outlined size="small" :disabled="!materie.prev_page_url" @click="router.visit(materie.prev_page_url)" />
+      <Button icon="pi pi-chevron-left" aria-label="Pagina precedente" outlined size="small" :disabled="!materie.prev_page_url" @click="router.visit(materie.prev_page_url)" />
       <span class="page-info">{{ materie.current_page }} / {{ materie.last_page }} ({{ materie.total }})</span>
-      <Button icon="pi pi-chevron-right" outlined size="small" :disabled="!materie.next_page_url" @click="router.visit(materie.next_page_url)" />
+      <Button icon="pi pi-chevron-right" aria-label="Pagina successiva" outlined size="small" :disabled="!materie.next_page_url" @click="router.visit(materie.next_page_url)" />
     </div>
   </AppLayout>
 </template>
@@ -43,6 +52,7 @@ import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
@@ -50,7 +60,8 @@ import InputText from 'primevue/inputtext';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 
-const props = defineProps({ materie: Object, filters: Object });
+const props = defineProps({ materie: Object, filters: Object, allergeniLabels: { type: Object, default: () => ({}) } });
+const allergeniLabels = props.allergeniLabels;
 const confirm = useConfirm();
 const page = usePage();
 const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
@@ -68,13 +79,17 @@ function confirmDelete(m) {
 
 <style scoped>
 .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
-.page-title { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0; }
+.page-title { font-size:1.5rem; font-weight:700; color:var(--ink); margin:0; }
 .filters-bar { display:flex; gap:1rem; }
-.row-link { color:#1d4ed8; text-decoration:none; font-weight:500; }
+.row-link { color:var(--info); text-decoration:none; font-weight:500; }
 .row-link:hover { text-decoration:underline; }
-.text-muted { color:#94a3b8; }
+.text-muted { color:var(--ink-3); }
+.allergen-chips { display:flex; flex-wrap:wrap; gap:0.3rem; }
+.chip { font-size:0.68rem; font-weight:600; padding:0.1rem 0.45rem; border-radius:99px; white-space:nowrap; }
+.chip-contiene { background:var(--danger-tint); color:var(--danger); }
+.chip-tracce { background:var(--warn-tint); color:var(--warn); }
 .mt-4 { margin-top:1rem; }
 .pagination { display:flex; align-items:center; gap:1rem; margin-top:1rem; justify-content:center; }
-.page-info { font-size:0.875rem; color:#64748b; }
-.empty-state { padding:2rem; text-align:center; color:#94a3b8; }
+.page-info { font-size:0.875rem; color:var(--ink-2); }
+.empty-state { padding:2rem; text-align:center; color:var(--ink-3); }
 </style>

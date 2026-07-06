@@ -12,6 +12,13 @@ class MateriaPrima extends Model
         'codice',
         'nome',
         'um_id',
+        'allergeni',
+        'allergeni_tracce',
+    ];
+
+    protected $casts = [
+        'allergeni'        => 'array',
+        'allergeni_tracce' => 'array',
     ];
 
     public function unitaMisura()

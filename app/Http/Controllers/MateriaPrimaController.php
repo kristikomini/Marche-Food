@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\MateriaPrima;
+use App\Services\AllergenService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class MateriaPrimaController extends Controller
@@ -22,14 +24,18 @@ class MateriaPrimaController extends Controller
         $materie = $query->orderBy('nome')->paginate(25)->withQueryString();
 
         return Inertia::render('MateriePrime/Index', [
-            'materie' => $materie,
-            'filters' => $request->only(['search']),
+            'materie'          => $materie,
+            'filters'          => $request->only(['search']),
+            'allergeniLabels'  => AllergenService::EU_ALLERGENS,
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('MateriePrime/Form', ['materia' => null]);
+        return Inertia::render('MateriePrime/Form', [
+            'materia'          => null,
+            'allergeniOptions' => AllergenService::options(),
+        ]);
     }
 
     public function store(Request $request)
@@ -41,7 +47,10 @@ class MateriaPrimaController extends Controller
 
     public function edit(MateriaPrima $materiePrime)
     {
-        return Inertia::render('MateriePrime/Form', ['materia' => $materiePrime]);
+        return Inertia::render('MateriePrime/Form', [
+            'materia'          => $materiePrime,
+            'allergeniOptions' => AllergenService::options(),
+        ]);
     }
 
     public function update(Request $request, MateriaPrima $materiePrime)
@@ -62,8 +71,12 @@ class MateriaPrimaController extends Controller
     {
         return $request->validate([
             'codice' => ['nullable', 'integer',
-                \Illuminate\Validation\Rule::unique('materie_prime', 'codice')->ignore($ignoreId)],
+                Rule::unique('materie_prime', 'codice')->ignore($ignoreId)],
             'nome'   => ['required', 'string', 'max:200'],
+            'allergeni'          => ['nullable', 'array'],
+            'allergeni.*'        => ['string', Rule::in(array_keys(AllergenService::EU_ALLERGENS))],
+            'allergeni_tracce'   => ['nullable', 'array'],
+            'allergeni_tracce.*' => ['string', Rule::in(array_keys(AllergenService::EU_ALLERGENS))],
         ]);
     }
 }

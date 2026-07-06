@@ -52,12 +52,80 @@
     <!-- INSTRUCTIONS -->
     <div class="instructions">
       <h3 class="instr-title">Formato CSV Acquisti</h3>
-      <pre class="csv-example">fornitore_codice;numero_documento;data_documento;tipo_documento;nome_prodotto;quantita_kg;quantita_pz;lotto;lotto_esterno;scadenza;data_in;note_documento
-FOR001;DDT/2024/001;01/01/2024;DDT;Tonno al naturale;100.000;;A2024001;;31/12/2025;01/01/2024;</pre>
+      <div class="csv-table-wrap">
+        <table class="csv-table">
+          <thead>
+            <tr>
+              <th>fornitore_codice</th>
+              <th>numero_documento</th>
+              <th>data_documento</th>
+              <th>tipo_documento</th>
+              <th>nome_prodotto</th>
+              <th>quantita_kg</th>
+              <th>quantita_pz</th>
+              <th>lotto</th>
+              <th>lotto_esterno</th>
+              <th>scadenza</th>
+              <th>data_in</th>
+              <th>note_documento</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>FOR001</td>
+              <td>DDT/2024/001</td>
+              <td>01/01/2024</td>
+              <td>DDT</td>
+              <td>Tonno al naturale</td>
+              <td>100.000</td>
+              <td class="muted">—</td>
+              <td>A2024001</td>
+              <td class="muted">—</td>
+              <td>31/12/2025</td>
+              <td>01/01/2024</td>
+              <td class="muted">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <h3 class="instr-title mt-4">Formato CSV Vendite</h3>
-      <pre class="csv-example">cliente_codice;numero_documento;data_documento;tipo_documento;nome_prodotto;pezzatura_gr;quantita_kg;quantita_pz;lotto;lotto_esterno;scadenza;note_documento
-CLI001;DDT/2024/001;01/01/2024;DDT;Tonno all'olio 800g;800;50.000;62;LP2024-001;;31/12/2025;</pre>
+      <div class="csv-table-wrap">
+        <table class="csv-table">
+          <thead>
+            <tr>
+              <th>cliente_codice</th>
+              <th>numero_documento</th>
+              <th>data_documento</th>
+              <th>tipo_documento</th>
+              <th>nome_prodotto</th>
+              <th>pezzatura_gr</th>
+              <th>quantita_kg</th>
+              <th>quantita_pz</th>
+              <th>lotto</th>
+              <th>lotto_esterno</th>
+              <th>scadenza</th>
+              <th>note_documento</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>CLI001</td>
+              <td>DDT/2024/001</td>
+              <td>01/01/2024</td>
+              <td>DDT</td>
+              <td>Tonno all'olio 800g</td>
+              <td>800</td>
+              <td>50.000</td>
+              <td>62</td>
+              <td>LP2024-001</td>
+              <td class="muted">—</td>
+              <td>31/12/2025</td>
+              <td class="muted">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <ul class="instr-list">
         <li>Date nel formato <strong>DD/MM/YYYY</strong> o <strong>YYYY-MM-DD</strong></li>
@@ -97,23 +165,30 @@ function submitVendite() {
 
 <style scoped>
 .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem; }
-.page-title { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0; }
-.desc { color:#64748b; margin:0 0 1.5rem 0; font-size:0.875rem; }
+.page-title { font-size:1.5rem; font-weight:700; color:var(--ink); margin:0; }
+.desc { color:var(--ink-2); margin:0 0 1.5rem 0; font-size:0.875rem; }
 .cards { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem; }
-.import-card { background:#fff; border-radius:8px; border:1px solid #e2e8f0; padding:1.5rem; }
+.import-card { background:var(--surface); border-radius:8px; border:1px solid var(--border); padding:1.5rem; }
 .card-icon-wrap { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-bottom:1rem; font-size:1.5rem; }
-.card-icon-wrap.acquisti { background:#dbeafe; color:#1d4ed8; }
-.card-icon-wrap.vendite  { background:#dcfce7; color:#15803d; }
-.card-title { font-size:1.1rem; font-weight:700; color:#1e293b; margin:0 0 0.5rem 0; }
-.card-desc { color:#64748b; font-size:0.875rem; margin:0 0 1rem 0; }
+.card-icon-wrap.acquisti { background:var(--info-tint); color:var(--info); }
+.card-icon-wrap.vendite  { background:var(--ok-tint); color:var(--ok); }
+.card-title { font-size:1.1rem; font-weight:700; color:var(--ink); margin:0 0 0.5rem 0; }
+.card-desc { color:var(--ink-2); font-size:0.875rem; margin:0 0 1rem 0; }
 .template-row { margin-bottom:1rem; }
-.template-link { color:#1d4ed8; font-size:0.875rem; text-decoration:none; display:inline-flex; align-items:center; gap:0.3rem; }
+.template-link { color:var(--info); font-size:0.875rem; text-decoration:none; display:inline-flex; align-items:center; gap:0.3rem; }
 .template-link:hover { text-decoration:underline; }
 .upload-form { display:flex; flex-direction:column; gap:0.5rem; }
 .mt-2 { margin-top:0.5rem; }
-.instructions { background:#fff; border-radius:8px; border:1px solid #e2e8f0; padding:1.5rem; }
-.instr-title { font-size:0.9rem; font-weight:700; color:#374151; margin:0 0 0.5rem 0; }
+.instructions { background:var(--surface); border-radius:8px; border:1px solid var(--border); padding:1.5rem; }
+.instr-title { font-size:0.9rem; font-weight:700; color:var(--ink-2); margin:0 0 0.5rem 0; }
 .mt-4 { margin-top:1.25rem; }
-.csv-example { background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:0.75rem 1rem; font-size:0.78rem; overflow-x:auto; white-space:pre; margin:0 0 0.5rem 0; }
-.instr-list { margin:1rem 0 0 0; padding-left:1.25rem; color:#475569; font-size:0.875rem; display:flex; flex-direction:column; gap:0.3rem; }
+.csv-table-wrap { overflow-x:auto; border-radius:6px; border:1px solid var(--border); margin-bottom:0.5rem; }
+.csv-table { width:100%; border-collapse:collapse; font-size:0.78rem; white-space:nowrap; }
+.csv-table thead tr { background:var(--border); }
+.csv-table th { padding:0.45rem 0.75rem; text-align:left; font-weight:700; color:var(--ink-2); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:2px solid var(--border); border-right:1px solid var(--border); }
+.csv-table th:last-child { border-right:none; }
+.csv-table td { padding:0.45rem 0.75rem; color:var(--ink); border-right:1px solid var(--border); background:var(--surface); }
+.csv-table td:last-child { border-right:none; }
+.csv-table td.muted { color:var(--ink-3); }
+.instr-list { margin:1rem 0 0 0; padding-left:1.25rem; color:var(--ink-2); font-size:0.875rem; display:flex; flex-direction:column; gap:0.3rem; }
 </style>

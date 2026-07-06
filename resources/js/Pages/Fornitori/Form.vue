@@ -3,7 +3,7 @@
     <div class="page-header">
       <h1 class="page-title">{{ isEdit ? 'Modifica Fornitore' : 'Nuovo Fornitore' }}</h1>
       <Link href="/fornitori">
-        <Button label="Annulla" outlined icon="pi pi-arrow-left" />
+        <Button label="Annulla" outlined icon="pi pi-arrow-left" aria-label="Indietro" />
       </Link>
     </div>
 
@@ -73,6 +73,17 @@
         </div>
       </section>
 
+      <!-- ESTRAZIONE AI CERTIFICATO (Epic 2) -->
+      <section v-if="['alimentare','imballaggio_primario'].includes(form.tipo)" class="form-section">
+        <h2 class="section-title">Estrazione automatica da certificato (AI)</h2>
+        <p class="ai-hint">Carica il certificato (PDF o immagine): l'AI compila automaticamente scadenza e numero. Verifica sempre i dati prima di salvare.</p>
+        <div class="ai-row">
+          <input ref="certFile" type="file" accept=".pdf,image/png,image/jpeg" aria-label="Certificato da analizzare" @change="onCertPick" />
+          <Button label="Estrai dati" icon="pi pi-bolt" :loading="aiLoading" :disabled="!certPicked" @click="extractCert" type="button" />
+        </div>
+        <div v-if="aiMsg" :class="['ai-msg', aiOk ? 'ok' : 'err']">{{ aiMsg }}</div>
+      </section>
+
       <!-- CERTIFICAZIONI HACCP (solo alimentare) -->
       <section v-if="form.tipo === 'alimentare'" class="form-section">
         <h2 class="section-title">Certificazioni HACCP</h2>
@@ -129,7 +140,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -143,7 +154,7 @@ const props = defineProps({
   fornitore: Object,
 });
 
-const isEdit = computed(() => !!props.fornitore);
+const isEdit = computed(() => !!props.fornitore?.id);
 
 const form = useForm({
   codice:              props.fornitore?.codice              ?? '',
@@ -154,7 +165,7 @@ const form = useForm({
   email:               props.fornitore?.email               ?? '',
   telefono:            props.fornitore?.telefono            ?? '',
   haccp_certificato:   props.fornitore?.haccp_certificato   ?? false,
-  haccp_scadenza:      props.fornitore?.haccp_scadenza      ?? null,
+  haccp_scadenza:      props.fornitore?.haccp_scadenza ? new Date(props.fornitore.haccp_scadenza) : null,
   certificazioni_note: props.fornitore?.certificazioni_note ?? '',
   moca_certificato:    props.fornitore?.moca_certificato    ?? false,
   moca_numero:         props.fornitore?.moca_numero         ?? '',
@@ -162,10 +173,36 @@ const form = useForm({
   note:                props.fornitore?.note                ?? '',
 });
 
+form.transform(data => ({
+  ...data,
+  haccp_scadenza: data.haccp_scadenza instanceof Date
+    ? data.haccp_scadenza.toISOString().slice(0, 10)
+    : (data.haccp_scadenza ?? null),
+}));
+
+watch(() => props.fornitore, (f) => {
+  form.codice              = f?.codice              ?? '';
+  form.ragione_sociale     = f?.ragione_sociale     ?? '';
+  form.tipo                = f?.tipo                ?? '';
+  form.piva                = f?.piva                ?? '';
+  form.indirizzo           = f?.indirizzo           ?? '';
+  form.email               = f?.email               ?? '';
+  form.telefono            = f?.telefono            ?? '';
+  form.haccp_certificato   = f?.haccp_certificato   ?? false;
+  form.haccp_scadenza      = f?.haccp_scadenza ? new Date(f.haccp_scadenza) : null;
+  form.certificazioni_note = f?.certificazioni_note ?? '';
+  form.moca_certificato    = f?.moca_certificato    ?? false;
+  form.moca_numero         = f?.moca_numero         ?? '';
+  form.attivo              = f?.attivo              ?? true;
+  form.note                = f?.note                ?? '';
+  form.clearErrors();
+});
+
 const tipoOptions = [
   { label: 'Alimentare',                    value: 'alimentare' },
   { label: 'Imballaggio Primario (MOCA)',   value: 'imballaggio_primario' },
   { label: 'Detergente / Imb. Secondario',  value: 'detergente_secondario' },
+  { label: 'Conto Terzi',                   value: 'conto_terzi' },
 ];
 
 function submit() {
@@ -173,6 +210,36 @@ function submit() {
     form.put(`/fornitori/${props.fornitore.id}`);
   } else {
     form.post('/fornitori');
+  }
+}
+
+// AI certificate extraction (Epic 2)
+const certFile = ref(null);
+const certPicked = ref(false);
+const aiLoading = ref(false);
+const aiMsg = ref('');
+const aiOk = ref(false);
+function onCertPick() { certPicked.value = !!(certFile.value && certFile.value.files && certFile.value.files.length); }
+function xsrfToken() { const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/); return m ? decodeURIComponent(m[1]) : ''; }
+async function extractCert() {
+  if (!certFile.value?.files?.length) return;
+  aiLoading.value = true; aiMsg.value = '';
+  const fd = new FormData();
+  fd.append('file', certFile.value.files[0]);
+  try {
+    const res = await fetch('/fornitori/estrai-certificato', {
+      method: 'POST', body: fd, credentials: 'same-origin',
+      headers: { 'X-XSRF-TOKEN': xsrfToken(), 'Accept': 'application/json' },
+    });
+    const data = await res.json();
+    if (!data.ok) { aiOk.value = false; aiMsg.value = data.error || 'Estrazione non riuscita.'; return; }
+    if (data.haccp_scadenza) form.haccp_scadenza = new Date(data.haccp_scadenza);
+    if (data.moca_numero) form.moca_numero = data.moca_numero;
+    aiOk.value = true; aiMsg.value = 'Dati estratti e compilati. Controlla prima di salvare.';
+  } catch (e) {
+    aiOk.value = false; aiMsg.value = 'Errore di rete durante l\'estrazione.';
+  } finally {
+    aiLoading.value = false;
   }
 }
 </script>
@@ -187,18 +254,18 @@ function submit() {
 .page-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--ink);
   margin: 0;
 }
 .form-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 .form-section {
   padding: 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border);
 }
 .form-section:last-of-type { border-bottom: none; }
 .section-title {
@@ -206,7 +273,7 @@ function submit() {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: var(--ink-2);
   margin: 0 0 1rem 0;
 }
 .form-grid {
@@ -215,15 +282,21 @@ function submit() {
   gap: 1rem;
 }
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
-.field label { font-size: 0.85rem; font-weight: 600; color: #374151; }
+.field label { font-size: 0.85rem; font-weight: 600; color: var(--ink-2); }
 .field-full { grid-column: 1 / -1; }
 .field-inline { flex-direction: row; align-items: center; gap: 0.6rem; }
 .field-inline label { margin: 0; font-weight: 500; }
-.error { color: #dc2626; font-size: 0.78rem; min-height: 1em; }
+.error { color: var(--danger); font-size: 0.78rem; min-height: 1em; }
 .form-actions {
   padding: 1.25rem 1.5rem;
-  background: #f8fafc;
+  background: var(--surface-2);
   display: flex;
   justify-content: flex-end;
 }
+
+.ai-hint { font-size: 0.82rem; color: var(--ink-2); margin: 0 0 0.75rem 0; }
+.ai-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+.ai-msg { margin-top: 0.6rem; font-size: 0.85rem; }
+.ai-msg.ok { color: var(--ok); }
+.ai-msg.err { color: var(--danger); }
 </style>

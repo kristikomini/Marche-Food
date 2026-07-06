@@ -34,18 +34,18 @@
       <Column v-if="isAdmin" header="Azioni" style="width:100px">
         <template #body="{ data }">
           <div style="display:flex;gap:0.4rem">
-            <Link :href="`/prodotti/${data.id}/edit`"><Button icon="pi pi-pencil" size="small" outlined /></Link>
-            <Button icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDelete(data)" />
+            <Link :href="`/prodotti/${data.id}/edit`"><Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined /></Link>
+            <Button icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(data)" />
           </div>
         </template>
       </Column>
-      <template #empty><div class="empty-state">Nessun prodotto trovato.</div></template>
+      <template #empty><EmptyState icon="pi pi-tag" title="Nessun prodotto" /></template>
     </DataTable>
 
     <div v-if="prodotti.last_page > 1" class="pagination">
-      <Button icon="pi pi-chevron-left" outlined size="small" :disabled="!prodotti.prev_page_url" @click="router.visit(prodotti.prev_page_url)" />
+      <Button icon="pi pi-chevron-left" aria-label="Pagina precedente" outlined size="small" :disabled="!prodotti.prev_page_url" @click="router.visit(prodotti.prev_page_url)" />
       <span class="page-info">{{ prodotti.current_page }} / {{ prodotti.last_page }} ({{ prodotti.total }})</span>
-      <Button icon="pi pi-chevron-right" outlined size="small" :disabled="!prodotti.next_page_url" @click="router.visit(prodotti.next_page_url)" />
+      <Button icon="pi pi-chevron-right" aria-label="Pagina successiva" outlined size="small" :disabled="!prodotti.next_page_url" @click="router.visit(prodotti.next_page_url)" />
     </div>
   </AppLayout>
 </template>
@@ -55,6 +55,7 @@ import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
@@ -83,13 +84,13 @@ function confirmDelete(p) {
 
 <style scoped>
 .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
-.page-title { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0; }
+.page-title { font-size:1.5rem; font-weight:700; color:var(--ink); margin:0; }
 .filters-bar { display:flex; gap:1rem; flex-wrap:wrap; }
-.row-link { color:#1d4ed8; text-decoration:none; font-weight:500; }
+.row-link { color:var(--info); text-decoration:none; font-weight:500; }
 .row-link:hover { text-decoration:underline; }
-.text-muted { color:#94a3b8; }
+.text-muted { color:var(--ink-3); }
 .mt-4 { margin-top:1rem; }
 .pagination { display:flex; align-items:center; gap:1rem; margin-top:1rem; justify-content:center; }
-.page-info { font-size:0.875rem; color:#64748b; }
-.empty-state { padding:2rem; text-align:center; color:#94a3b8; }
+.page-info { font-size:0.875rem; color:var(--ink-2); }
+.empty-state { padding:2rem; text-align:center; color:var(--ink-3); }
 </style>

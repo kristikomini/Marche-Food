@@ -122,7 +122,7 @@ class FornitoreSeeder extends Seeder
         ];
 
         foreach ($fornitori as $data) {
-            Fornitore::create($data);
+            Fornitore::firstOrCreate(['codice' => $data['codice']], $data);
         }
     }
 }

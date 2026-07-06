@@ -3,7 +3,7 @@
     <div class="page-header">
       <h1 class="page-title">{{ isEdit ? 'Modifica Lotto Detergente' : 'Nuovo Lotto Detergente' }}</h1>
       <Link href="/imballaggi?tab=detergenti">
-        <Button label="Annulla" outlined icon="pi pi-arrow-left" />
+        <Button label="Annulla" outlined icon="pi pi-arrow-left" aria-label="Indietro" />
       </Link>
     </div>
 
@@ -78,7 +78,8 @@
 
           <div class="field">
             <label>Data Uscita</label>
-            <DatePicker v-model="form.data_out" date-format="dd/mm/yy" show-button-bar fluid />
+            <DatePicker v-model="form.data_out" date-format="dd/mm/yy" :invalid="!!form.errors.data_out" show-button-bar fluid />
+            <small class="error">{{ form.errors.data_out }}</small>
           </div>
 
           <div class="field field-full">
@@ -97,7 +98,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -129,6 +130,21 @@ const form = useForm({
   note:           props.lotto?.note           ?? '',
 });
 
+watch(() => props.lotto, (l) => {
+  form.fornitore_id    = l?.fornitore_id    ?? null;
+  form.componente      = l?.componente      ?? '';
+  form.codice_articolo = l?.codice_articolo ?? '';
+  form.um              = l?.um              ?? 'lt';
+  form.quantita        = l?.quantita        ? Number(l.quantita) : null;
+  form.lotto           = l?.lotto           ?? '';
+  form.scadenza        = l?.scadenza        ? new Date(l.scadenza) : null;
+  form.numero_ddt      = l?.numero_ddt      ?? '';
+  form.data_in         = l?.data_in         ? new Date(l.data_in)  : null;
+  form.data_out        = l?.data_out        ? new Date(l.data_out) : null;
+  form.note            = l?.note            ?? '';
+  form.clearErrors();
+});
+
 function submit() {
   const payload = {
     ...form.data(),
@@ -146,14 +162,14 @@ function submit() {
 
 <style scoped>
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-.page-title { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
-.form-card { background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
+.page-title { font-size: 1.5rem; font-weight: 700; color: var(--ink); margin: 0; }
+.form-card { background: var(--surface); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
 .form-section { padding: 1.5rem; }
-.section-title { font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin: 0 0 1rem 0; }
+.section-title { font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); margin: 0 0 1rem 0; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
-.field label { font-size: 0.85rem; font-weight: 600; color: #374151; }
+.field label { font-size: 0.85rem; font-weight: 600; color: var(--ink-2); }
 .field-full { grid-column: 1 / -1; }
-.error { color: #dc2626; font-size: 0.78rem; min-height: 1em; }
-.form-actions { padding: 1.25rem 1.5rem; background: #f8fafc; display: flex; justify-content: flex-end; border-top: 1px solid #e2e8f0; }
+.error { color: var(--danger); font-size: 0.78rem; min-height: 1em; }
+.form-actions { padding: 1.25rem 1.5rem; background: var(--surface-2); display: flex; justify-content: flex-end; border-top: 1px solid var(--border); }
 </style>

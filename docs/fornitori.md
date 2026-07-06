@@ -11,6 +11,7 @@ Un **fornitore** è un'azienda da cui Marche International Food acquista qualcos
 | Tipo (valore nel DB)      | Cosa fornisce                          | Modulo dove appare           |
 |---------------------------|----------------------------------------|------------------------------|
 | `alimentare`              | Materie prime (carne, spezie, ecc.)    | Acquisti                     |
+| `conto_terzi`             | Lavorazione per conto terzi            | Acquisti (con `is_conto_terzi = TRUE`) |
 | `imballaggio_primario`    | Imballaggi a contatto con il cibo (MOCA) | Imballaggi → tab "Primari"   |
 | `detergente_secondario`   | Detergenti / imballaggi secondari      | Imballaggi → tab "Detergenti"|
 
@@ -27,7 +28,7 @@ CREATE TABLE fornitori (
     id                  BIGSERIAL PRIMARY KEY,
     codice              VARCHAR(20)  UNIQUE,           -- codice interno opzionale (es. "FOR001")
     ragione_sociale     VARCHAR(200) NOT NULL,          -- nome ufficiale dell'azienda
-    tipo                VARCHAR(30)  NOT NULL,          -- 'alimentare' | 'imballaggio_primario' | 'detergente_secondario'
+    tipo                VARCHAR(30)  NOT NULL,          -- 'alimentare' | 'conto_terzi' | 'imballaggio_primario' | 'detergente_secondario'
     piva                VARCHAR(20),                   -- Partita IVA
     indirizzo           TEXT,
     email               VARCHAR(100),
@@ -51,7 +52,7 @@ CREATE TABLE fornitori (
 | `id` | BIGSERIAL | sì (auto) | Numero intero generato automaticamente. È la chiave primaria — ogni fornitore ha un ID unico che non cambia mai. |
 | `codice` | VARCHAR(20) | no | Un codice che l'azienda assegna internamente (es. "FOR001"). Non può essere duplicato tra fornitori (`UNIQUE`). |
 | `ragione_sociale` | VARCHAR(200) | **sì** | Il nome legale dell'azienda fornitrice. È l'unico campo obbligatorio oltre a `tipo`. |
-| `tipo` | VARCHAR(30) | **sì** | Uno dei tre valori fissi. Determina in quale sezione dell'app il fornitore può essere usato. |
+| `tipo` | VARCHAR(30) | **sì** | Uno dei quattro valori fissi. Determina in quale sezione dell'app il fornitore può essere usato. |
 | `piva` | VARCHAR(20) | no | Partita IVA, usata solo per riferimento. |
 | `indirizzo` | TEXT | no | Indirizzo completo in formato libero. |
 | `email` | VARCHAR(100) | no | Email di contatto. |
@@ -267,7 +268,7 @@ private function validated(Request $request, ?int $ignoreId = null): array
     return $request->validate([
         'codice'          => "nullable|string|max:20|unique:fornitori,codice,{$ignoreId}",
         'ragione_sociale' => 'required|string|max:200',
-        'tipo'            => 'required|in:alimentare,imballaggio_primario,detergente_secondario',
+        'tipo'            => 'required|in:alimentare,conto_terzi,imballaggio_primario,detergente_secondario',
         'piva'            => 'nullable|string|max:20',
         'email'           => 'nullable|email|max:100',
         'haccp_certificato' => 'boolean',
@@ -282,7 +283,7 @@ Le regole di validazione funzionano così:
 - `required` → il campo non può essere vuoto
 - `nullable` → il campo può essere vuoto/null
 - `string|max:200` → deve essere testo, massimo 200 caratteri
-- `in:alimentare,...` → deve essere uno di questi valori esatti
+- `in:alimentare,conto_terzi,...` → deve essere uno di questi valori esatti
 - `unique:fornitori,codice,{$ignoreId}` → deve essere unico nella colonna `codice` della tabella `fornitori`, ignorando la riga con id `$ignoreId`
 - `email` → deve essere formato email valido
 - `boolean` → deve essere true o false
@@ -449,3 +450,20 @@ WHERE a.id = 1001;
 | Mostrare gli acquisti di un fornitore nella scheda | `Fornitore.php` (aggiungi relazione `acquisti()`) + `FornitoreController.php` (edit: carica `$fornitore->load('acquisti')`) + `Form.vue` (mostra la lista) |
 | Impedire la cancellazione se ha acquisti | `FornitoreController.php` (destroy: controlla `$fornitore->acquisti()->exists()` prima di delete) |
 | Cercare anche per P.IVA | `FornitoreController.php` (index: aggiungi `->orWhere('piva', 'ilike', ...)`) |
+
+---
+
+## Estrazione AI del certificato (Epic 2)
+
+Nel form Fornitore (tipo `alimentare` o `imballaggio_primario`) è disponibile il
+caricamento di un certificato **HACCP/MOCA** (PDF o immagine). Il pulsante
+"Estrai dati" invia il file a `POST /fornitori/estrai-certificato` (solo admin),
+che tramite `CertificateExtractionService` interroga una vision LLM (Anthropic
+Claude, configurabile in `config/ai.php`) e restituisce `haccp_scadenza` e
+`moca_numero`, compilando automaticamente i campi del form (da verificare prima
+del salvataggio).
+
+- Richiede `ANTHROPIC_API_KEY`; senza chiave la funzione risponde 422 con un
+  messaggio e l'operatore compila a mano.
+- Vedi `INTEGRATIONS.md` per dettagli su richiesta/risposta e sulle implicazioni
+  di privacy nell'invio dei certificati a un servizio esterno.

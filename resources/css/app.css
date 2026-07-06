@@ -3,7 +3,101 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+/* ═══════════════════════════════════════════════════════════════════════════
+   Marche International Food — Design System
+   Self-hosted variable fonts (imported in app.js) + semantic design tokens.
+   Every colour is named ONCE here and consumed via var(--token) everywhere.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* The `--font-*` prefix is Tailwind v4's font-family theme namespace, so Tailwind
+   MANAGES these and tree-shakes any that aren't referenced by a generated utility
+   class. The app sets `font-family: var(--font-*)` directly (never the utility),
+   so we use `@theme static` to force all three to always be emitted to :root. */
+@theme static {
+    --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Fraunces Variable', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+    --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace;
 }
+
+/* ── Design tokens (light) ────────────────────────────────────────────────── */
+:root {
+    /* Warm neutrals — surfaces & ink */
+    --ground:        #faf8f4;
+    --surface:       #ffffff;
+    --surface-2:     #f4f1ea;
+    --border:        #e7e1d6;
+    --border-strong: #d8d0c1;
+    --ink:           #211e19;
+    --ink-2:         #57514a;
+    --ink-3:         #928b7e;
+
+    /* Marche Pine — primary brand */
+    --pine:        #2e6b57;
+    --pine-strong: #1f5040;
+    --pine-deep:   #123528;
+    --pine-tint:   #e7f1ec;
+
+    /* Ambra — warm accent (tradition) */
+    --ambra:        #9a5b12;
+    --ambra-strong: #7c480c;
+    --ambra-tint:   #f7eedd;
+
+    /* Semantic status (colour + always paired with icon/text in markup) */
+    --ok:      #15803d;  --ok-tint:     #dcfce7;
+    --warn:    #b45309;  --warn-tint:   #fbefd6;
+    --danger:  #b91c1c;  --danger-tint: #fce4e4;
+    --info:    #1d4ed8;  --info-tint:   #dee7fd;
+
+    /* Elevation & shape */
+    --shadow-1: 0 1px 2px rgba(33, 30, 25, .05), 0 1px 3px rgba(33, 30, 25, .06);
+    --shadow-2: 0 4px 12px rgba(33, 30, 25, .08), 0 2px 4px rgba(33, 30, 25, .05);
+    --radius:   10px;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+body {
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background: var(--ground);
+}
+
+/* Page & section headings carry the display serif (tradition + modern).
+   Scoped component classes still control size/weight/colour; only the
+   family cascades in, giving instant typographic identity. */
+h1, h2, h3 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+}
+
+/* Lining, tabular figures wherever digits line up in data */
+.mono, .tabular, [class*='num'], td.right, .lot, .lotto {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Responsive refinements (mobile) ─────────────────────────────────────── */
+@media (max-width: 768px) {
+    /* Stack multi-column form / stat grids on small screens */
+    .form-grid-4,
+    .form-grid,
+    .stat-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Let wide data tables scroll horizontally instead of overflowing the page */
+    .p-datatable-wrapper,
+    .p-datatable-table-container,
+    .table-wrap {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ── Accessibility: visible keyboard focus (WCAG 2.4.7) ───────────────────── */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--pine);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+/* Slightly stronger muted-text contrast for small print */
+.text-muted-accessible { color: var(--ink-2); }

@@ -1,17 +1,28 @@
 <template>
   <div class="login-page">
-    <!-- Decorative brand panel -->
+    <!-- Brand panel — the hills of Le Marche at dawn -->
     <div class="brand-panel">
-      <div class="brand-arches">
-        <div class="arch arch-1"></div>
-        <div class="arch arch-2"></div>
-        <div class="arch arch-3"></div>
-        <div class="arch arch-4"></div>
-        <div class="sun"></div>
-      </div>
+      <svg class="brand-scene" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <defs>
+          <radialGradient id="sun-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#f0c869" stop-opacity="0.42" />
+            <stop offset="100%" stop-color="#f0c869" stop-opacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="830" cy="262" r="150" fill="url(#sun-glow)" />
+        <circle cx="830" cy="262" r="52" fill="#e6b453" />
+        <!-- distant, hazy hill -->
+        <path d="M0,250 C220,190 380,280 620,220 S1000,180 1200,240 L1200,500 L0,500 Z" fill="#3f7d68" opacity="0.55" />
+        <!-- mid hill -->
+        <path d="M0,300 C260,250 460,330 720,278 S1060,268 1200,308 L1200,500 L0,500 Z" fill="#265a49" />
+        <!-- front hill -->
+        <path d="M0,360 C300,326 520,392 820,350 S1100,356 1200,378 L1200,500 L0,500 Z" fill="#173a2c" />
+      </svg>
       <div class="brand-text">
-        <h1 class="brand-name">Marche International<br>Food S.r.l.</h1>
-        <p class="brand-tagline">Sistema di Tracciabilità HACCP</p>
+        <span class="brand-mark">mif</span>
+        <h1 class="brand-name">Marche International Food</h1>
+        <p class="brand-tagline-it">Dalle Marche alla tua tavola</p>
+        <p class="brand-system">Sistema di Tracciabilità HACCP</p>
       </div>
     </div>
 
@@ -23,6 +34,10 @@
         </div>
         <h2 class="card-title">Accedi</h2>
         <p class="card-subtitle">Inserisci le tue credenziali per continuare</p>
+
+        <div v-if="$page.props.flash?.status" class="flash-status">
+          {{ $page.props.flash.status }}
+        </div>
 
         <form @submit.prevent="submit" class="form">
           <div class="field">
@@ -59,6 +74,7 @@
               <Checkbox v-model="form.remember" input-id="remember" binary />
               <label for="remember">Ricordami</label>
             </div>
+            <a href="/forgot-password" class="forgot-link">Password dimenticata?</a>
           </div>
 
           <Button
@@ -101,65 +117,29 @@ function submit() {
 .login-page {
   display: flex;
   min-height: 100vh;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* ── Brand Panel ─────────────────────────────── */
 .brand-panel {
   flex: 1;
-  background: linear-gradient(160deg, #162b1c 0%, #1c3d28 50%, #2a6941 100%);
+  background: linear-gradient(165deg, var(--pine-deep) 0%, var(--pine-strong) 62%, var(--pine) 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 3rem;
+  padding-top: 21vh;
   position: relative;
   overflow: hidden;
 }
 
-.brand-arches {
-  position: absolute;
-  bottom: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 500px;
-  height: 320px;
-}
-
-.arch {
+.brand-scene {
   position: absolute;
   bottom: 0;
-  border-radius: 50% 50% 0 0;
-}
-.arch-1 {
-  width: 340px; height: 280px;
-  background: rgba(42, 105, 65, 0.7);
-  left: 80px;
-}
-.arch-2 {
-  width: 260px; height: 220px;
-  background: rgba(74, 154, 93, 0.6);
-  left: 140px;
-}
-.arch-3 {
-  width: 180px; height: 160px;
-  background: rgba(128, 196, 144, 0.5);
-  left: 180px;
-  bottom: 0;
-}
-.arch-4 {
-  width: 200px; height: 170px;
-  background: rgba(204, 68, 68, 0.35);
-  left: 280px;
-}
-.sun {
-  position: absolute;
-  width: 70px; height: 70px;
-  border-radius: 50%;
-  background: #f5c534;
-  top: 20px;
-  left: 210px;
-  box-shadow: 0 0 40px rgba(245, 197, 52, 0.4);
+  left: 0;
+  width: 100%;
+  height: 62%;
 }
 
 .brand-text {
@@ -167,21 +147,43 @@ function submit() {
   z-index: 10;
   text-align: center;
   color: #fff;
+  margin-bottom: 2rem;
+}
+
+.brand-mark {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+  padding: 0.3rem 0.8rem;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  border-radius: 9px;
+  margin-bottom: 1.5rem;
 }
 
 .brand-name {
-  font-size: 2.2rem;
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: 0.01em;
-  margin: 0 0 1rem 0;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  font-size: 2.6rem;
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.75rem 0;
+  text-wrap: balance;
+  text-shadow: 0 1px 3px rgba(9, 20, 15, 0.55), 0 2px 20px rgba(9, 20, 15, 0.35);
 }
 
-.brand-tagline {
-  font-size: 1rem;
-  color: rgba(255,255,255,0.7);
-  letter-spacing: 0.08em;
+.brand-tagline-it {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 1.5rem 0;
+}
+
+.brand-system {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 500;
   margin: 0;
@@ -191,7 +193,7 @@ function submit() {
 .form-panel {
   width: 460px;
   min-width: 420px;
-  background: #f5f7f5;
+  background: var(--ground);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -199,7 +201,7 @@ function submit() {
 }
 
 .login-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   box-shadow: 0 8px 40px rgba(22, 43, 28, 0.10);
   padding: 2.5rem 2rem;
@@ -223,14 +225,14 @@ function submit() {
   text-align: center;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1a3d28;
+  color: var(--pine-strong);
   margin: 0 0 0.25rem 0;
 }
 
 .card-subtitle {
   text-align: center;
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--ink-2);
   margin: 0 0 1.75rem 0;
 }
 
@@ -249,11 +251,11 @@ function submit() {
 .field label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--ink-2);
 }
 
 .error {
-  color: #dc2626;
+  color: var(--danger);
   font-size: 0.78rem;
   min-height: 1rem;
 }
@@ -269,27 +271,48 @@ function submit() {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--ink-2);
+}
+
+.forgot-link {
+  font-size: 0.8rem;
+  color: var(--pine);
+  text-decoration: none;
+  font-weight: 500;
+}
+.forgot-link:hover { text-decoration: underline; }
+
+.flash-status {
+  background: var(--ok-tint);
+  border: 1px solid var(--ok);
+  color: var(--ok);
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
 }
 
 .submit-btn {
   margin-top: 0.5rem;
-  background: #2a6941 !important;
-  border-color: #2a6941 !important;
+  background: var(--pine) !important;
+  border-color: var(--pine) !important;
   font-weight: 600;
   padding: 0.75rem;
 }
 
 .submit-btn:hover {
-  background: #1c4f30 !important;
-  border-color: #1c4f30 !important;
+  background: var(--pine-strong) !important;
+  border-color: var(--pine-strong) !important;
 }
 
 @media (max-width: 768px) {
   .login-page { flex-direction: column; }
-  .brand-panel { padding: 2rem; min-height: 220px; }
-  .brand-name { font-size: 1.5rem; }
+  .brand-panel { padding: 2.5rem 2rem 3rem; min-height: 260px; }
+  .brand-name { font-size: 1.75rem; }
+  .brand-tagline-it { font-size: 1.05rem; margin-bottom: 0.5rem; }
+  .brand-mark { margin-bottom: 1rem; }
+  .brand-text { margin-bottom: 0; }
   .form-panel { width: 100%; min-width: 0; }
-  .brand-arches { display: none; }
+  .brand-scene { height: 45%; }
 }
 </style>

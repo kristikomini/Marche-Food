@@ -12,6 +12,7 @@ class ProduzioneMateriaPrima extends Model
     protected $fillable = [
         'produzione_id',
         'acquisto_riga_id',
+        'semilavorato_id',
         'materia_prima_id',
         'quantita_kg',
     ];
@@ -20,9 +21,19 @@ class ProduzioneMateriaPrima extends Model
         'quantita_kg' => 'decimal:3',
     ];
 
+    public function produzione()
+    {
+        return $this->belongsTo(Produzione::class);
+    }
+
     public function acquistoRiga()
     {
         return $this->belongsTo(AcquistoRiga::class);
+    }
+
+    public function semilavorato()
+    {
+        return $this->belongsTo(LottoSemilavorato::class);
     }
 
     public function materiaPrima()

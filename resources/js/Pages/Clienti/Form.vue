@@ -3,7 +3,7 @@
     <div class="page-header">
       <h1 class="page-title">{{ isEdit ? 'Modifica Cliente' : 'Nuovo Cliente' }}</h1>
       <Link href="/clienti">
-        <Button label="Annulla" outlined icon="pi pi-arrow-left" />
+        <Button label="Annulla" outlined icon="pi pi-arrow-left" aria-label="Indietro" />
       </Link>
     </div>
 
@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -95,6 +95,18 @@ const form = useForm({
   note:            props.cliente?.note            ?? '',
 });
 
+watch(() => props.cliente, (c) => {
+  form.codice_cliente  = c?.codice_cliente  ?? '';
+  form.ragione_sociale = c?.ragione_sociale ?? '';
+  form.piva            = c?.piva            ?? '';
+  form.indirizzo       = c?.indirizzo       ?? '';
+  form.email           = c?.email           ?? '';
+  form.telefono        = c?.telefono        ?? '';
+  form.attivo          = c?.attivo          ?? true;
+  form.note            = c?.note            ?? '';
+  form.clearErrors();
+});
+
 function submit() {
   if (isEdit.value) {
     form.put(`/clienti/${props.cliente.id}`);
@@ -114,25 +126,25 @@ function submit() {
 .page-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--ink);
   margin: 0;
 }
 .form-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 .form-section {
   padding: 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border);
 }
 .section-title {
   font-size: 0.9rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: var(--ink-2);
   margin: 0 0 1rem 0;
 }
 .form-grid {
@@ -141,14 +153,14 @@ function submit() {
   gap: 1rem;
 }
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
-.field label { font-size: 0.85rem; font-weight: 600; color: #374151; }
+.field label { font-size: 0.85rem; font-weight: 600; color: var(--ink-2); }
 .field-full { grid-column: 1 / -1; }
 .field-inline { flex-direction: row; align-items: center; gap: 0.6rem; }
 .field-inline label { margin: 0; font-weight: 500; }
-.error { color: #dc2626; font-size: 0.78rem; min-height: 1em; }
+.error { color: var(--danger); font-size: 0.78rem; min-height: 1em; }
 .form-actions {
   padding: 1.25rem 1.5rem;
-  background: #f8fafc;
+  background: var(--surface-2);
   display: flex;
   justify-content: flex-end;
 }

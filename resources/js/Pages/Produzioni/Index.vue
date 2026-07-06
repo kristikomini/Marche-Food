@@ -2,7 +2,12 @@
   <AppLayout>
     <div class="page-header">
       <h1 class="page-title">Produzioni</h1>
-      <Link href="/produzioni/create"><Button label="Nuova Produzione" icon="pi pi-plus" /></Link>
+      <div style="display:flex;gap:0.5rem">
+        <a href="/produzioni/export">
+          <Button label="Esporta CSV" icon="pi pi-download" outlined severity="secondary" />
+        </a>
+        <Link href="/produzioni/create"><Button label="Nuova Produzione" icon="pi pi-plus" /></Link>
+      </div>
     </div>
 
     <div class="filters-bar">
@@ -39,21 +44,27 @@
       <Column field="operatore" header="Operatore" style="width:130px">
         <template #body="{ data }"><span class="text-muted">{{ data.operatore ?? '—' }}</span></template>
       </Column>
-      <Column header="Azioni" style="width:100px">
+      <Column header="Azioni" style="width:170px">
         <template #body="{ data }">
           <div style="display:flex;gap:0.4rem">
-            <Link :href="`/produzioni/${data.id}/edit`"><Button icon="pi pi-pencil" size="small" outlined /></Link>
-            <Button v-if="isAdmin" icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDelete(data)" />
+            <Link :href="`/produzioni/${data.id}/edit`"><Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined /></Link>
+            <a :href="`/produzioni/${data.id}/etichetta`" target="_blank">
+              <Button icon="pi pi-qrcode" aria-label="Etichette QR" size="small" outlined severity="secondary" v-tooltip="'Etichette QR'" />
+            </a>
+            <a :href="`/produzioni/${data.id}/pdf`" target="_blank">
+              <Button icon="pi pi-file-pdf" aria-label="Scarica PDF" size="small" outlined severity="danger" v-tooltip="'Scarica PDF'" />
+            </a>
+            <Button v-if="isAdmin" icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(data)" />
           </div>
         </template>
       </Column>
-      <template #empty><div class="empty-state">Nessuna produzione trovata.</div></template>
+      <template #empty><EmptyState icon="pi pi-cog" title="Nessuna produzione" /></template>
     </DataTable>
 
     <div v-if="produzioni.last_page > 1" class="pagination">
-      <Button icon="pi pi-chevron-left" outlined size="small" :disabled="!produzioni.prev_page_url" @click="router.visit(produzioni.prev_page_url)" />
+      <Button icon="pi pi-chevron-left" aria-label="Pagina precedente" outlined size="small" :disabled="!produzioni.prev_page_url" @click="router.visit(produzioni.prev_page_url)" />
       <span class="page-info">{{ produzioni.current_page }} / {{ produzioni.last_page }} ({{ produzioni.total }})</span>
-      <Button icon="pi pi-chevron-right" outlined size="small" :disabled="!produzioni.next_page_url" @click="router.visit(produzioni.next_page_url)" />
+      <Button icon="pi pi-chevron-right" aria-label="Pagina successiva" outlined size="small" :disabled="!produzioni.next_page_url" @click="router.visit(produzioni.next_page_url)" />
     </div>
   </AppLayout>
 </template>
@@ -63,6 +74,7 @@ import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
@@ -103,14 +115,14 @@ function confirmDelete(p) {
 
 <style scoped>
 .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
-.page-title { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0; }
+.page-title { font-size:1.5rem; font-weight:700; color:var(--ink); margin:0; }
 .filters-bar { display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; }
-.row-link { color:#1d4ed8; text-decoration:none; font-weight:500; }
+.row-link { color:var(--info); text-decoration:none; font-weight:500; }
 .row-link:hover { text-decoration:underline; }
-.text-muted { color:#94a3b8; }
-.mono { font-family:monospace; font-size:0.88rem; }
+.text-muted { color:var(--ink-3); }
+.mono { font-family:var(--font-mono); font-size:0.88rem; }
 .mt-4 { margin-top:1rem; }
 .pagination { display:flex; align-items:center; gap:1rem; margin-top:1rem; justify-content:center; }
-.page-info { font-size:0.875rem; color:#64748b; }
-.empty-state { padding:2rem; text-align:center; color:#94a3b8; }
+.page-info { font-size:0.875rem; color:var(--ink-2); }
+.empty-state { padding:2rem; text-align:center; color:var(--ink-3); }
 </style>

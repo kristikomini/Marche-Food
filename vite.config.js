@@ -8,7 +8,13 @@ export default defineConfig({
             input: ['resources/js/app.js'],
             refresh: true,
         }),
-        vue(),
+        vue({
+            template: {
+                transformAssetUrls: {
+                    img: [],
+                },
+            },
+        }),
     ],
     server: {
         watch: {

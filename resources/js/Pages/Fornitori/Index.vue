@@ -64,6 +64,12 @@
           <span v-else>{{ data.ragione_sociale }}</span>
         </template>
       </Column>
+      <Column header="Email">
+        <template #body="{ data }"><span class="text-muted">{{ data.email ?? '—' }}</span></template>
+      </Column>
+      <Column header="Telefono" style="width: 130px">
+        <template #body="{ data }"><span class="text-muted">{{ data.telefono ?? '—' }}</span></template>
+      </Column>
       <Column field="tipo" header="Tipo" style="width: 150px">
         <template #body="{ data }">
           <Tag :value="tipoLabel[data.tipo]" :severity="tipoSeverity[data.tipo]" />
@@ -74,8 +80,16 @@
           <i
             v-if="data.tipo === 'alimentare'"
             :class="data.haccp_certificato ? 'pi pi-check-circle' : 'pi pi-times-circle'"
-            :style="{ color: data.haccp_certificato ? '#16a34a' : '#dc2626' }"
+            :style="{ color: data.haccp_certificato ? 'var(--ok)' : 'var(--danger)' }"
           />
+          <span v-else class="text-muted">—</span>
+        </template>
+      </Column>
+      <Column header="Scad. HACCP" style="width: 115px">
+        <template #body="{ data }">
+          <span v-if="data.tipo === 'alimentare' && data.haccp_scadenza" :class="isScaduto(data.haccp_scadenza) ? 'text-danger' : ''">
+            {{ formatDate(data.haccp_scadenza) }}
+          </span>
           <span v-else class="text-muted">—</span>
         </template>
       </Column>
@@ -84,7 +98,7 @@
           <i
             v-if="data.tipo === 'imballaggio_primario'"
             :class="data.moca_certificato ? 'pi pi-check-circle' : 'pi pi-times-circle'"
-            :style="{ color: data.moca_certificato ? '#16a34a' : '#dc2626' }"
+            :style="{ color: data.moca_certificato ? 'var(--ok)' : 'var(--danger)' }"
           />
           <span v-else class="text-muted">—</span>
         </template>
@@ -98,22 +112,22 @@
         <template #body="{ data }">
           <div style="display:flex; gap:0.4rem">
             <Link :href="`/fornitori/${data.id}/edit`">
-              <Button icon="pi pi-pencil" size="small" outlined />
+              <Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined />
             </Link>
-            <Button icon="pi pi-trash" size="small" outlined severity="danger" @click="confirmDelete(data)" />
+            <Button icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(data)" />
           </div>
         </template>
       </Column>
 
       <template #empty>
-        <div class="empty-state">Nessun fornitore trovato.</div>
+        <EmptyState icon="pi pi-building" title="Nessun fornitore" />
       </template>
     </DataTable>
 
     <!-- Pagination -->
     <div v-if="fornitori.last_page > 1" class="pagination">
       <Button
-        icon="pi pi-chevron-left"
+        icon="pi pi-chevron-left" aria-label="Pagina precedente"
         outlined
         size="small"
         :disabled="!fornitori.prev_page_url"
@@ -124,7 +138,7 @@
         ({{ fornitori.total }} fornitori)
       </span>
       <Button
-        icon="pi pi-chevron-right"
+        icon="pi pi-chevron-right" aria-label="Pagina successiva"
         outlined
         size="small"
         :disabled="!fornitori.next_page_url"
@@ -136,9 +150,10 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { Link, router, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage, useForm } from '@inertiajs/vue3';
 import { useConfirm } from 'primevue/useconfirm';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
@@ -154,12 +169,18 @@ const props = defineProps({
 
 const confirm = useConfirm();
 const page = usePage();
+const deleteForm = useForm({});
 const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
 
 const filters = ref({
   search: props.filters?.search ?? '',
   tipo: props.filters?.tipo ?? '',
 });
+
+function formatDate(d) {
+  return d ? new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+}
+function isScaduto(d) { return d && new Date(d) < new Date(); }
 
 const tipoLabel = {
   alimentare: 'Alimentare',
@@ -196,7 +217,10 @@ function confirmDelete(fornitore) {
     acceptLabel: 'Elimina',
     rejectLabel: 'Annulla',
     acceptClass: 'p-button-danger',
-    accept: () => router.delete(`/fornitori/${fornitore.id}`),
+    accept: () => {
+      if (deleteForm.processing) return;
+      deleteForm.delete(`/fornitori/${fornitore.id}`);
+    },
   });
 }
 </script>
@@ -211,7 +235,7 @@ function confirmDelete(fornitore) {
 .page-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--ink);
   margin: 0;
 }
 .filters-bar {
@@ -225,12 +249,13 @@ function confirmDelete(fornitore) {
   gap: 0.4rem;
 }
 .row-link {
-  color: #1d4ed8;
+  color: var(--info);
   text-decoration: none;
   font-weight: 500;
 }
 .row-link:hover { text-decoration: underline; }
-.text-muted { color: #94a3b8; }
+.text-muted { color: var(--ink-3); }
+.text-danger { color: var(--danger); font-weight: 600; }
 .mt-4 { margin-top: 1rem; }
 .pagination {
   display: flex;
@@ -239,6 +264,6 @@ function confirmDelete(fornitore) {
   margin-top: 1rem;
   justify-content: center;
 }
-.page-info { font-size: 0.875rem; color: #64748b; }
-.empty-state { padding: 2rem; text-align: center; color: #94a3b8; }
+.page-info { font-size: 0.875rem; color: var(--ink-2); }
+.empty-state { padding: 2rem; text-align: center; color: var(--ink-3); }
 </style>

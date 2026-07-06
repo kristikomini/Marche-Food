@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Fornitore;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,7 +45,23 @@ class FornitoreController extends Controller
     public function edit(Fornitore $fornitore): Response
     {
         return Inertia::render('Fornitori/Form', [
-            'fornitore' => $fornitore,
+            'fornitore' => [
+                'id'                  => $fornitore->id,
+                'codice'              => $fornitore->codice,
+                'ragione_sociale'     => $fornitore->ragione_sociale,
+                'tipo'                => $fornitore->tipo,
+                'piva'                => $fornitore->piva,
+                'indirizzo'           => $fornitore->indirizzo,
+                'email'               => $fornitore->email,
+                'telefono'            => $fornitore->telefono,
+                'haccp_certificato'   => (bool) $fornitore->haccp_certificato,
+                'haccp_scadenza'      => $fornitore->haccp_scadenza?->toDateString(),
+                'certificazioni_note' => $fornitore->certificazioni_note,
+                'moca_certificato'    => (bool) $fornitore->moca_certificato,
+                'moca_numero'         => $fornitore->moca_numero,
+                'attivo'              => (bool) $fornitore->attivo,
+                'note'                => $fornitore->note,
+            ],
         ]);
     }
 
@@ -68,9 +85,9 @@ class FornitoreController extends Controller
     private function validated(Request $request, ?int $ignoreId = null): array
     {
         return $request->validate([
-            'codice'               => "nullable|string|max:20|unique:fornitori,codice,{$ignoreId}",
+            'codice'               => ['nullable', 'string', 'max:20', Rule::unique('fornitori', 'codice')->ignore($ignoreId)],
             'ragione_sociale'      => 'required|string|max:200',
-            'tipo'                 => 'required|in:alimentare,imballaggio_primario,detergente_secondario',
+            'tipo'                 => 'required|in:alimentare,imballaggio_primario,detergente_secondario,conto_terzi',
             'piva'                 => 'nullable|string|max:20',
             'indirizzo'            => 'nullable|string',
             'email'                => 'nullable|email|max:100',

@@ -4,10 +4,10 @@
       <h1 class="page-title">{{ isEdit ? 'Modifica Acquisto' : 'Nuovo Acquisto' }}</h1>
       <div style="display:flex;gap:0.5rem;align-items:center">
         <Link v-if="isEdit" :href="`/acquisti/${props.acquisto.id}/print`" target="_blank">
-          <Button label="Stampa" icon="pi pi-print" outlined severity="secondary" />
+          <Button label="Stampa" icon="pi pi-print" aria-label="Stampa" outlined severity="secondary" />
         </Link>
         <Link href="/acquisti">
-          <Button label="Annulla" outlined icon="pi pi-arrow-left" />
+          <Button label="Annulla" outlined icon="pi pi-arrow-left" aria-label="Indietro" />
         </Link>
       </div>
     </div>
@@ -97,6 +97,7 @@
             <thead>
               <tr>
                 <th style="min-width:200px">Prodotto / Descrizione *</th>
+                <th style="min-width:150px">Materia prima</th>
                 <th style="width:70px">U.M.</th>
                 <th style="width:100px">Q.tà Pz</th>
                 <th style="width:110px">Q.tà Kg *</th>
@@ -115,6 +116,19 @@
                   <InputText
                     v-model="riga.nome_prodotto"
                     :invalid="!!form.errors[`righe.${i}.nome_prodotto`]"
+                    fluid
+                    size="small"
+                  />
+                </td>
+                <td>
+                  <Select
+                    v-model="riga.materia_prima_id"
+                    :options="materie"
+                    option-label="nome"
+                    option-value="id"
+                    placeholder="—"
+                    filter
+                    show-clear
                     fluid
                     size="small"
                   />
@@ -181,7 +195,7 @@
                 <td>
                   <Button
                     type="button"
-                    icon="pi pi-trash"
+                    icon="pi pi-trash" aria-label="Elimina"
                     size="small"
                     text
                     severity="danger"
@@ -210,7 +224,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -222,6 +236,7 @@ import DatePicker from 'primevue/datepicker';
 const props = defineProps({
   acquisto: Object,
   fornitori: Array,
+  materie: { type: Array, default: () => [] },
 });
 
 const isEdit = computed(() => !!props.acquisto);
@@ -241,6 +256,8 @@ const umOptions = [
 
 function emptyRiga(dataIn = null) {
   return {
+    id: null,
+    materia_prima_id: null,
     nome_prodotto: '',
     um: 'kg',
     quantita_pz: null,
@@ -259,6 +276,7 @@ function parseDate(d) {
 }
 
 const form = useForm({
+  updated_at:      props.acquisto?.updated_at ?? null,
   fornitore_id:    props.acquisto?.fornitore_id    ?? null,
   numero_documento: props.acquisto?.numero_documento ?? '',
   data_documento:  props.acquisto?.data_documento  ? new Date(props.acquisto.data_documento) : null,
@@ -266,10 +284,12 @@ const form = useForm({
   note:            props.acquisto?.note            ?? '',
   righe: props.acquisto?.righe?.length
     ? props.acquisto.righe.map(r => ({
-        nome_prodotto: r.nome_prodotto ?? '',
-        um:            r.um            ?? 'kg',
-        quantita_pz:   r.quantita_pz   ? Number(r.quantita_pz)  : null,
-        quantita_kg:   r.quantita_kg   ? Number(r.quantita_kg)  : null,
+        id:               r.id           ?? null,
+        materia_prima_id: r.materia_prima_id ?? null,
+        nome_prodotto:    r.nome_prodotto ?? '',
+        um:               r.um            ?? 'kg',
+        quantita_pz:      r.quantita_pz   ? Number(r.quantita_pz)  : null,
+        quantita_kg:      r.quantita_kg   ? Number(r.quantita_kg)  : null,
         lotto:            r.lotto            ?? '',
         lotto_esterno:    r.lotto_esterno    ?? '',
         scadenza:         parseDate(r.scadenza),
@@ -278,6 +298,31 @@ const form = useForm({
         nota_credito_ref: r.nota_credito_ref ?? '',
       }))
     : [emptyRiga()],
+});
+
+watch(() => props.acquisto, (a) => {
+  form.fornitore_id     = a?.fornitore_id     ?? null;
+  form.numero_documento = a?.numero_documento ?? '';
+  form.data_documento   = a?.data_documento   ? new Date(a.data_documento) : null;
+  form.tipo_documento   = a?.tipo_documento   ?? 'DDT';
+  form.note             = a?.note             ?? '';
+  form.righe = a?.righe?.length
+    ? a.righe.map(r => ({
+        id:               r.id               ?? null,
+        materia_prima_id: r.materia_prima_id ?? null,
+        nome_prodotto:    r.nome_prodotto    ?? '',
+        um:               r.um               ?? 'kg',
+        quantita_pz:      r.quantita_pz      ? Number(r.quantita_pz)  : null,
+        quantita_kg:      r.quantita_kg      ? Number(r.quantita_kg)  : null,
+        lotto:            r.lotto            ?? '',
+        lotto_esterno:    r.lotto_esterno    ?? '',
+        scadenza:         parseDate(r.scadenza),
+        data_in:          parseDate(r.data_in),
+        data_out:         parseDate(r.data_out),
+        nota_credito_ref: r.nota_credito_ref ?? '',
+      }))
+    : [emptyRiga()];
+  form.clearErrors();
 });
 
 function syncDataIn() {
@@ -323,11 +368,11 @@ function submit() {
   justify-content: space-between;
   margin-bottom: 1.5rem;
 }
-.page-title { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
+.page-title { font-size: 1.5rem; font-weight: 700; color: var(--ink); margin: 0; }
 .form-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 .mb-4 { margin-bottom: 1rem; }
@@ -337,7 +382,7 @@ function submit() {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: var(--ink-2);
   margin: 0 0 1rem 0;
 }
 .form-grid-4 {
@@ -346,14 +391,14 @@ function submit() {
   gap: 1rem;
 }
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
-.field label { font-size: 0.85rem; font-weight: 600; color: #374151; }
-.error { color: #dc2626; font-size: 0.78rem; }
+.field label { font-size: 0.85rem; font-weight: 600; color: var(--ink-2); }
+.error { color: var(--danger); font-size: 0.78rem; }
 .righe-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border);
 }
 .table-wrapper {
   overflow-x: auto;
@@ -370,24 +415,24 @@ function submit() {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #64748b;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 .righe-table td {
   padding: 0.4rem 0.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
 .righe-table tbody tr:last-child td { border-bottom: none; }
 .form-actions {
   padding: 1rem 1.5rem;
-  background: #f8fafc;
+  background: var(--surface-2);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border);
 }
-.righe-count { font-size: 0.85rem; color: #64748b; }
+.righe-count { font-size: 0.85rem; color: var(--ink-2); }
 </style>
