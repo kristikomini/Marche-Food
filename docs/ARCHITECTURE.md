@@ -283,7 +283,7 @@ Data-safety and compliance features (soft-delete, QR lot labels, allergen tracki
 | Service / component | Responsibility |
 |---|---|
 | `AllergenService` | The 14 EU allergens (Reg. 1169/2011); derives a production lot's allergen set from its ingredients, **recursively** through semi-finished (semilavorato) ingredients (cycle-guarded). |
-| `App\Concerns\Auditable` (existing) | Unchanged; the 7 operational models now **also** use Laravel's `SoftDeletes`. |
+| `App\Concerns\Auditable` (extended) | Still stamps `created_by`/`updated_by`; now **also** writes an append-only `audit_logs` entry (via the `AuditLog` model) on every create/update/delete/restore with before→after field diffs. The 7 operational models also use `SoftDeletes`. |
 
 New controller: `CestinoController` (admin-only trash: list soft-deleted documents, restore, permanent-delete).
 

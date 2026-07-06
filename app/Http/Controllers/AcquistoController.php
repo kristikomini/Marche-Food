@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Acquisto;
 use App\Models\AcquistoRiga;
 use App\Models\Fornitore;
+use App\Models\MateriaPrima;
 use App\Models\ProduzioneMateriaPrima;
 use App\Models\VenditaRiga;
 use Illuminate\Http\Request;
@@ -57,6 +58,7 @@ class AcquistoController extends Controller
                 ->where('attivo', true)
                 ->orderBy('ragione_sociale')
                 ->get(['id', 'ragione_sociale', 'codice']),
+            'materie' => $this->materieList(),
         ]);
     }
 
@@ -91,7 +93,13 @@ class AcquistoController extends Controller
                 ->where('attivo', true)
                 ->orderBy('ragione_sociale')
                 ->get(['id', 'ragione_sociale', 'codice']),
+            'materie' => $this->materieList(),
         ]);
+    }
+
+    private function materieList()
+    {
+        return MateriaPrima::orderBy('nome')->get(['id', 'nome', 'codice']);
     }
 
     public function update(Request $request, Acquisto $acquisto)
@@ -188,6 +196,7 @@ class AcquistoController extends Controller
             'is_conto_terzi'     => ['boolean'],
             'righe'              => ['required', 'array', 'min:1'],
             'righe.*.id'         => ['nullable', 'integer'],
+            'righe.*.materia_prima_id' => ['nullable', 'integer', 'exists:materie_prime,id'],
             'righe.*.nome_prodotto' => ['required', 'string', 'max:200'],
             'righe.*.um'         => ['nullable', 'string', 'max:10'],
             'righe.*.quantita_pz' => ['nullable', 'numeric', 'min:0'],

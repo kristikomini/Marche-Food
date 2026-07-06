@@ -521,3 +521,20 @@ Added to the 7 operational **document** tables: `acquisti`, `vendite`, `produzio
 | `allergeni_tracce` | JSON nullable | array of allergen codes it **may contain** (cross-contact) |
 
 Codes are the 14 EU allergens from `App\Services\AllergenService::EU_ALLERGENS` (`cereali_glutine`, `crostacei`, `uova`, `pesce`, `arachidi`, `soia`, `latte`, `frutta_guscio`, `sedano`, `senape`, `sesamo`, `solfiti`, `lupini`, `molluschi`). Production-lot allergens are **derived** at read time (no stored column) by `AllergenService::forProduzione()`, which unions ingredient allergens recursively through semilavorati.
+
+### `acquisti_righe` — new column (lot → raw material)
+`materia_prima_id BIGINT NULL` → `materie_prime(id)` `ON DELETE SET NULL` (migration `2026_07_06_000004`, indexed). Optionally links an incoming purchase lot to a raw material so allergens (and other master-data attributes) flow onto received lots.
+
+### `audit_logs` — append-only change history (migration `2026_07_06_000003`)
+| Column | Type | Notes |
+|---|---|---|
+| `id` | BIGSERIAL PK | |
+| `auditable_type` | VARCHAR(255) | model morph class (e.g. `App\Models\Acquisto`) |
+| `auditable_id` | BIGINT | the record's id |
+| `event` | VARCHAR(20) | `created` \| `updated` \| `deleted` \| `restored` \| `force_deleted` (indexed) |
+| `user_id` | BIGINT → users | nullable, `ON DELETE SET NULL` |
+| `changes` | JSON | `{campo: {da, a}}` for updates; initial attributes for creates; null otherwise |
+| `etichetta` | VARCHAR(255) | display-label snapshot (survives a permanent delete) |
+| `created_at` | TIMESTAMPTZ | write time (no `updated_at` — rows are write-once) |
+
+Written by the `Auditable` trait on every lifecycle event. Never updated or deleted by the app. Indexed on `(auditable_type, auditable_id)`, `created_at`, and `event`.

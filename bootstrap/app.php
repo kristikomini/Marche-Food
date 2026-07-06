@@ -24,6 +24,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureAdmin::class,
         ]);
+        // Run the admin role check BEFORE route-model binding, so an unauthorized
+        // operator is cleanly redirected instead of leaking a 404 for a missing id.
+        $middleware->prependToPriorityList(
+            before: \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            prepend: \App\Http\Middleware\EnsureAdmin::class,
+        );
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/');
     })

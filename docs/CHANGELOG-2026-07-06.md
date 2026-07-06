@@ -108,4 +108,35 @@ No existing behaviour was modified destructively — deletes changed from hard t
 - **Run `php artisan migrate`** on dev/prod DBs to apply the two new migrations (production `docker/start.sh` migrates on boot).
 - **Full FIC consumer labels** — the allergen foundation is in place; the ingredient list + nutrition declaration remain if prepacked consumer sales are confirmed.
 - **Schede CRUD tests** — the remaining largely-untested controller (P-B13).
-- **Middleware-ordering fix** for the pre-existing `AccessControlTest` failure (optional; needs global middleware-priority change).
+
+---
+
+# Part 2 — compliance & correctness gaps
+
+A follow-up batch closing the gaps identified in a functionality review. Four
+tested phases; suite grew to **98 tests, now fully green** (the former
+pre-existing failure is fixed).
+
+## A — Append-only audit / change log
+- `2026_07_06_000003_create_audit_logs_table` + `App\Models\AuditLog`.
+- `App\Concerns\Auditable` extended: on every `created`/`updated`/`deleted`/`restored`/`force_deleted` it writes an immutable row with the before→after value of each changed field, the acting user, and a label snapshot. No-op saves and `deleted_at`-only diffs are skipped; `restored` is registered only on SoftDeletes models (else `Recall` throws at boot).
+- `AuditService::changeLog()` + reworked `AuditController` and `Audit/Index.vue` (event chips + `da → a` diffs).
+- Resolves **P-B7** (audit trail was capture-only / current-state).
+
+## B — Link incoming lots to materie prime
+- `2026_07_06_000004_add_materia_prima_id_to_acquisti_righe` + `AcquistoRiga::materiaPrima()`.
+- Optional raw-material select per line on the acquisti form; validated against `materie_prime`.
+- Allergens now flow onto purchase lots: shown on the purchase-lot QR label and the traceability purchase node.
+
+## C — Middleware ordering fix
+- `bootstrap/app.php`: `prependToPriorityList(before: SubstituteBindings, prepend: EnsureAdmin)` so the admin check runs **before** route-model binding. An unauthorised operator is now cleanly redirected instead of leaking a 404. **Fixes the long-standing `AccessControlTest` baseline failure.**
+
+## D — schema.sql & docs
+- `schema.sql` extended with a 2026-07-06 section: `deleted_at` (7 tables), `allergeni`/`allergeni_tracce`, `acquisti_righe.materia_prima_id`, and the `audit_logs` table; final marker bumped to `2026_07_06_000004`.
+- Docs updated: `BLUEPRINT`, `ARCHITECTURE`, `DATABASE`, `WORKFLOWS` (§19 audit log, §20 lot allergens), `ROADMAP` (P-B7 resolved).
+
+## New tests
+`AuditLogTest` (4), `PurchaseLotAllergenTest` (3) — plus the `AccessControlTest` delete case now passes.
+
+## Migrations to run
+`php artisan migrate` applies `2026_07_06_000003` (audit_logs) and `2026_07_06_000004` (materia_prima_id) in addition to the earlier two.

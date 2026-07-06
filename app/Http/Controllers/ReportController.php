@@ -129,7 +129,7 @@ class ReportController extends Controller
     // ── Lot QR labels for purchases / sales ─────────────────────────────────
     public function acquistoEtichette(Request $request, Acquisto $acquisto)
     {
-        $acquisto->load(['righe', 'fornitore']);
+        $acquisto->load(['righe.materiaPrima', 'fornitore']);
         $copie = max(1, min(60, (int) $request->input('copie', 1)));
 
         $labels = $this->lottoLabels($acquisto->righe, $acquisto->fornitore?->ragione_sociale, $copie);
@@ -179,12 +179,18 @@ class ReportController extends Controller
                 $meta[] = 'Scad.: ' . \Carbon\Carbon::parse($r->scadenza)->format('d/m/Y');
             }
 
+            // Allergens flow onto the label when the lot is linked to a raw
+            // material (materiaPrima is eager-loaded for purchases only).
+            $mp = $r->materiaPrima ?? null;
+
             return [
-                'prodotto' => $r->nome_prodotto,
-                'lotto'    => $lotto,
-                'meta'     => implode(' · ', $meta),
-                'traceUrl' => url('/tracciabilita?q=' . urlencode($lotto)),
-                'copie'    => $copie,
+                'prodotto'  => $r->nome_prodotto,
+                'lotto'     => $lotto,
+                'meta'      => implode(' · ', $meta),
+                'traceUrl'  => url('/tracciabilita?q=' . urlencode($lotto)),
+                'allergeni' => $mp ? $this->allergeni->labels($mp->allergeni ?? []) : [],
+                'tracce'    => $mp ? $this->allergeni->labels($mp->allergeni_tracce ?? []) : [],
+                'copie'     => $copie,
             ];
         })->filter()->values()->all();
     }

@@ -69,4 +69,44 @@ class AuditService
             ->values()
             ->take($limit);
     }
+
+    /**
+     * Append-only change history from `audit_logs`: every create/update/delete/
+     * restore with the before→after values of each changed field.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function changeLog(int $limit = 200): array
+    {
+        return DB::table('audit_logs as a')
+            ->leftJoin('users as u', 'u.id', '=', 'a.user_id')
+            ->orderByDesc('a.id')
+            ->limit($limit)
+            ->get(['a.id', 'a.auditable_type', 'a.auditable_id', 'a.event', 'a.changes', 'a.etichetta', 'a.created_at', 'u.name as utente'])
+            ->map(fn ($r) => [
+                'id'         => $r->id,
+                'tipo'       => $this->typeLabel($r->auditable_type),
+                'record_id'  => $r->auditable_id,
+                'etichetta'  => $r->etichetta,
+                'evento'     => $r->event,
+                'modifiche'  => $r->changes ? json_decode($r->changes, true) : null,
+                'utente'     => $r->utente,
+                'created_at' => $r->created_at,
+            ])
+            ->all();
+    }
+
+    private function typeLabel(string $class): string
+    {
+        return [
+            'App\\Models\\Acquisto'                 => 'Acquisto',
+            'App\\Models\\Vendita'                  => 'Vendita',
+            'App\\Models\\Produzione'               => 'Produzione',
+            'App\\Models\\BollaReso'                => 'Bolla di Reso',
+            'App\\Models\\NotaCredito'              => 'Nota di Credito',
+            'App\\Models\\LottoImballaggioPrimario' => 'Imballaggio',
+            'App\\Models\\LottoDetergente'          => 'Detergente',
+            'App\\Models\\Recall'                   => 'Recall',
+        ][$class] ?? class_basename($class);
+    }
 }

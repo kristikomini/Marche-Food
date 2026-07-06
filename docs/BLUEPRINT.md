@@ -137,9 +137,10 @@ purchase lot **or** a `lotti_semilavorati` semi-finished lot, plus its
 
 **Cross-cutting:** `recalls` + `recall_notifiche`; `app_notifications` +
 `notification_reads`; 2FA columns on `users`; audit columns
-(`created_by`/`updated_by`) on the 7 operational tables; and, since 2026-07-06,
-`deleted_at` (soft-delete) on those same 7 tables and `allergeni` /
-`allergeni_tracce` on `materie_prime`.
+(`created_by`/`updated_by`) on the 7 operational tables plus the append-only
+`audit_logs` change history; `deleted_at` (soft-delete) on those same 7 tables;
+`allergeni` / `allergeni_tracce` on `materie_prime`; and
+`acquisti_righe.materia_prima_id` linking incoming lots to raw materials.
 
 **The traceability spine** is `produzioni_materie_prime`: it ties every
 production run to the exact lots it consumed, which is what makes both trace
@@ -163,8 +164,9 @@ directions and the recall "who got this lot" query possible.
 - **Optimistic locking on edits.** Edit forms submit the `updated_at` they loaded;
   `Controller::assertNotStale()` rejects the save if the record changed meanwhile
   (surfaced as a "Conflitto di modifica" toast).
-- **Auditable trait.** `created_by`/`updated_by` are stamped automatically on the
-  7 operational models; surfaced read-only in the **Log Attività** page.
+- **Auditable trait.** Stamps `created_by`/`updated_by` **and** writes an
+  append-only `audit_logs` entry for every create/update/delete/restore (with
+  before→after field values); surfaced read-only in the **Log Attività** page.
 - **Soft-delete with guards.** Operational documents soft-delete (recoverable via
   the Cestino) instead of hard-deleting; `destroy()` guards refuse to trash a
   record still referenced by an active downstream document. Because raw
@@ -215,8 +217,10 @@ close (records `data_chiusura`). Tables `recalls` + `recall_notifiche`.
 14 EU allergens per raw material — *contiene* and *può contenere (tracce)*.
 `AllergenService` derives each production lot's declaration as the **union** of
 its ingredients, **recursing through semi-finished ingredients** (an allergen in
-"contains" is dropped from "may contain"). Shown as chips in the materie-prime
-list + traceability and printed on the production QR label and HACCP PDF.
+"contains" is dropped from "may contain"). Incoming **purchase lots** can be
+linked to a raw material (`acquisti_righe.materia_prima_id`), so allergens flow
+onto received lots too — shown as chips in the materie-prime list + traceability
+(purchase *and* production lots) and printed on the QR labels and HACCP PDF.
 
 ### Reporting & inventory
 `/report` — date-range management report (purchase/sale/production volumes with
@@ -236,9 +240,12 @@ they can be restored (reappearing everywhere, including inventory/traceability)
 or permanently removed. Delete guards preserve the "can't remove referenced
 data" invariant that the DB foreign keys enforced on the old hard delete.
 
-### Audit trail
-`/audit` (admin) — a "who created/modified what" feed over the 7 operational
-tables, built from the Auditable columns (`AuditService`).
+### Audit trail (append-only change log)
+`/audit` (admin) — an immutable `audit_logs` history: every create, update,
+(soft/force) delete and restore of an Auditable model, with the **before→after
+values** of each changed field, the acting user, and a label snapshot that
+survives a permanent delete. This is genuine audit-grade evidence, not just
+"who last touched it" (`Auditable` trait → `AuditLog` → `AuditService`).
 
 ### In-app notifications
 `NotificationService` derives alerts (expired/expiring lots, HACCP certs, open
@@ -284,17 +291,17 @@ search box in the topbar (`/cerca`).
 
 `php artisan test` runs the full **PHPUnit** suite on **SQLite in-memory**
 (`RefreshDatabase`) — feature tests exercise real routes/middleware, unit tests
-cover extracted logic. ~91 tests. Coverage includes access control, auth, 2FA
-TOTP vectors, dashboard, purchases/productions CRUD, balance & semilavorato
-enforcement, traceability, import, inventory, certificate parsing, security
-headers, backup pruning, and (2026-07-06) soft-delete/Cestino, QR labels,
-allergen propagation, recall workflow, user management, and the packaging delete
-guard.
+cover extracted logic. ~98 tests, **fully green**. Coverage includes access
+control, auth, 2FA TOTP vectors, dashboard, purchases/productions CRUD, balance
+& semilavorato enforcement, traceability, import, inventory, certificate
+parsing, security headers, backup pruning, soft-delete/Cestino, QR labels,
+allergen propagation (production and purchase lots), the append-only audit log,
+recall workflow, user management, and the packaging delete guard.
 
-> One **pre-existing** failure is the accepted green baseline:
-> `AccessControlTest::test_operator_cannot_delete_admin_records` — Laravel's
-> route-model-binding returns 404 before the `admin` middleware can redirect an
-> unauthorised operator. It is a middleware-ordering quirk, not a regression.
+> The former baseline failure (`AccessControlTest::test_operator_cannot_delete_admin_records`)
+> was fixed by running the `admin` middleware before route-model binding (see
+> `bootstrap/app.php` → `prependToPriorityList`), so an unauthorised operator is
+> cleanly redirected instead of leaking a 404.
 
 The repo is **not** Laravel Pint-clean (linting is manual — roadmap D-A7); new
 code matches the surrounding file style rather than triggering a repo-wide

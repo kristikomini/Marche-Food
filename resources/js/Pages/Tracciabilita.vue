@@ -72,6 +72,16 @@
                   Scad: {{ formatDate(riga.scadenza) }}
                 </span>
               </div>
+              <div v-if="riga.allergeni && (riga.allergeni.contiene.length || riga.allergeni.tracce.length)" class="allergeni-row">
+                <template v-if="riga.allergeni.contiene.length">
+                  <span class="allergeni-label">Allergeni:</span>
+                  <span v-for="a in riga.allergeni.contiene" :key="a" class="chip chip-contiene">{{ a }}</span>
+                </template>
+                <template v-if="riga.allergeni.tracce.length">
+                  <span class="allergeni-label">Può contenere:</span>
+                  <span v-for="a in riga.allergeni.tracce" :key="`t-${a}`" class="chip chip-tracce">{{ a }}</span>
+                </template>
+              </div>
             </div>
             <div class="node-actions">
               <Link :href="`/acquisti/${riga.acquisto_id}/edit`" class="node-link">Vedi acquisto</Link>

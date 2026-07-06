@@ -97,6 +97,7 @@
             <thead>
               <tr>
                 <th style="min-width:200px">Prodotto / Descrizione *</th>
+                <th style="min-width:150px">Materia prima</th>
                 <th style="width:70px">U.M.</th>
                 <th style="width:100px">Q.tà Pz</th>
                 <th style="width:110px">Q.tà Kg *</th>
@@ -115,6 +116,19 @@
                   <InputText
                     v-model="riga.nome_prodotto"
                     :invalid="!!form.errors[`righe.${i}.nome_prodotto`]"
+                    fluid
+                    size="small"
+                  />
+                </td>
+                <td>
+                  <Select
+                    v-model="riga.materia_prima_id"
+                    :options="materie"
+                    option-label="nome"
+                    option-value="id"
+                    placeholder="—"
+                    filter
+                    show-clear
                     fluid
                     size="small"
                   />
@@ -222,6 +236,7 @@ import DatePicker from 'primevue/datepicker';
 const props = defineProps({
   acquisto: Object,
   fornitori: Array,
+  materie: { type: Array, default: () => [] },
 });
 
 const isEdit = computed(() => !!props.acquisto);
@@ -242,6 +257,7 @@ const umOptions = [
 function emptyRiga(dataIn = null) {
   return {
     id: null,
+    materia_prima_id: null,
     nome_prodotto: '',
     um: 'kg',
     quantita_pz: null,
@@ -269,6 +285,7 @@ const form = useForm({
   righe: props.acquisto?.righe?.length
     ? props.acquisto.righe.map(r => ({
         id:               r.id           ?? null,
+        materia_prima_id: r.materia_prima_id ?? null,
         nome_prodotto:    r.nome_prodotto ?? '',
         um:               r.um            ?? 'kg',
         quantita_pz:      r.quantita_pz   ? Number(r.quantita_pz)  : null,
@@ -292,6 +309,7 @@ watch(() => props.acquisto, (a) => {
   form.righe = a?.righe?.length
     ? a.righe.map(r => ({
         id:               r.id               ?? null,
+        materia_prima_id: r.materia_prima_id ?? null,
         nome_prodotto:    r.nome_prodotto    ?? '',
         um:               r.um               ?? 'kg',
         quantita_pz:      r.quantita_pz      ? Number(r.quantita_pz)  : null,

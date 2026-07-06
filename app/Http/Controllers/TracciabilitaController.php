@@ -44,6 +44,7 @@ class TracciabilitaController extends Controller
         // ── 1. Forward trace: purchase lots ──────────────────────────────────
         $righeQuery = AcquistoRiga::with([
                 'acquisto.fornitore',
+                'materiaPrima',
                 'produzioniMateriePrime.produzione.scheda.prodotto',
             ])
             ->where(function ($query) use ($term, $op) {
@@ -55,6 +56,15 @@ class TracciabilitaController extends Controller
 
         $totalRighe    = (clone $righeQuery)->count();
         $righeAcquisto = $righeQuery->limit(self::LIMIT_RIGHE)->get();
+
+        // Allergen declaration for incoming lots linked to a raw material.
+        $righeAcquisto->each(function ($r) {
+            $mp = $r->materiaPrima;
+            $r->setAttribute('allergeni', [
+                'contiene' => $mp ? $this->allergeni->labels($mp->allergeni ?? []) : [],
+                'tracce'   => $mp ? $this->allergeni->labels($mp->allergeni_tracce ?? []) : [],
+            ]);
+        });
 
         // ── 2. Reverse trace: production lots ────────────────────────────────
         $prodQuery = Produzione::with([

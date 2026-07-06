@@ -396,3 +396,9 @@ Infrastructure-level rate limiting (Traefik/Coolify/Hetzner firewall) can add an
 | `allergeni_tracce` | array of strings | each ∈ the 14 EU allergen codes |
 
 The index and edit form receive the allergen option list / label map from the controller. Production allergens are **derived** (not an endpoint field) and appear inside the traceability response, the produzione label, and the produzione PDF.
+
+### Additions in part 2 (2026-07-06)
+
+- **`GET /audit`** (admin) now returns an append-only change log (`log`: every create/update/delete/restore with before→after field values) in addition to the current-state summary.
+- **`POST /acquisti` / `PUT /acquisti/{id}`** accept an optional `righe.*.materia_prima_id` (must exist in `materie_prime`) linking each purchase line to a raw material; the create/edit forms receive a `materie` list.
+- **`GET /acquisti/{id}/etichette`** prints the linked lot's allergens on each label.

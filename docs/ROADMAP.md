@@ -51,7 +51,7 @@ The domain core is strong. To satisfy "a full platform," the following product-l
 |----|-----|-----|
 | **P-B5** | High | **Reporting/analytics is thin.** Only live dashboard KPIs. No date-range management reports (purchases/sales/production volumes), per-supplier / per-customer reports, or expiry/stock reports, and no export to PDF/Excel. |
 | **P-B6** | High | **Recall is read-only.** No workflow to *issue* a recall, record status, and log customer notifications — important for HACCP audits. |
-| **P-B7** | Medium | **Audit trail is captured but invisible** — `created_by`/`updated_by` exist on 7 tables but there is no UI to review who changed what. |
+| ~~P-B7~~ | — | ~~**Audit trail is captured but invisible.**~~ **Resolved 2026-07-06:** upgraded from `created_by`/`updated_by` to a true append-only `audit_logs` change history (every create/update/delete/restore with before→after field values), shown at `/audit`. `Auditable` trait + `AuditLog` + `AuditService::changeLog()`. |
 | ~~P-B8~~ | — | ~~**No lot labels / QR codes.**~~ **Resolved:** production lots (`/produzioni/{id}/etichetta`) and, since 2026-07-06, **purchase and sale lots** (`/acquisti\|vendite/{id}/etichette`) print QR labels that open the traceability view. |
 | **P-B9** | Medium | **No DDT/invoice PDF** for acquisti/vendite (only the production report is a PDF). |
 | **P-B10** | Medium | **No stock/inventory view** — lot balances are computed only inside the production form, not shown as an inventory report. |

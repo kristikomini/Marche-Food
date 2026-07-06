@@ -230,3 +230,11 @@ Each **materia prima** declares which of the 14 EU allergens it *contains* (`all
 - an allergen that ends up in the "contains" set is removed from "may contain".
 
 The result is shown as chips on the materie-prime list and in the traceability view, and printed on the production QR label and the HACCP production PDF. `AllergenService::forProduzioneLabels()` returns the same sets resolved to Italian labels for display. Nothing is stored on `produzioni` — the matrix is always derived from live recipe/material data, so a supplier-driven allergen change reflows automatically.
+
+## 19. Append-only audit / change log (2026-07-06)
+
+The `Auditable` trait (on the 8 operational models) now does two things: it stamps `created_by`/`updated_by` **and** writes an immutable row to `audit_logs` on every lifecycle event — `created`, `updated`, `deleted` (soft), `restored`, `force_deleted`. For an update it records the **before→after** value of each changed field (`{campo: {da, a}}`); noise columns (`created_at`, `updated_at`, `created_by`, `updated_by`, `deleted_at`) are excluded, and a no-op save writes nothing. A human `etichetta` snapshot is stored so the entry stays readable even after the record is permanently deleted. `AuditLog` is deliberately not Auditable (no recursion) and write-once. The **Log Attività** page (`/audit`, admin) renders this history with colour-coded event chips and a `da → a` diff per field. `restored` is only registered on SoftDeletes models (registering it on `Recall` would throw during boot).
+
+## 20. Allergens on incoming lots (2026-07-06)
+
+A purchase line can be linked to a raw material via `acquisti_righe.materia_prima_id` (an optional select on the acquisti form). When linked, that lot inherits the material's allergen declaration, which is then shown on the purchase-lot QR label (`/acquisti/{id}/etichette`) and on the purchase node in the traceability view — extending the allergen story from finished lots back to received lots.

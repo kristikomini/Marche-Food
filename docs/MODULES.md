@@ -347,3 +347,9 @@ The Artisan command `db:backup` (class `BackupDatabase`) runs daily at 03:00:
 ### Allergen tracking (FIC)
 
 Each materia prima declares which of the 14 EU allergens it **contains** and which it **may contain** (cross-contact / tracce), stored as JSON. `AllergenService::forProduzione()` computes a finished lot's declaration as the union of its ingredients' allergens, recursing into any semi-finished ingredient's source production (an allergen that is a declared "contains" is dropped from "may contain"). The result is shown as chips in the materie-prime list and traceability view, and printed on the production QR label and HACCP PDF.
+
+### 2026-07-06 (part 2)
+
+- **Log Attività → append-only change log.** The `/audit` page now reads an immutable `audit_logs` history (every create/update/delete/restore with before→after field values), not just the current `created_by`/`updated_by`. `Auditable` trait → `AuditLog` → `AuditService::changeLog()`.
+- **Lotto → materia prima.** Purchase lines can link to a raw material (`acquisti_righe.materia_prima_id`, optional select on the acquisti form); linked lots inherit the material's allergens on the purchase-lot QR label and traceability node.
+- **Access-control ordering fix.** The `admin` middleware now runs before route-model binding (`bootstrap/app.php`), so an unauthorised operator is redirected rather than receiving a 404.

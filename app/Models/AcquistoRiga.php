@@ -11,6 +11,7 @@ class AcquistoRiga extends Model
     protected $fillable = [
         'acquisto_id',
         'prodotto_id',
+        'materia_prima_id',
         'nome_prodotto',
         'um',
         'quantita_pz',
@@ -34,6 +35,11 @@ class AcquistoRiga extends Model
     public function acquisto()
     {
         return $this->belongsTo(Acquisto::class);
+    }
+
+    public function materiaPrima()
+    {
+        return $this->belongsTo(MateriaPrima::class);
     }
 
     public function produzioniMateriePrime()

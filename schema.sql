@@ -487,4 +487,45 @@ CREATE TABLE notification_reads (
 );
 CREATE INDEX idx_notification_reads_recall ON notification_reads(notification_id);
 
--- Fine schema (allineato alle migrazioni fino a 2026_07_01_000004).
+-- =============================================================================
+-- 2026-07-06 — soft-delete, allergeni, link lotto→materia prima, audit log
+-- =============================================================================
+
+-- 2026_07_06_000001: soft-delete sui 7 documenti operativi. Le tabelle di riga
+-- (acquisti_righe, vendite_righe, produzioni_materie_prime, ...) NON hanno
+-- deleted_at: restano intatte quando il documento padre viene cestinato.
+ALTER TABLE acquisti                 ADD COLUMN deleted_at TIMESTAMPTZ;
+ALTER TABLE vendite                  ADD COLUMN deleted_at TIMESTAMPTZ;
+ALTER TABLE produzioni               ADD COLUMN deleted_at TIMESTAMPTZ;
+ALTER TABLE bolle_reso               ADD COLUMN deleted_at TIMESTAMPTZ;
+ALTER TABLE note_credito             ADD COLUMN deleted_at TIMESTAMPTZ;
+ALTER TABLE lotti_imballaggi_primari ADD COLUMN deleted_at TIMESTAMPTZ;
+ALTER TABLE lotti_detergenti         ADD COLUMN deleted_at TIMESTAMPTZ;
+
+-- 2026_07_06_000002: allergeni (Reg. UE 1169/2011) per materia prima.
+ALTER TABLE materie_prime ADD COLUMN allergeni        JSON;
+ALTER TABLE materie_prime ADD COLUMN allergeni_tracce JSON;
+
+-- 2026_07_06_000004: collega un lotto in ingresso a una materia prima (fa fluire
+-- gli allergeni sui lotti di acquisto).
+ALTER TABLE acquisti_righe
+    ADD COLUMN materia_prima_id BIGINT REFERENCES materie_prime(id) ON DELETE SET NULL;
+CREATE INDEX idx_acquisti_righe_materia_prima ON acquisti_righe(materia_prima_id);
+
+-- 2026_07_06_000003: audit log append-only. Ogni create/update/delete/restore di
+-- un modello Auditable, con i valori prima→dopo di ogni campo modificato.
+CREATE TABLE audit_logs (
+    id              BIGSERIAL PRIMARY KEY,
+    auditable_type  VARCHAR(255) NOT NULL,
+    auditable_id    BIGINT       NOT NULL,
+    event           VARCHAR(20)  NOT NULL,   -- created | updated | deleted | restored | force_deleted
+    user_id         BIGINT       REFERENCES users(id) ON DELETE SET NULL,
+    changes         JSON,                     -- {campo: {da, a}} per update; attributi per create
+    etichetta       VARCHAR(255),             -- snapshot leggibile (sopravvive alla cancellazione)
+    created_at      TIMESTAMPTZ
+);
+CREATE INDEX idx_audit_logs_auditable ON audit_logs(auditable_type, auditable_id);
+CREATE INDEX idx_audit_logs_created   ON audit_logs(created_at);
+CREATE INDEX idx_audit_logs_event     ON audit_logs(event);
+
+-- Fine schema (allineato alle migrazioni fino a 2026_07_06_000004).
