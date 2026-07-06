@@ -9,11 +9,6 @@ import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
 import 'primeicons/primeicons.css';
 
-// Self-hosted variable fonts (GDPR-safe — no Google CDN). See resources/css/app.css.
-import '@fontsource-variable/fraunces';
-import '@fontsource-variable/inter';
-import '@fontsource-variable/jetbrains-mono';
-
 // Align PrimeVue's Aura preset with the Marche design tokens so its components
 // (buttons, data tables, selects, focus rings) share the brand's pine primary
 // and warm-stone surfaces — no more emerald-vs-forest mismatch.
@@ -53,6 +48,28 @@ const MarchePreset = definePreset(Aura, {
                     800: '#3a362f',
                     900: '#211e19',
                     950: '#14120e',
+                },
+            },
+            dark: {
+                primary: {
+                    color: '#74bba1',
+                    contrastColor: '#0f2a21',
+                    hoverColor: '#93cdb6',
+                    activeColor: '#a9d9c6',
+                },
+                surface: {
+                    0:   '#ffffff',
+                    50:  '#faf8f4',
+                    100: '#f4f1ea',
+                    200: '#e7e1d6',
+                    300: '#d8d0c1',
+                    400: '#b8ae9c',
+                    500: '#928b7e',
+                    600: '#6e685d',
+                    700: '#57514a',
+                    800: '#3a362f',
+                    900: '#201d17',
+                    950: '#17150f',
                 },
             },
         },

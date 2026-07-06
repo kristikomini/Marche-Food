@@ -6,18 +6,18 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1e293b; background: #fff; padding: 24px; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1c3d28; padding-bottom: 12px; margin-bottom: 16px; }
-  .brand h1 { font-size: 15px; font-weight: 700; color: #1c3d28; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1f5040; padding-bottom: 12px; margin-bottom: 16px; }
+  .brand h1 { font-size: 15px; font-weight: 700; color: #1f5040; }
   .brand p { font-size: 9px; color: #64748b; margin-top: 2px; }
   .doc-info { text-align: right; }
-  .doc-info .num { font-size: 13px; font-weight: 700; color: #1c3d28; }
+  .doc-info .num { font-size: 13px; font-weight: 700; color: #1f5040; }
   .doc-info .sub { font-size: 9px; color: #64748b; }
   .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
   .kpi { background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 4px; padding: 10px; }
-  .kpi .label { font-size: 8px; text-transform: uppercase; letter-spacing: 0.08em; color: #2a6941; font-weight: 700; }
-  .kpi .value { font-size: 16px; font-weight: 700; color: #1c3d28; margin-top: 4px; }
+  .kpi .label { font-size: 8px; text-transform: uppercase; letter-spacing: 0.08em; color: #2e6b57; font-weight: 700; }
+  .kpi .value { font-size: 16px; font-weight: 700; color: #1f5040; margin-top: 4px; }
   .kpi .sub { font-size: 8px; color: #64748b; }
-  .section-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #2a6941; background: #f0fdf4; border-left: 3px solid #2a6941; padding: 4px 8px; margin: 14px 0 6px; }
+  .section-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #2e6b57; background: #f0fdf4; border-left: 3px solid #2e6b57; padding: 4px 8px; margin: 14px 0 6px; }
   table { width: 100%; border-collapse: collapse; }
   th { background: #f8fafc; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; padding: 5px 6px; text-align: left; border-bottom: 1px solid #e2e8f0; }
   td { padding: 5px 6px; border-bottom: 1px solid #f1f5f9; font-size: 10px; }

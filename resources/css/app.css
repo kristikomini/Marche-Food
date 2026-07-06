@@ -9,15 +9,13 @@
    Every colour is named ONCE here and consumed via var(--token) everywhere.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* The `--font-*` prefix is Tailwind v4's font-family theme namespace, so Tailwind
-   MANAGES these and tree-shakes any that aren't referenced by a generated utility
-   class. The app sets `font-family: var(--font-*)` directly (never the utility),
-   so we use `@theme static` to force all three to always be emitted to :root. */
+/* System font stack (matches the original pre-redesign look — Segoe UI on Windows).
+   Headings intentionally use the same sans (no serif). `@theme static` forces
+   emission since the app references `var(--font-*)` directly, not via a utility. */
 @theme static {
-    --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-    --font-display: 'Fraunces Variable', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
-    --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace;
+    --font-sans: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-display: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+    --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 }
 
 /* ── Design tokens (light) ────────────────────────────────────────────────── */
@@ -55,12 +53,44 @@
     --radius:   10px;
 }
 
+/* ── Dark theme — activated by `.dark` on <html> (toggle in the top bar). Because
+   every surface reads from these tokens, redefining them here re-themes the whole
+   app. Warm near-black, lifted brand green, desaturated status colours. ───────── */
+:root.dark {
+    --ground:        #17150f;
+    --surface:       #201d17;
+    --surface-2:     #29251e;
+    --border:        #38322a;
+    --border-strong: #4a4238;
+    --ink:           #f3efe7;
+    --ink-2:         #beb6a8;
+    --ink-3:         #8a8175;
+
+    --pine:        #74bba1;
+    --pine-strong: #93cdb6;
+    --pine-deep:   #0f2a21;
+    --pine-tint:   #22352c;
+
+    --ambra:        #d9a441;
+    --ambra-strong: #e7bc6a;
+    --ambra-tint:   #33291a;
+
+    --ok:      #4ade80;  --ok-tint:     #17311f;
+    --warn:    #e7a44b;  --warn-tint:   #33291a;
+    --danger:  #f0817b;  --danger-tint: #3a1f1e;
+    --info:    #7aa0f0;  --info-tint:   #1e2740;
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, .35);
+    --shadow-2: 0 6px 18px rgba(0, 0, 0, .45);
+}
+
 /* ── Base ─────────────────────────────────────────────────────────────────── */
 body {
     font-family: var(--font-sans);
     color: var(--ink);
     background: var(--ground);
 }
+.dark body { color-scheme: dark; }
 
 /* Page & section headings carry the display serif (tradition + modern).
    Scoped component classes still control size/weight/colour; only the
