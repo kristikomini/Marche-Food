@@ -9,15 +9,13 @@
    Every colour is named ONCE here and consumed via var(--token) everywhere.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* The `--font-*` prefix is Tailwind v4's font-family theme namespace, so Tailwind
-   MANAGES these and tree-shakes any that aren't referenced by a generated utility
-   class. The app sets `font-family: var(--font-*)` directly (never the utility),
-   so we use `@theme static` to force all three to always be emitted to :root. */
+/* System font stack (matches the original pre-redesign look — Segoe UI on Windows).
+   Headings intentionally use the same sans (no serif). `@theme static` forces
+   emission since the app references `var(--font-*)` directly, not via a utility. */
 @theme static {
-    --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-    --font-display: 'Fraunces Variable', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
-    --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace;
+    --font-sans: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-display: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+    --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 }
 
 /* ── Design tokens (light) ────────────────────────────────────────────────── */

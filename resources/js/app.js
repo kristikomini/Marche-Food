@@ -9,11 +9,6 @@ import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
 import 'primeicons/primeicons.css';
 
-// Self-hosted variable fonts (GDPR-safe — no Google CDN). See resources/css/app.css.
-import '@fontsource-variable/fraunces';
-import '@fontsource-variable/inter';
-import '@fontsource-variable/jetbrains-mono';
-
 // Align PrimeVue's Aura preset with the Marche design tokens so its components
 // (buttons, data tables, selects, focus rings) share the brand's pine primary
 // and warm-stone surfaces — no more emerald-vs-forest mismatch.
