@@ -368,11 +368,11 @@ function submit() {
   justify-content: space-between;
   margin-bottom: 1.5rem;
 }
-.page-title { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
+.page-title { font-size: 1.5rem; font-weight: 700; color: var(--ink); margin: 0; }
 .form-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 .mb-4 { margin-bottom: 1rem; }
@@ -382,7 +382,7 @@ function submit() {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: var(--ink-2);
   margin: 0 0 1rem 0;
 }
 .form-grid-4 {
@@ -391,14 +391,14 @@ function submit() {
   gap: 1rem;
 }
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
-.field label { font-size: 0.85rem; font-weight: 600; color: #374151; }
-.error { color: #dc2626; font-size: 0.78rem; }
+.field label { font-size: 0.85rem; font-weight: 600; color: var(--ink-2); }
+.error { color: var(--danger); font-size: 0.78rem; }
 .righe-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border);
 }
 .table-wrapper {
   overflow-x: auto;
@@ -415,24 +415,24 @@ function submit() {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #64748b;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 .righe-table td {
   padding: 0.4rem 0.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
 .righe-table tbody tr:last-child td { border-bottom: none; }
 .form-actions {
   padding: 1rem 1.5rem;
-  background: #f8fafc;
+  background: var(--surface-2);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border);
 }
-.righe-count { font-size: 0.85rem; color: #64748b; }
+.righe-count { font-size: 0.85rem; color: var(--ink-2); }
 </style>

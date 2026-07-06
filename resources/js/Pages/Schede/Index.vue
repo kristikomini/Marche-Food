@@ -33,7 +33,7 @@
       </Column>
       <Column header="Marinatura" style="width:100px; text-align:center">
         <template #body="{ data }">
-          <i v-if="data.ha_marinatura" class="pi pi-check-circle" style="color:#16a34a" />
+          <i v-if="data.ha_marinatura" class="pi pi-check-circle" style="color:var(--ok)" />
           <span v-else class="text-muted">—</span>
         </template>
       </Column>
@@ -106,15 +106,15 @@ function confirmDelete(s) {
 
 <style scoped>
 .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
-.page-title { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0; }
+.page-title { font-size:1.5rem; font-weight:700; color:var(--ink); margin:0; }
 .filters-bar { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
-.toggle-filter { display:flex; align-items:center; gap:0.5rem; font-size:0.875rem; color:#374151; }
-.row-link { color:#1d4ed8; text-decoration:none; font-weight:500; }
+.toggle-filter { display:flex; align-items:center; gap:0.5rem; font-size:0.875rem; color:var(--ink-2); }
+.row-link { color:var(--info); text-decoration:none; font-weight:500; }
 .row-link:hover { text-decoration:underline; }
-.text-muted { color:#94a3b8; }
-.mono { font-family:monospace; font-size:0.88rem; font-weight:700; color:#1e293b; }
+.text-muted { color:var(--ink-3); }
+.mono { font-family:var(--font-mono); font-size:0.88rem; font-weight:700; color:var(--ink); }
 .mt-4 { margin-top:1rem; }
 .pagination { display:flex; align-items:center; gap:1rem; margin-top:1rem; justify-content:center; }
-.page-info { font-size:0.875rem; color:#64748b; }
-.empty-state { padding:2rem; text-align:center; color:#94a3b8; }
+.page-info { font-size:0.875rem; color:var(--ink-2); }
+.empty-state { padding:2rem; text-align:center; color:var(--ink-3); }
 </style>

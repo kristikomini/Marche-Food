@@ -155,7 +155,7 @@ function confirmDelete(cliente) {
 .page-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--ink);
   margin: 0;
 }
 .filters-bar {
@@ -169,15 +169,15 @@ function confirmDelete(cliente) {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--ink-2);
 }
 .row-link {
-  color: #1d4ed8;
+  color: var(--info);
   text-decoration: none;
   font-weight: 500;
 }
 .row-link:hover { text-decoration: underline; }
-.text-muted { color: #94a3b8; }
+.text-muted { color: var(--ink-3); }
 .mt-4 { margin-top: 1rem; }
 .pagination {
   display: flex;
@@ -186,6 +186,6 @@ function confirmDelete(cliente) {
   margin-top: 1rem;
   justify-content: center;
 }
-.page-info { font-size: 0.875rem; color: #64748b; }
-.empty-state { padding: 2rem; text-align: center; color: #94a3b8; }
+.page-info { font-size: 0.875rem; color: var(--ink-2); }
+.empty-state { padding: 2rem; text-align: center; color: var(--ink-3); }
 </style>

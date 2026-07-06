@@ -88,15 +88,15 @@ function confirmForceDelete(item) {
 
 <style scoped>
 .page-header { margin-bottom:1.5rem; }
-.page-title { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0 0 0.25rem 0; }
-.page-sub { font-size:0.875rem; color:#64748b; margin:0; }
-.result-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+.page-title { font-size:1.5rem; font-weight:700; color:var(--ink); margin:0 0 0.25rem 0; }
+.page-sub { font-size:0.875rem; color:var(--ink-2); margin:0; }
+.result-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
 .table-wrap { overflow-x:auto; }
 .result-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-.result-table th { padding:0.5rem 1rem; background:#f8fafc; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:#64748b; border-bottom:1px solid #e2e8f0; text-align:left; white-space:nowrap; }
-.result-table td { padding:0.55rem 1rem; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
-.mono { font-family:'SFMono-Regular',Consolas,monospace; font-size:0.8rem; }
-.tag { font-size:0.72rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:99px; background:#f0fdf4; color:#2a6941; }
+.result-table th { padding:0.5rem 1rem; background:var(--surface-2); font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-2); border-bottom:1px solid var(--border); text-align:left; white-space:nowrap; }
+.result-table td { padding:0.55rem 1rem; border-bottom:1px solid var(--border); white-space:nowrap; }
+.mono { font-family:var(--font-mono); font-size:0.8rem; }
+.tag { font-size:0.72rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:99px; background:var(--pine-tint); color:var(--pine); }
 .actions-col { display:flex; gap:0.5rem; }
-.empty { text-align:center; color:#94a3b8; font-style:italic; padding:1.5rem; }
+.empty { text-align:center; color:var(--ink-3); font-style:italic; padding:1.5rem; }
 </style>

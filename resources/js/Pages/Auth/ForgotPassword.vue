@@ -77,8 +77,8 @@ function submit() {
 
 <style scoped>
 * { box-sizing: border-box; }
-.login-page { display:flex; min-height:100vh; font-family:'Segoe UI',Arial,sans-serif; }
-.brand-panel { flex:1; background:linear-gradient(160deg,#162b1c 0%,#1c3d28 50%,#2a6941 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem; position:relative; overflow:hidden; }
+.login-page { display:flex; min-height:100vh; font-family:var(--font-sans); }
+.brand-panel { flex:1; background:linear-gradient(160deg,var(--pine-deep) 0%,var(--pine-strong) 50%,var(--pine) 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem; position:relative; overflow:hidden; }
 .brand-arches { position:absolute; bottom:-40px; left:50%; transform:translateX(-50%); width:500px; height:320px; }
 .arch { position:absolute; bottom:0; border-radius:50% 50% 0 0; }
 .arch-1 { width:340px; height:280px; background:rgba(42,105,65,0.7); left:80px; }
@@ -89,21 +89,21 @@ function submit() {
 .brand-text { position:relative; z-index:10; text-align:center; color:#fff; }
 .brand-name { font-size:2.2rem; font-weight:800; line-height:1.2; margin:0 0 1rem 0; text-shadow:0 2px 12px rgba(0,0,0,0.3); }
 .brand-tagline { font-size:1rem; color:rgba(255,255,255,0.7); letter-spacing:0.08em; text-transform:uppercase; font-weight:500; margin:0; }
-.form-panel { width:460px; min-width:420px; background:#f5f7f5; display:flex; align-items:center; justify-content:center; padding:2rem; }
-.login-card { background:#fff; border-radius:16px; box-shadow:0 8px 40px rgba(22,43,28,0.10); padding:2.5rem 2rem; width:100%; max-width:380px; }
+.form-panel { width:460px; min-width:420px; background:var(--ground); display:flex; align-items:center; justify-content:center; padding:2rem; }
+.login-card { background:var(--surface); border-radius:16px; box-shadow:0 8px 40px rgba(22,43,28,0.10); padding:2.5rem 2rem; width:100%; max-width:380px; }
 .card-logo { display:flex; justify-content:center; margin-bottom:1.25rem; }
 .card-logo img { width:80px; height:80px; object-fit:contain; }
-.card-title { text-align:center; font-size:1.5rem; font-weight:700; color:#1a3d28; margin:0 0 0.25rem 0; }
-.card-subtitle { text-align:center; font-size:0.875rem; color:#64748b; margin:0 0 1.5rem 0; }
-.status-msg { background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:0.75rem 1rem; color:#166534; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; }
+.card-title { text-align:center; font-size:1.5rem; font-weight:700; color:var(--pine-strong); margin:0 0 0.25rem 0; }
+.card-subtitle { text-align:center; font-size:0.875rem; color:var(--ink-2); margin:0 0 1.5rem 0; }
+.status-msg { background:var(--ok-tint); border:1px solid var(--ok); border-radius:8px; padding:0.75rem 1rem; color:var(--ok); font-size:0.875rem; display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; }
 .form { display:flex; flex-direction:column; gap:1rem; }
 .field { display:flex; flex-direction:column; gap:0.35rem; }
-.field label { font-size:0.875rem; font-weight:600; color:#374151; }
-.error { color:#dc2626; font-size:0.78rem; min-height:1rem; }
-.submit-btn { margin-top:0.5rem; background:#2a6941 !important; border-color:#2a6941 !important; font-weight:600; padding:0.75rem; }
-.submit-btn:hover { background:#1c4f30 !important; border-color:#1c4f30 !important; }
+.field label { font-size:0.875rem; font-weight:600; color:var(--ink-2); }
+.error { color:var(--danger); font-size:0.78rem; min-height:1rem; }
+.submit-btn { margin-top:0.5rem; background:var(--pine) !important; border-color:var(--pine) !important; font-weight:600; padding:0.75rem; }
+.submit-btn:hover { background:var(--pine-strong) !important; border-color:var(--pine-strong) !important; }
 .back-link { text-align:center; margin-top:1.25rem; font-size:0.875rem; }
-.back-link a { color:#2a6941; text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem; }
+.back-link a { color:var(--pine); text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem; }
 .back-link a:hover { text-decoration:underline; }
 @media (max-width:768px) {
   .login-page { flex-direction:column; }

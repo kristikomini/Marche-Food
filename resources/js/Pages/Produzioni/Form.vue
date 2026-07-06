@@ -110,7 +110,7 @@
                 </td>
               </tr>
               <tr v-if="!form.materie_prime.length">
-                <td colspan="5" style="text-align:center;color:#94a3b8;padding:1rem">Nessuna materia prima aggiunta.</td>
+                <td colspan="5" style="text-align:center;color:var(--ink-3);padding:1rem">Nessuna materia prima aggiunta.</td>
               </tr>
             </tbody>
           </table>
@@ -164,7 +164,7 @@
                 </td>
               </tr>
               <tr v-if="!form.imballaggi.length">
-                <td colspan="4" style="text-align:center;color:#94a3b8;padding:1rem">Nessun imballaggio collegato.</td>
+                <td colspan="4" style="text-align:center;color:var(--ink-3);padding:1rem">Nessun imballaggio collegato.</td>
               </tr>
             </tbody>
           </table>
@@ -218,7 +218,7 @@
                 </td>
               </tr>
               <tr v-if="!form.detergenti.length">
-                <td colspan="4" style="text-align:center;color:#94a3b8;padding:1rem">Nessun detergente collegato.</td>
+                <td colspan="4" style="text-align:center;color:var(--ink-3);padding:1rem">Nessun detergente collegato.</td>
               </tr>
             </tbody>
           </table>
@@ -504,29 +504,29 @@ function submitSemi() {
 
 <style scoped>
 .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
-.page-title { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0; }
-.form-card { background:#fff; border-radius:8px; border:1px solid #e2e8f0; overflow:hidden; }
+.page-title { font-size:1.5rem; font-weight:700; color:var(--ink); margin:0; }
+.form-card { background:var(--surface); border-radius:8px; border:1px solid var(--border); overflow:hidden; }
 .mb-4 { margin-bottom:1rem; }
 .form-section { padding:1.5rem; }
-.section-title { font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748b; margin:0 0 0.25rem 0; }
-.section-sub { font-size:0.78rem; color:#94a3b8; margin:0; }
+.section-title { font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-2); margin:0 0 0.25rem 0; }
+.section-sub { font-size:0.78rem; color:var(--ink-3); margin:0; }
 .form-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
 .field { display:flex; flex-direction:column; gap:0.3rem; }
-.field label { font-size:0.85rem; font-weight:600; color:#374151; }
-.error { color:#dc2626; font-size:0.78rem; }
-.righe-header { display:flex; align-items:flex-start; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid #f1f5f9; }
+.field label { font-size:0.85rem; font-weight:600; color:var(--ink-2); }
+.error { color:var(--danger); font-size:0.78rem; }
+.righe-header { display:flex; align-items:flex-start; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--border); }
 .table-wrapper { overflow-x:auto; }
 .righe-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-.righe-table th { padding:0.6rem 0.5rem; text-align:left; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:#64748b; background:#f8fafc; border-bottom:1px solid #e2e8f0; white-space:nowrap; }
-.righe-table td { padding:0.4rem 0.5rem; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
-.form-actions { padding:1rem 1.5rem; background:#f8fafc; display:flex; align-items:center; justify-content:space-between; border-top:1px solid #e2e8f0; }
-.form-actions-sub { padding:0.5rem 1.5rem; background:#f8fafc; display:flex; align-items:center; justify-content:flex-start; border-top:1px solid #e2e8f0; }
-.righe-count { font-size:0.85rem; color:#64748b; }
-.balance-ok { font-size:0.82rem; font-weight:600; color:#16a34a; font-family:monospace; }
-.balance-negative { font-size:0.82rem; font-weight:600; color:#dc2626; font-family:monospace; }
-.balance-empty { font-size:0.82rem; color:#94a3b8; }
+.righe-table th { padding:0.6rem 0.5rem; text-align:left; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-2); background:var(--surface-2); border-bottom:1px solid var(--border); white-space:nowrap; }
+.righe-table td { padding:0.4rem 0.5rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+.form-actions { padding:1rem 1.5rem; background:var(--surface-2); display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--border); }
+.form-actions-sub { padding:0.5rem 1.5rem; background:var(--surface-2); display:flex; align-items:center; justify-content:flex-start; border-top:1px solid var(--border); }
+.righe-count { font-size:0.85rem; color:var(--ink-2); }
+.balance-ok { font-size:0.82rem; font-weight:600; color:var(--ok); font-family:var(--font-mono); }
+.balance-negative { font-size:0.82rem; font-weight:600; color:var(--danger); font-family:var(--font-mono); }
+.balance-empty { font-size:0.82rem; color:var(--ink-3); }
 .semi-info { display:flex; flex-direction:column; gap:0.5rem; }
 .semi-info-row { display:flex; gap:1rem; align-items:baseline; }
-.semi-label { font-size:0.82rem; font-weight:600; color:#64748b; min-width:80px; }
-.semi-value { font-size:0.9rem; color:#1e293b; }
+.semi-label { font-size:0.82rem; font-weight:600; color:var(--ink-2); min-width:80px; }
+.semi-value { font-size:0.9rem; color:var(--ink); }
 </style>

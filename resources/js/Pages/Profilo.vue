@@ -149,31 +149,31 @@ watch(() => twoFactor.value.pending, renderQr);
 
 <style scoped>
 .page-header { margin-bottom: 1.5rem; }
-.page-title { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
+.page-title { font-size: 1.5rem; font-weight: 700; color: var(--ink); margin: 0; }
 .profile-grid { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; align-items: start; }
-.card { background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; padding: 1.5rem; }
+.card { background: var(--surface); border-radius: 8px; border: 1px solid var(--border); padding: 1.5rem; }
 .tfa-card { margin-top: 1.5rem; }
-.section-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin: 0 0 1.25rem 0; }
-.info-row { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0; border-bottom: 1px solid #f1f5f9; }
+.section-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); margin: 0 0 1.25rem 0; }
+.info-row { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0; border-bottom: 1px solid var(--border); }
 .info-row:last-child { border-bottom: none; }
-.info-label { font-size: 0.85rem; color: #64748b; font-weight: 500; }
-.info-value { font-size: 0.875rem; color: #1e293b; font-weight: 600; }
+.info-label { font-size: 0.85rem; color: var(--ink-2); font-weight: 500; }
+.info-value { font-size: 0.875rem; color: var(--ink); font-weight: 600; }
 .pw-form { display: flex; flex-direction: column; gap: 1rem; }
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
-.field label { font-size: 0.85rem; font-weight: 600; color: #374151; }
-.error { color: #dc2626; font-size: 0.78rem; min-height: 1rem; }
-.tfa-desc { font-size: 0.875rem; color: #64748b; margin-bottom: 1rem; max-width: 640px; line-height: 1.5; }
+.field label { font-size: 0.85rem; font-weight: 600; color: var(--ink-2); }
+.error { color: var(--danger); font-size: 0.78rem; min-height: 1rem; }
+.tfa-desc { font-size: 0.875rem; color: var(--ink-2); margin-bottom: 1rem; max-width: 640px; line-height: 1.5; }
 .tfa-setup { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start; }
-.tfa-qr { width: 160px; height: 160px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; }
+.tfa-qr { width: 160px; height: 160px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
 .tfa-qr :deep(svg) { width: 100%; height: 100%; }
 .tfa-setup-right { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 1rem; }
-.tfa-secret-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 0.3rem; }
-.tfa-secret code { font-family: monospace; font-size: 0.95rem; background: #f1f5f9; padding: 0.4rem 0.6rem; border-radius: 6px; display: inline-block; letter-spacing: 0.1em; }
+.tfa-secret-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); font-weight: 700; display: block; margin-bottom: 0.3rem; }
+.tfa-secret code { font-family: var(--font-mono); font-size: 0.95rem; background: var(--border); padding: 0.4rem 0.6rem; border-radius: 6px; display: inline-block; letter-spacing: 0.1em; }
 .tfa-actions { display: flex; gap: 0.6rem; }
-.tfa-enabled { display: flex; align-items: center; gap: 0.6rem; color: #166534; font-weight: 600; margin-bottom: 1rem; }
+.tfa-enabled { display: flex; align-items: center; gap: 0.6rem; color: var(--ok); font-weight: 600; margin-bottom: 1rem; }
 .tfa-enabled i { font-size: 1.2rem; }
-.tfa-recovery { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; }
+.tfa-recovery { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
 .tfa-codes { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem; margin-top: 0.5rem; }
-.tfa-codes code { font-family: monospace; font-size: 0.85rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 0.3rem 0.5rem; text-align: center; }
+.tfa-codes code { font-family: var(--font-mono); font-size: 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0.3rem 0.5rem; text-align: center; }
 @media (max-width: 768px) { .profile-grid { grid-template-columns: 1fr; } }
 </style>

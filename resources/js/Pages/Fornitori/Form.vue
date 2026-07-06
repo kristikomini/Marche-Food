@@ -254,18 +254,18 @@ async function extractCert() {
 .page-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--ink);
   margin: 0;
 }
 .form-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 .form-section {
   padding: 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border);
 }
 .form-section:last-of-type { border-bottom: none; }
 .section-title {
@@ -273,7 +273,7 @@ async function extractCert() {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: var(--ink-2);
   margin: 0 0 1rem 0;
 }
 .form-grid {
@@ -282,21 +282,21 @@ async function extractCert() {
   gap: 1rem;
 }
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
-.field label { font-size: 0.85rem; font-weight: 600; color: #374151; }
+.field label { font-size: 0.85rem; font-weight: 600; color: var(--ink-2); }
 .field-full { grid-column: 1 / -1; }
 .field-inline { flex-direction: row; align-items: center; gap: 0.6rem; }
 .field-inline label { margin: 0; font-weight: 500; }
-.error { color: #dc2626; font-size: 0.78rem; min-height: 1em; }
+.error { color: var(--danger); font-size: 0.78rem; min-height: 1em; }
 .form-actions {
   padding: 1.25rem 1.5rem;
-  background: #f8fafc;
+  background: var(--surface-2);
   display: flex;
   justify-content: flex-end;
 }
 
-.ai-hint { font-size: 0.82rem; color: #64748b; margin: 0 0 0.75rem 0; }
+.ai-hint { font-size: 0.82rem; color: var(--ink-2); margin: 0 0 0.75rem 0; }
 .ai-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
 .ai-msg { margin-top: 0.6rem; font-size: 0.85rem; }
-.ai-msg.ok { color: #166534; }
-.ai-msg.err { color: #b91c1c; }
+.ai-msg.ok { color: var(--ok); }
+.ai-msg.err { color: var(--danger); }
 </style>

@@ -114,14 +114,14 @@ function confirmDelete(p) {
 
 <style scoped>
 .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
-.page-title { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0; }
+.page-title { font-size:1.5rem; font-weight:700; color:var(--ink); margin:0; }
 .filters-bar { display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; }
-.row-link { color:#1d4ed8; text-decoration:none; font-weight:500; }
+.row-link { color:var(--info); text-decoration:none; font-weight:500; }
 .row-link:hover { text-decoration:underline; }
-.text-muted { color:#94a3b8; }
-.mono { font-family:monospace; font-size:0.88rem; }
+.text-muted { color:var(--ink-3); }
+.mono { font-family:var(--font-mono); font-size:0.88rem; }
 .mt-4 { margin-top:1rem; }
 .pagination { display:flex; align-items:center; gap:1rem; margin-top:1rem; justify-content:center; }
-.page-info { font-size:0.875rem; color:#64748b; }
-.empty-state { padding:2rem; text-align:center; color:#94a3b8; }
+.page-info { font-size:0.875rem; color:var(--ink-2); }
+.empty-state { padding:2rem; text-align:center; color:var(--ink-3); }
 </style>

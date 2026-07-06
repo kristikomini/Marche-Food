@@ -223,14 +223,14 @@ function confirmDeleteD(lotto) {
 
 <style scoped>
 .page-header { display: flex; align-items: center; margin-bottom: 1.5rem; }
-.page-title { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
+.page-title { font-size: 1.5rem; font-weight: 700; color: var(--ink); margin: 0; }
 .tab-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; padding-top: 1rem; }
-.lotto-badge { font-family: monospace; font-size: 0.82rem; background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 4px; }
-.text-muted { color: #94a3b8; }
-.text-out { color: #64748b; }
-.text-danger { color: #dc2626; font-weight: 600; }
+.lotto-badge { font-family: var(--font-mono); font-size: 0.82rem; background: var(--border); padding: 0.15rem 0.4rem; border-radius: 4px; }
+.text-muted { color: var(--ink-3); }
+.text-out { color: var(--ink-2); }
+.text-danger { color: var(--danger); font-weight: 600; }
 .mt-3 { margin-top: 0.75rem; }
 .pagination { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; justify-content: center; }
-.page-info { font-size: 0.875rem; color: #64748b; }
-.empty-state { padding: 2rem; text-align: center; color: #94a3b8; }
+.page-info { font-size: 0.875rem; color: var(--ink-2); }
+.empty-state { padding: 2rem; text-align: center; color: var(--ink-3); }
 </style>

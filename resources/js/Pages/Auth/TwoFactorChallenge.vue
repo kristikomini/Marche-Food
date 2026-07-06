@@ -46,16 +46,16 @@ function submit() {
 </script>
 
 <style scoped>
-.tfa-shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1c3d28, #2a6941); padding: 1rem; }
-.tfa-box { background: #fff; border-radius: 12px; padding: 2rem; width: 100%; max-width: 380px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+.tfa-shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--pine-strong), var(--pine)); padding: 1rem; }
+.tfa-box { background: var(--surface); border-radius: 12px; padding: 2rem; width: 100%; max-width: 380px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
 .brand { text-align: center; margin-bottom: 1.5rem; }
 .logo { width: 56px; height: 56px; object-fit: contain; }
-.brand h1 { font-size: 1.1rem; color: #1c3d28; margin-top: 0.5rem; }
-.hint { font-size: 0.85rem; color: #64748b; text-align: center; margin-bottom: 1.25rem; }
+.brand h1 { font-size: 1.1rem; color: var(--pine-strong); margin-top: 0.5rem; }
+.hint { font-size: 0.85rem; color: var(--ink-2); text-align: center; margin-bottom: 1.25rem; }
 .code-input { text-align: center; font-size: 1.2rem; letter-spacing: 0.2em; }
-.error { color: #dc2626; font-size: 0.8rem; display: block; margin: 0.4rem 0; text-align: center; }
+.error { color: var(--danger); font-size: 0.8rem; display: block; margin: 0.4rem 0; text-align: center; }
 .submit { margin-top: 1rem; }
-.link { background: none; border: none; color: #2a6941; font-size: 0.82rem; cursor: pointer; display: block; margin: 1rem auto 0; text-decoration: underline; }
-.back { display: block; text-align: center; margin-top: 1.25rem; color: #94a3b8; font-size: 0.8rem; text-decoration: none; }
-.back:hover { color: #2a6941; }
+.link { background: none; border: none; color: var(--pine); font-size: 0.82rem; cursor: pointer; display: block; margin: 1rem auto 0; text-decoration: underline; }
+.back { display: block; text-align: center; margin-top: 1.25rem; color: var(--ink-3); font-size: 0.8rem; text-decoration: none; }
+.back:hover { color: var(--pine); }
 </style>

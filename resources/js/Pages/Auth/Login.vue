@@ -106,13 +106,13 @@ function submit() {
 .login-page {
   display: flex;
   min-height: 100vh;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* ── Brand Panel ─────────────────────────────── */
 .brand-panel {
   flex: 1;
-  background: linear-gradient(160deg, #162b1c 0%, #1c3d28 50%, #2a6941 100%);
+  background: linear-gradient(160deg, var(--pine-deep) 0%, var(--pine-strong) 50%, var(--pine) 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -196,7 +196,7 @@ function submit() {
 .form-panel {
   width: 460px;
   min-width: 420px;
-  background: #f5f7f5;
+  background: var(--ground);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -204,7 +204,7 @@ function submit() {
 }
 
 .login-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   box-shadow: 0 8px 40px rgba(22, 43, 28, 0.10);
   padding: 2.5rem 2rem;
@@ -228,14 +228,14 @@ function submit() {
   text-align: center;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1a3d28;
+  color: var(--pine-strong);
   margin: 0 0 0.25rem 0;
 }
 
 .card-subtitle {
   text-align: center;
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--ink-2);
   margin: 0 0 1.75rem 0;
 }
 
@@ -254,11 +254,11 @@ function submit() {
 .field label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--ink-2);
 }
 
 .error {
-  color: #dc2626;
+  color: var(--danger);
   font-size: 0.78rem;
   min-height: 1rem;
 }
@@ -274,21 +274,21 @@ function submit() {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--ink-2);
 }
 
 .forgot-link {
   font-size: 0.8rem;
-  color: #2a6941;
+  color: var(--pine);
   text-decoration: none;
   font-weight: 500;
 }
 .forgot-link:hover { text-decoration: underline; }
 
 .flash-status {
-  background: #f0fdf4;
-  border: 1px solid #86efac;
-  color: #166534;
+  background: var(--ok-tint);
+  border: 1px solid var(--ok);
+  color: var(--ok);
   border-radius: 8px;
   padding: 0.65rem 0.9rem;
   font-size: 0.85rem;
@@ -297,15 +297,15 @@ function submit() {
 
 .submit-btn {
   margin-top: 0.5rem;
-  background: #2a6941 !important;
-  border-color: #2a6941 !important;
+  background: var(--pine) !important;
+  border-color: var(--pine) !important;
   font-weight: 600;
   padding: 0.75rem;
 }
 
 .submit-btn:hover {
-  background: #1c4f30 !important;
-  border-color: #1c4f30 !important;
+  background: var(--pine-strong) !important;
+  border-color: var(--pine-strong) !important;
 }
 
 @media (max-width: 768px) {

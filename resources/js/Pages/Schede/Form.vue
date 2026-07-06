@@ -81,7 +81,7 @@
                 <td><Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="removeRiga('ricette', i)" /></td>
               </tr>
               <tr v-if="!form.ricette.length">
-                <td colspan="5" style="text-align:center;color:#94a3b8;padding:1rem">Nessun ingrediente aggiunto.</td>
+                <td colspan="5" style="text-align:center;color:var(--ink-3);padding:1rem">Nessun ingrediente aggiunto.</td>
               </tr>
             </tbody>
           </table>
@@ -112,7 +112,7 @@
                 <td><Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="removeRiga('ricette_marinature', i)" /></td>
               </tr>
               <tr v-if="!form.ricette_marinature.length">
-                <td colspan="4" style="text-align:center;color:#94a3b8;padding:1rem">Nessun ingrediente aggiunto.</td>
+                <td colspan="4" style="text-align:center;color:var(--ink-3);padding:1rem">Nessun ingrediente aggiunto.</td>
               </tr>
             </tbody>
           </table>
@@ -154,7 +154,7 @@
                 <td><Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="form.scheda_flussi.splice(i, 1)" /></td>
               </tr>
               <tr v-if="!form.scheda_flussi.length">
-                <td colspan="4" style="text-align:center;color:#94a3b8;padding:1rem">Nessuna fase aggiunta.</td>
+                <td colspan="4" style="text-align:center;color:var(--ink-3);padding:1rem">Nessuna fase aggiunta.</td>
               </tr>
             </tbody>
           </table>
@@ -251,21 +251,21 @@ function submit() {
 
 <style scoped>
 .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
-.page-title { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0; }
-.form-card { background:#fff; border-radius:8px; border:1px solid #e2e8f0; overflow:hidden; }
+.page-title { font-size:1.5rem; font-weight:700; color:var(--ink); margin:0; }
+.form-card { background:var(--surface); border-radius:8px; border:1px solid var(--border); overflow:hidden; }
 .mb-4 { margin-bottom:1rem; }
 .form-section { padding:1.5rem; }
-.section-title { font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748b; margin:0 0 1rem 0; }
+.section-title { font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-2); margin:0 0 1rem 0; }
 .form-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
 .field { display:flex; flex-direction:column; gap:0.3rem; }
-.field label { font-size:0.85rem; font-weight:600; color:#374151; }
+.field label { font-size:0.85rem; font-weight:600; color:var(--ink-2); }
 .field-inline { flex-direction:row; align-items:center; gap:0.6rem; }
 .field-inline label { margin:0; font-weight:500; }
-.error { color:#dc2626; font-size:0.78rem; }
-.righe-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid #f1f5f9; }
+.error { color:var(--danger); font-size:0.78rem; }
+.righe-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--border); }
 .table-wrapper { overflow-x:auto; }
 .righe-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-.righe-table th { padding:0.6rem 0.5rem; text-align:left; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:#64748b; background:#f8fafc; border-bottom:1px solid #e2e8f0; }
-.righe-table td { padding:0.4rem 0.5rem; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+.righe-table th { padding:0.6rem 0.5rem; text-align:left; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-2); background:var(--surface-2); border-bottom:1px solid var(--border); }
+.righe-table td { padding:0.4rem 0.5rem; border-bottom:1px solid var(--border); vertical-align:middle; }
 .form-actions-outer { display:flex; justify-content:flex-end; margin-top:1rem; }
 </style>

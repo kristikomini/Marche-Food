@@ -80,7 +80,7 @@
           <i
             v-if="data.tipo === 'alimentare'"
             :class="data.haccp_certificato ? 'pi pi-check-circle' : 'pi pi-times-circle'"
-            :style="{ color: data.haccp_certificato ? '#16a34a' : '#dc2626' }"
+            :style="{ color: data.haccp_certificato ? 'var(--ok)' : 'var(--danger)' }"
           />
           <span v-else class="text-muted">—</span>
         </template>
@@ -98,7 +98,7 @@
           <i
             v-if="data.tipo === 'imballaggio_primario'"
             :class="data.moca_certificato ? 'pi pi-check-circle' : 'pi pi-times-circle'"
-            :style="{ color: data.moca_certificato ? '#16a34a' : '#dc2626' }"
+            :style="{ color: data.moca_certificato ? 'var(--ok)' : 'var(--danger)' }"
           />
           <span v-else class="text-muted">—</span>
         </template>
@@ -234,7 +234,7 @@ function confirmDelete(fornitore) {
 .page-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--ink);
   margin: 0;
 }
 .filters-bar {
@@ -248,13 +248,13 @@ function confirmDelete(fornitore) {
   gap: 0.4rem;
 }
 .row-link {
-  color: #1d4ed8;
+  color: var(--info);
   text-decoration: none;
   font-weight: 500;
 }
 .row-link:hover { text-decoration: underline; }
-.text-muted { color: #94a3b8; }
-.text-danger { color: #dc2626; font-weight: 600; }
+.text-muted { color: var(--ink-3); }
+.text-danger { color: var(--danger); font-weight: 600; }
 .mt-4 { margin-top: 1rem; }
 .pagination {
   display: flex;
@@ -263,6 +263,6 @@ function confirmDelete(fornitore) {
   margin-top: 1rem;
   justify-content: center;
 }
-.page-info { font-size: 0.875rem; color: #64748b; }
-.empty-state { padding: 2rem; text-align: center; color: #94a3b8; }
+.page-info { font-size: 0.875rem; color: var(--ink-2); }
+.empty-state { padding: 2rem; text-align: center; color: var(--ink-3); }
 </style>

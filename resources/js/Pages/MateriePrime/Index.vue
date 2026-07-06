@@ -78,17 +78,17 @@ function confirmDelete(m) {
 
 <style scoped>
 .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
-.page-title { font-size:1.5rem; font-weight:700; color:#1e293b; margin:0; }
+.page-title { font-size:1.5rem; font-weight:700; color:var(--ink); margin:0; }
 .filters-bar { display:flex; gap:1rem; }
-.row-link { color:#1d4ed8; text-decoration:none; font-weight:500; }
+.row-link { color:var(--info); text-decoration:none; font-weight:500; }
 .row-link:hover { text-decoration:underline; }
-.text-muted { color:#94a3b8; }
+.text-muted { color:var(--ink-3); }
 .allergen-chips { display:flex; flex-wrap:wrap; gap:0.3rem; }
 .chip { font-size:0.68rem; font-weight:600; padding:0.1rem 0.45rem; border-radius:99px; white-space:nowrap; }
-.chip-contiene { background:#fef2f2; color:#b91c1c; }
-.chip-tracce { background:#fffbeb; color:#b45309; }
+.chip-contiene { background:var(--danger-tint); color:var(--danger); }
+.chip-tracce { background:var(--warn-tint); color:var(--warn); }
 .mt-4 { margin-top:1rem; }
 .pagination { display:flex; align-items:center; gap:1rem; margin-top:1rem; justify-content:center; }
-.page-info { font-size:0.875rem; color:#64748b; }
-.empty-state { padding:2rem; text-align:center; color:#94a3b8; }
+.page-info { font-size:0.875rem; color:var(--ink-2); }
+.empty-state { padding:2rem; text-align:center; color:var(--ink-3); }
 </style>
