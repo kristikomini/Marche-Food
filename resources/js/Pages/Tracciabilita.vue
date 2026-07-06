@@ -141,6 +141,16 @@
                 <span v-if="prod.operatore" class="meta-sep">·</span>
                 <span v-if="prod.operatore" class="text-muted">Op: {{ prod.operatore }}</span>
               </div>
+              <div v-if="prod.allergeni && (prod.allergeni.contiene.length || prod.allergeni.tracce.length)" class="allergeni-row">
+                <template v-if="prod.allergeni.contiene.length">
+                  <span class="allergeni-label">Allergeni:</span>
+                  <span v-for="a in prod.allergeni.contiene" :key="a" class="chip chip-contiene">{{ a }}</span>
+                </template>
+                <template v-if="prod.allergeni.tracce.length">
+                  <span class="allergeni-label">Può contenere:</span>
+                  <span v-for="a in prod.allergeni.tracce" :key="`t-${a}`" class="chip chip-tracce">{{ a }}</span>
+                </template>
+              </div>
             </div>
             <div class="node-actions">
               <Link :href="`/produzioni/${prod.id}/edit`" class="node-link">Vedi produzione</Link>
@@ -367,6 +377,11 @@ function isScaduto(d) {
 .trace-no-use { margin-left: 1.75rem; margin-top: 0.35rem; font-size: 0.78rem; color: #94a3b8; display: flex; align-items: center; gap: 0.4rem; }
 
 .text-muted { color: #94a3b8; }
+.allergeni-row { display:flex; flex-wrap:wrap; align-items:center; gap:0.3rem; margin-top:0.4rem; }
+.allergeni-label { font-size:0.72rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.03em; }
+.chip { font-size:0.68rem; font-weight:600; padding:0.1rem 0.45rem; border-radius:99px; white-space:nowrap; }
+.chip-contiene { background:#fef2f2; color:#b91c1c; }
+.chip-tracce { background:#fffbeb; color:#b45309; }
 .mono { font-family: monospace; }
 
 /* ── Empty states ───────────────────────────────────────────────── */

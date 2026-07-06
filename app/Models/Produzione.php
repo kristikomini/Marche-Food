@@ -4,10 +4,11 @@ namespace App\Models;
 
 use App\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Produzione extends Model
 {
-    use Auditable;
+    use Auditable, SoftDeletes;
 
     protected $table = 'produzioni';
 

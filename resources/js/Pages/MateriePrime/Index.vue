@@ -20,6 +20,15 @@
           <span v-else>{{ data.nome }}</span>
         </template>
       </Column>
+      <Column header="Allergeni">
+        <template #body="{ data }">
+          <div class="allergen-chips">
+            <span v-for="code in (data.allergeni || [])" :key="code" class="chip chip-contiene">{{ allergeniLabels[code] || code }}</span>
+            <span v-for="code in (data.allergeni_tracce || [])" :key="`t-${code}`" class="chip chip-tracce">tracce: {{ allergeniLabels[code] || code }}</span>
+            <span v-if="!(data.allergeni || []).length && !(data.allergeni_tracce || []).length" class="text-muted">—</span>
+          </div>
+        </template>
+      </Column>
       <Column v-if="isAdmin" header="Azioni" style="width:100px">
         <template #body="{ data }">
           <div style="display:flex;gap:0.4rem">
@@ -50,7 +59,8 @@ import InputText from 'primevue/inputtext';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 
-const props = defineProps({ materie: Object, filters: Object });
+const props = defineProps({ materie: Object, filters: Object, allergeniLabels: { type: Object, default: () => ({}) } });
+const allergeniLabels = props.allergeniLabels;
 const confirm = useConfirm();
 const page = usePage();
 const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
@@ -73,6 +83,10 @@ function confirmDelete(m) {
 .row-link { color:#1d4ed8; text-decoration:none; font-weight:500; }
 .row-link:hover { text-decoration:underline; }
 .text-muted { color:#94a3b8; }
+.allergen-chips { display:flex; flex-wrap:wrap; gap:0.3rem; }
+.chip { font-size:0.68rem; font-weight:600; padding:0.1rem 0.45rem; border-radius:99px; white-space:nowrap; }
+.chip-contiene { background:#fef2f2; color:#b91c1c; }
+.chip-tracce { background:#fffbeb; color:#b45309; }
 .mt-4 { margin-top:1rem; }
 .pagination { display:flex; align-items:center; gap:1rem; margin-top:1rem; justify-content:center; }
 .page-info { font-size:0.875rem; color:#64748b; }

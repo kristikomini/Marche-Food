@@ -9,7 +9,9 @@ Sistema gestionale web per la tracciabilità alimentare conforme HACCP di **Marc
 | **Screen 1 — Alimenti** | Acquisti (DDT/Fatture fornitori) con lotti, Vendite clienti, Bolle Reso, Note di Credito |
 | **Screen 2 — Imballaggi** | Lotti imballaggi primari (MOCA) e detergenti certificati |
 | **Screen 3 — Produzione** | Schede di produzione con ricette, Flussi HACCP, Produzioni con tracciabilità lotti |
-| **Anagrafica** | Fornitori, Clienti, Prodotti, Materie Prime, Destinazione Ingredienti |
+| **Anagrafica** | Fornitori, Clienti, Prodotti, Materie Prime (con **allergeni** UE 1169/2011), Destinazione Ingredienti |
+| **Conformità** | Tracciabilità bidirezionale lotti, Recall workflow, Log attività (audit), Etichette lotto con QR (produzioni, acquisti, vendite), Allergeni derivati sui lotti di produzione |
+| **Sicurezza dati** | Soft-delete con **Cestino** (ripristino / eliminazione definitiva), Optimistic locking, 2FA (admin), Notifiche in-app |
 | **Import** | Migrazione dati storici via CSV |
 
 ## Requisiti
@@ -161,6 +163,7 @@ Per lo schema SQL completo vedere [schema.sql](schema.sql).
 
 | Documento | Contenuto |
 |-----------|-----------|
+| [docs/BLUEPRINT.md](docs/BLUEPRINT.md) | **Panoramica completa del sistema**: cos'è, stack, architettura, pattern, modello dati, tutte le funzionalità |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack, architettura, flussi di richiesta |
 | [docs/DATABASE.md](docs/DATABASE.md) | ERD e descrizione tabelle |
 | [docs/MODULES.md](docs/MODULES.md) | Mappa e descrizione dei moduli |
@@ -172,4 +175,5 @@ Per lo schema SQL completo vedere [schema.sql](schema.sql).
 | [docs/GAPS.md](docs/GAPS.md) | 21 gap storici risolti (giugno 2026) |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Gap analysis deployment/piattaforma e piano a fasi |
 | [docs/CHANGELOG-2026-07-01.md](docs/CHANGELOG-2026-07-01.md) | Modifiche della sessione di hardening (luglio 2026) |
+| [docs/CHANGELOG-2026-07-06.md](docs/CHANGELOG-2026-07-06.md) | Soft-delete/Cestino, etichette QR acquisti/vendite, allergeni, test |
 | [docs/fornitori.md](docs/fornitori.md) | Approfondimento sul modulo Fornitori |

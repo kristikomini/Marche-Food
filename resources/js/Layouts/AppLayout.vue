@@ -108,6 +108,9 @@
           <Link href="/audit" :class="['nav-item', isActive('/audit')]">
             <i class="pi pi-history" /> Log Attività
           </Link>
+          <Link href="/cestino" :class="['nav-item', isActive('/cestino')]">
+            <i class="pi pi-trash" /> Cestino
+          </Link>
         </template>
       </nav>
     </aside>

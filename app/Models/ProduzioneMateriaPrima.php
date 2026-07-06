@@ -21,6 +21,11 @@ class ProduzioneMateriaPrima extends Model
         'quantita_kg' => 'decimal:3',
     ];
 
+    public function produzione()
+    {
+        return $this->belongsTo(Produzione::class);
+    }
+
     public function acquistoRiga()
     {
         return $this->belongsTo(AcquistoRiga::class);

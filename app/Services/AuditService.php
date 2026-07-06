@@ -38,6 +38,7 @@ class AuditService
             $rows = DB::table($table)
                 ->leftJoin('users as cu', 'cu.id', '=', "{$table}.created_by")
                 ->leftJoin('users as uu', 'uu.id', '=', "{$table}.updated_by")
+                ->whereNull("{$table}.deleted_at")
                 ->orderByDesc("{$table}.updated_at")
                 ->limit($limit)
                 ->get([

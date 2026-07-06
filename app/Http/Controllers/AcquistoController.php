@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Acquisto;
 use App\Models\AcquistoRiga;
 use App\Models\Fornitore;
+use App\Models\ProduzioneMateriaPrima;
+use App\Models\VenditaRiga;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -155,10 +157,24 @@ class AcquistoController extends Controller
 
     public function destroy(Acquisto $acquisto)
     {
+        // Soft-delete bypasses the DB foreign keys, so guard here: refuse to
+        // trash a purchase whose lots are still used by an active production or
+        // sale (a trashed production/sale no longer counts as a reference).
+        $rigaIds = $acquisto->righe()->pluck('id');
+
+        $consumed = ProduzioneMateriaPrima::whereIn('acquisto_riga_id', $rigaIds)
+            ->whereHas('produzione')->exists();
+        $sold = VenditaRiga::whereIn('acquisto_riga_id', $rigaIds)
+            ->whereHas('vendita')->exists();
+
+        if ($consumed || $sold) {
+            return back()->with('error', 'Impossibile eliminare: alcuni lotti di questo acquisto sono utilizzati in produzioni o vendite attive. Elimina prima quei documenti.');
+        }
+
         $acquisto->delete();
 
         return redirect()->route('acquisti.index')
-            ->with('success', 'Acquisto eliminato.');
+            ->with('success', 'Acquisto spostato nel cestino.');
     }
 
     private function validateRequest(Request $request): array

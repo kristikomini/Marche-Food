@@ -42,7 +42,7 @@ The domain core is strong. To satisfy "a full platform," the following product-l
 | ID | Sev | Gap |
 |----|-----|-----|
 | ~~P-B1~~ | — | ~~Semi-finished (semilavorato) balance is not enforced.~~ **Resolved on review:** `ProduzioneController::lockAndCheckBalance()` already locks and re-checks `lotti_semilavorati` balances with the same pessimistic-lock pattern as purchase lots. Confirmed by the balance simulation (see change-log). No further work needed. |
-| **P-B2** | Medium | **Hard deletes** everywhere — an accidental admin delete of a production/purchase is unrecoverable. No soft-delete/restore. |
+| ~~P-B2~~ | — | ~~**Hard deletes** everywhere — an accidental admin delete is unrecoverable.~~ **Resolved 2026-07-06:** the 7 operational document models use `SoftDeletes`; admin **Cestino** (`/cestino`) restores or permanently deletes; `destroy()` guards preserve the "can't remove referenced data" invariant; all raw balance/report/search/audit queries exclude trashed parents. See `CHANGELOG-2026-07-06.md`. |
 | **P-B3** | Medium | **No optimistic locking** — two users editing the same document → silent last-write-wins. |
 | **P-B4** | Low | Some CHECK constraints are PostgreSQL-only; SQLite (tests) does not enforce them. Application-level parity exists for the XOR rule but not all. |
 
@@ -52,16 +52,17 @@ The domain core is strong. To satisfy "a full platform," the following product-l
 | **P-B5** | High | **Reporting/analytics is thin.** Only live dashboard KPIs. No date-range management reports (purchases/sales/production volumes), per-supplier / per-customer reports, or expiry/stock reports, and no export to PDF/Excel. |
 | **P-B6** | High | **Recall is read-only.** No workflow to *issue* a recall, record status, and log customer notifications — important for HACCP audits. |
 | **P-B7** | Medium | **Audit trail is captured but invisible** — `created_by`/`updated_by` exist on 7 tables but there is no UI to review who changed what. |
-| **P-B8** | Medium | **No lot labels / QR codes.** Printable lot labels with a QR that opens the traceability view would close the physical↔digital loop. |
+| ~~P-B8~~ | — | ~~**No lot labels / QR codes.**~~ **Resolved:** production lots (`/produzioni/{id}/etichetta`) and, since 2026-07-06, **purchase and sale lots** (`/acquisti\|vendite/{id}/etichette`) print QR labels that open the traceability view. |
 | **P-B9** | Medium | **No DDT/invoice PDF** for acquisti/vendite (only the production report is a PDF). |
 | **P-B10** | Medium | **No stock/inventory view** — lot balances are computed only inside the production form, not shown as an inventory report. |
+| ~~P-B16~~ | — | **Added 2026-07-06 — allergen tracking (Reg. UE 1169/2011).** 14 EU allergens per raw material (contiene / tracce), derived onto each production lot recursively through semilavorati, shown in traceability and printed on the QR label + HACCP PDF. Foundation for full FIC consumer labels. `AllergenService`. |
 
 ### B.3 UX, accessibility, quality
 | ID | Sev | Gap |
 |----|-----|-----|
 | **P-B11** | Medium | **Accessibility** below WCAG AA: missing ARIA labels, image alt text, color-only expiry indicators, modal focus management. |
 | **P-B12** | Medium | **Mobile refinement** — wide inline tables and 4-column form grids overflow on phones. |
-| **P-B13** | Medium | **Thin automated test coverage** — only 5 feature test files; import, traceability, balance, imballaggi, schede, recall, users are largely untested. |
+| **P-B13** | Medium (improving) | **Thin automated test coverage.** 2026-07-06 added feature tests for soft-delete/Cestino, QR labels, allergens, recall workflow, user management, and the imballaggi delete guard (suite now ~91 tests). Schede CRUD remains the main untested controller. |
 | **P-B14** | Low | No global search, no in-app notifications, alert windows/recipients are hard-coded, single language (Italian — acceptable for this client). |
 
 ### B.4 Access & account security

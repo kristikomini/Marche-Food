@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Acquisto;
 use App\Models\Produzione;
 use App\Models\Vendita;
+use App\Services\AllergenService;
 use App\Services\ReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -12,8 +13,10 @@ use Inertia\Inertia;
 
 class ReportController extends Controller
 {
-    public function __construct(private ReportService $reports)
-    {
+    public function __construct(
+        private ReportService $reports,
+        private AllergenService $allergeni,
+    ) {
     }
 
     // ── Management / compliance report ──────────────────────────────────────
@@ -83,7 +86,9 @@ class ReportController extends Controller
             'detergenti.lottoDetergente.fornitore',
         ]);
 
-        $pdf = Pdf::loadView('pdf.produzione', compact('produzione'))->setPaper('a4', 'portrait');
+        $allergeni = $this->allergeni->forProduzioneLabels($produzione);
+
+        $pdf = Pdf::loadView('pdf.produzione', compact('produzione', 'allergeni'))->setPaper('a4', 'portrait');
         $filename = 'lavorazione_' . str_replace(['/', ' '], '_', $produzione->lotto_produzione) . '.pdf';
 
         return $pdf->download($filename);
@@ -108,6 +113,7 @@ class ReportController extends Controller
             'dataProduzione' => \Carbon\Carbon::parse($produzione->data_produzione)->format('d/m/Y'),
             'quantita'       => $produzione->quantita_prodotta_kg,
             'traceUrl'       => url('/tracciabilita?q=' . urlencode($produzione->lotto_produzione)),
+            'allergeni'      => $this->allergeni->forProduzioneLabels($produzione),
             'copie'          => $copie,
         ]);
     }
@@ -118,5 +124,68 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('pdf.vendita', compact('vendita'))->setPaper('a4', 'portrait');
 
         return $pdf->download('vendita_' . str_replace(['/', ' '], '_', $vendita->numero_documento) . '.pdf');
+    }
+
+    // ── Lot QR labels for purchases / sales ─────────────────────────────────
+    public function acquistoEtichette(Request $request, Acquisto $acquisto)
+    {
+        $acquisto->load(['righe', 'fornitore']);
+        $copie = max(1, min(60, (int) $request->input('copie', 1)));
+
+        $labels = $this->lottoLabels($acquisto->righe, $acquisto->fornitore?->ragione_sociale, $copie);
+
+        return view('labels.lotti', [
+            'titolo' => 'Etichette acquisto ' . $acquisto->numero_documento,
+            'labels' => $labels,
+        ]);
+    }
+
+    public function venditaEtichette(Request $request, Vendita $vendita)
+    {
+        $vendita->load(['righe', 'cliente']);
+        $copie = max(1, min(60, (int) $request->input('copie', 1)));
+
+        $labels = $this->lottoLabels($vendita->righe, $vendita->cliente?->ragione_sociale, $copie);
+
+        return view('labels.lotti', [
+            'titolo' => 'Etichette vendita ' . $vendita->numero_documento,
+            'labels' => $labels,
+        ]);
+    }
+
+    /**
+     * Build QR label rows from document lines. Lines without any lot code are
+     * skipped — the QR points to the traceability view keyed on the lot.
+     *
+     * @param  iterable  $righe
+     * @return array<int,array<string,mixed>>
+     */
+    private function lottoLabels($righe, ?string $controparte, int $copie): array
+    {
+        return collect($righe)->map(function ($r) use ($controparte, $copie) {
+            $lotto = $r->lotto ?: $r->lotto_esterno;
+            if (! $lotto) {
+                return null;
+            }
+
+            $meta = [];
+            if ($controparte) {
+                $meta[] = $controparte;
+            }
+            if ($r->quantita_kg) {
+                $meta[] = number_format((float) $r->quantita_kg, 3, ',', '.') . ' kg';
+            }
+            if ($r->scadenza) {
+                $meta[] = 'Scad.: ' . \Carbon\Carbon::parse($r->scadenza)->format('d/m/Y');
+            }
+
+            return [
+                'prodotto' => $r->nome_prodotto,
+                'lotto'    => $lotto,
+                'meta'     => implode(' · ', $meta),
+                'traceUrl' => url('/tracciabilita?q=' . urlencode($lotto)),
+                'copie'    => $copie,
+            ];
+        })->filter()->values()->all();
     }
 }

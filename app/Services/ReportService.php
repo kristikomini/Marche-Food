@@ -28,21 +28,24 @@ class ReportService
         ['da' => $da, 'a' => $a] = $this->normalizeRange($da, $a);
 
         $acquisti = DB::table('acquisti')
+            ->whereNull('deleted_at')
             ->whereBetween('data_documento', [$da, $a])
             ->where('is_conto_terzi', false);
         $acquistiKg = DB::table('acquisti_righe')
             ->join('acquisti', 'acquisti.id', '=', 'acquisti_righe.acquisto_id')
+            ->whereNull('acquisti.deleted_at')
             ->whereBetween('acquisti.data_documento', [$da, $a])
             ->where('acquisti.is_conto_terzi', false)
             ->sum('acquisti_righe.quantita_kg');
 
-        $vendite   = DB::table('vendite')->whereBetween('data_documento', [$da, $a]);
+        $vendite   = DB::table('vendite')->whereNull('deleted_at')->whereBetween('data_documento', [$da, $a]);
         $venditeKg = DB::table('vendite_righe')
             ->join('vendite', 'vendite.id', '=', 'vendite_righe.vendita_id')
+            ->whereNull('vendite.deleted_at')
             ->whereBetween('vendite.data_documento', [$da, $a])
             ->sum('vendite_righe.quantita_kg');
 
-        $produzioni   = DB::table('produzioni')->whereBetween('data_produzione', [$da, $a]);
+        $produzioni   = DB::table('produzioni')->whereNull('deleted_at')->whereBetween('data_produzione', [$da, $a]);
         $produzioniKg = (clone $produzioni)->sum('quantita_prodotta_kg');
 
         return [
@@ -66,6 +69,7 @@ class ReportService
         return DB::table('acquisti_righe')
             ->join('acquisti', 'acquisti.id', '=', 'acquisti_righe.acquisto_id')
             ->join('fornitori', 'fornitori.id', '=', 'acquisti.fornitore_id')
+            ->whereNull('acquisti.deleted_at')
             ->whereBetween('acquisti.data_documento', [$da, $a])
             ->where('acquisti.is_conto_terzi', false)
             ->groupBy('fornitori.id', 'fornitori.ragione_sociale')
@@ -83,6 +87,7 @@ class ReportService
         return DB::table('vendite_righe')
             ->join('vendite', 'vendite.id', '=', 'vendite_righe.vendita_id')
             ->join('clienti', 'clienti.id', '=', 'vendite.cliente_id')
+            ->whereNull('vendite.deleted_at')
             ->whereBetween('vendite.data_documento', [$da, $a])
             ->groupBy('clienti.id', 'clienti.ragione_sociale')
             ->orderByDesc(DB::raw('SUM(vendite_righe.quantita_kg)'))
@@ -106,6 +111,7 @@ class ReportService
         $rows = DB::table('acquisti_righe')
             ->join('acquisti', 'acquisti.id', '=', 'acquisti_righe.acquisto_id')
             ->join('fornitori', 'fornitori.id', '=', 'acquisti.fornitore_id')
+            ->whereNull('acquisti.deleted_at')
             ->whereNull('acquisti_righe.data_out')
             ->whereNotNull('acquisti_righe.scadenza')
             ->where('acquisti_righe.scadenza', '<=', $limite)

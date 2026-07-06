@@ -33,6 +33,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\KioskController;
 use App\Http\Controllers\CertificatoController;
+use App\Http\Controllers\CestinoController;
 
 // ─── Health / readiness probe (public, no auth) ─────────────────────────────────
 Route::get('/health', [HealthController::class, 'show'])->name('health');
@@ -93,6 +94,8 @@ Route::middleware('auth')->group(function () {
     Route::get('acquisti/{acquisto}/pdf', [ReportController::class, 'acquistoPdf'])->name('acquisti.pdf');
     Route::get('vendite/{vendita}/pdf', [ReportController::class, 'venditaPdf'])->name('vendite.pdf');
     Route::get('produzioni/{produzione}/etichetta', [ReportController::class, 'produzioneEtichetta'])->name('produzioni.etichetta');
+    Route::get('acquisti/{acquisto}/etichette', [ReportController::class, 'acquistoEtichette'])->name('acquisti.etichette');
+    Route::get('vendite/{vendita}/etichette', [ReportController::class, 'venditaEtichette'])->name('vendite.etichette');
 
     // Kiosk mode (tablet, factory floor)
     Route::get('produzioni/kiosk', [KioskController::class, 'index'])->name('produzioni.kiosk');
@@ -214,6 +217,11 @@ Route::middleware('auth')->group(function () {
 
         // Audit log (chi ha fatto cosa)
         Route::get('audit', [AuditController::class, 'index'])->name('audit.index');
+
+        // Cestino (ripristino / eliminazione definitiva dei documenti eliminati)
+        Route::get('cestino', [CestinoController::class, 'index'])->name('cestino.index');
+        Route::post('cestino/{tipo}/{id}/restore', [CestinoController::class, 'restore'])->name('cestino.restore');
+        Route::delete('cestino/{tipo}/{id}', [CestinoController::class, 'forceDelete'])->name('cestino.force-delete');
 
         // Gestione utenti
         Route::resource('utenti', UtenteController::class)

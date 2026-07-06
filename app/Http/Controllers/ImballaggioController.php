@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\LottoImballaggioPrimario;
 use App\Models\LottoDetergente;
 use App\Models\Fornitore;
+use App\Models\ProduzioneImballaggioPrimario;
+use App\Models\ProduzioneDetergente;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -78,10 +80,15 @@ class ImballaggioController extends Controller
 
     public function destroyPrimario(LottoImballaggioPrimario $primario)
     {
+        if (ProduzioneImballaggioPrimario::where('lotto_imballaggio_id', $primario->id)
+            ->whereHas('produzione')->exists()) {
+            return back()->with('error', 'Impossibile eliminare: questo lotto imballaggio è utilizzato in una produzione attiva.');
+        }
+
         $primario->delete();
 
         return redirect()->route('imballaggi.index', ['tab' => 'primari'])
-            ->with('success', 'Lotto eliminato.');
+            ->with('success', 'Lotto spostato nel cestino.');
     }
 
     // ─── DETERGENTI ──────────────────────────────────────────────────────────
@@ -120,10 +127,15 @@ class ImballaggioController extends Controller
 
     public function destroyDetergente(LottoDetergente $detergente)
     {
+        if (ProduzioneDetergente::where('lotto_detergente_id', $detergente->id)
+            ->whereHas('produzione')->exists()) {
+            return back()->with('error', 'Impossibile eliminare: questo lotto detergente è utilizzato in una produzione attiva.');
+        }
+
         $detergente->delete();
 
         return redirect()->route('imballaggi.index', ['tab' => 'detergenti'])
-            ->with('success', 'Lotto eliminato.');
+            ->with('success', 'Lotto spostato nel cestino.');
     }
 
     // ─── HELPERS ─────────────────────────────────────────────────────────────

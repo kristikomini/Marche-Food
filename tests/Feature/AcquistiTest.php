@@ -83,6 +83,6 @@ class AcquistiTest extends TestCase
              ->delete("/acquisti/{$acquisto->id}")
              ->assertRedirect('/acquisti');
 
-        $this->assertDatabaseMissing('acquisti', ['id' => $acquisto->id]);
+        $this->assertSoftDeleted('acquisti', ['id' => $acquisto->id]);
     }
 }

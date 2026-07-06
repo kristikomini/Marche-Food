@@ -206,3 +206,27 @@ Edit forms for acquisti/vendite/produzioni submit the `updated_at` they loaded. 
 ## 16. AI certificate extraction
 
 On the supplier form, an operator uploads a HACCP/MOCA certificate (PDF/image) → `POST /fornitori/estrai-certificato` (admin) → `CertificateExtractionService` sends it to a vision LLM (Anthropic Claude, configurable in `config/ai.php`) and returns `{haccp_scadenza, moca_numero}` to auto-fill the form. Requires `ANTHROPIC_API_KEY`; degrades gracefully with a clear message when unconfigured. The response parser tolerates markdown fences / surrounding prose. See `INTEGRATIONS.md`.
+
+## 17. Soft-delete, restore & delete guards (2026-07-06)
+
+Deleting an operational document is now a **soft delete** (`deleted_at` set), so an accidental admin delete is recoverable rather than lost. The 7 document models use Laravel's `SoftDeletes`; trashed rows disappear from every normal list, edit form, inventory balance, report, search and audit feed, then reappear on restore.
+
+- **Cestino** (`/cestino`, admin): lists trashed documents across the 7 tables (`Acquisto`, `Vendita`, `Produzione`, `BollaReso`, `NotaCredito`, `LottoImballaggioPrimario`, `LottoDetergente`), with **restore** and **permanent delete** (force-delete, wrapped so a residual FK surfaces a friendly error).
+- **Delete guards.** Soft-delete bypasses the database foreign keys, so each `destroy()` re-checks references at the application level and refuses to trash a document still tied to an **active** (non-trashed) downstream document:
+  - *Acquisto* — a lot consumed by an active production or sold.
+  - *Produzione* — its semilavorato consumed by an active downstream production, or its finished lot sold.
+  - *LottoImballaggioPrimario / LottoDetergente* — used in an active production.
+  - *Vendita* — a line with a return slip (bolla di reso).
+  - *BollaReso* — has a credit note.
+  A trashed production's consumption is **released** back to lot balances (the balance queries only count non-trashed productions/sales), so the freed stock is immediately available again.
+- **Raw-query correctness.** `InventoryService`, `ReportService`, `SearchService`, `AuditService` and the `ProduzioneController` balance checks all filter `whereNull('<parent>.deleted_at')` because `DB::table()` ignores the soft-delete scope. (Aggregate columns inside `pluck(DB::raw('SUM(...)'))` are aliased/unqualified — a table-qualified column inside the raw `SUM()` breaks Laravel's `stripTableForPluck`.)
+
+## 18. Allergen derivation (Reg. UE 1169/2011) (2026-07-06)
+
+Each **materia prima** declares which of the 14 EU allergens it *contains* (`allergeni`) and which it *may contain* (`allergeni_tracce`, cross-contact). `AllergenService::forProduzione($produzione)` computes a production lot's allergen declaration as the **union** of its ingredients' allergens:
+
+- for each ingredient line, the linked `materia_prima`'s `allergeni` / `allergeni_tracce`;
+- for a semi-finished ingredient, it **recurses** into that semilavorato's source production and unions its derived allergens (cycle-guarded by a visited set), so a sub-recipe's allergens propagate up to the parent lot;
+- an allergen that ends up in the "contains" set is removed from "may contain".
+
+The result is shown as chips on the materie-prime list and in the traceability view, and printed on the production QR label and the HACCP production PDF. `AllergenService::forProduzioneLabels()` returns the same sets resolved to Italian labels for display. Nothing is stored on `produzioni` — the matrix is always derived from live recipe/material data, so a supplier-driven allergen change reflows automatically.

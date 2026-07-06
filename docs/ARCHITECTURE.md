@@ -275,3 +275,20 @@ Dedicated **services** (`app/Services/`) keep controllers thin and are unit/simu
 | `CertificateExtractionService` | AI (Claude Vision) certificate field extraction |
 
 New controllers: `HealthController`, `MagazzinoController`, `AuditController`, `SearchController`, `NotificationController`, `KioskController`, `CertificatoController`, `Auth/TwoFactorController` (and `ReportController` extended). Vendored browser assets (no build step): `public/vendor/qrcode-generator.js` (lot labels, 2FA QR) and `public/vendor/html5-qrcode.min.js` (kiosk camera scanning).
+
+## Services & components added 2026-07-06
+
+Data-safety and compliance features (soft-delete, QR lot labels, allergen tracking):
+
+| Service / component | Responsibility |
+|---|---|
+| `AllergenService` | The 14 EU allergens (Reg. 1169/2011); derives a production lot's allergen set from its ingredients, **recursively** through semi-finished (semilavorato) ingredients (cycle-guarded). |
+| `App\Concerns\Auditable` (existing) | Unchanged; the 7 operational models now **also** use Laravel's `SoftDeletes`. |
+
+New controller: `CestinoController` (admin-only trash: list soft-deleted documents, restore, permanent-delete).
+
+New Blade view: `resources/views/labels/lotti.blade.php` (multi-lot QR label sheet for purchases/sales, reusing the vendored `qrcode-generator.js`).
+
+New Vue page: `resources/js/Pages/Cestino/Index.vue`.
+
+**Soft-delete design note.** Only the 7 operational **document** tables carry `deleted_at`; their line/pivot tables do not (they are preserved untouched when a parent is trashed). Because raw `DB::table()` queries bypass Eloquent's `SoftDeletingScope`, every raw balance/report/search/audit query was updated to exclude trashed parents via a join + `whereNull('<parent>.deleted_at')`. Each `destroy()` also carries an application-level guard that blocks trashing a record still referenced by an **active** (non-trashed) downstream document — preserving the invariant the database foreign keys used to enforce on hard delete.

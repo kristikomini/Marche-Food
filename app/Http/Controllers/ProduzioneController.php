@@ -141,9 +141,22 @@ class ProduzioneController extends Controller
 
     public function destroy(Produzione $produzione)
     {
+        // Refuse to trash a production whose semi-finished lot is consumed by an
+        // active downstream production, or whose finished lot has been sold.
+        $semiId = $produzione->lottoSemilavorato()->value('id');
+        $semiConsumed = $semiId && \App\Models\ProduzioneMateriaPrima::where('semilavorato_id', $semiId)
+            ->whereHas('produzione')->exists();
+
+        $sold = \App\Models\VenditaRiga::where('produzione_id', $produzione->id)
+            ->whereHas('vendita')->exists();
+
+        if ($semiConsumed || $sold) {
+            return back()->with('error', 'Impossibile eliminare: il semilavorato o il lotto di questa produzione è utilizzato in produzioni o vendite attive.');
+        }
+
         $produzione->delete();
 
-        return redirect()->route('produzioni.index')->with('success', 'Produzione eliminata.');
+        return redirect()->route('produzioni.index')->with('success', 'Produzione spostata nel cestino.');
     }
 
     private function syncMateriePrime(Produzione $produzione, array $righe): void
@@ -192,17 +205,22 @@ class ProduzioneController extends Controller
     {
         // GAP-D2 (extended): balance for purchased lots = received - consumed in productions - sold directly
         $consumedPurchased = DB::table('produzioni_materie_prime')
+            ->join('produzioni', 'produzioni.id', '=', 'produzioni_materie_prime.produzione_id')
+            ->whereNull('produzioni.deleted_at')
             ->whereNotNull('acquisto_riga_id')
-            ->when($excludeProduzioneId, fn($q) => $q->where('produzione_id', '!=', $excludeProduzioneId))
+            ->when($excludeProduzioneId, fn($q) => $q->where('produzioni_materie_prime.produzione_id', '!=', $excludeProduzioneId))
             ->groupBy('acquisto_riga_id')
-            ->pluck(DB::raw('SUM(quantita_kg)'), 'acquisto_riga_id');
+            ->pluck(DB::raw('SUM(produzioni_materie_prime.quantita_kg) as s'), 'acquisto_riga_id');
 
         $soldDirectly = DB::table('vendite_righe')
+            ->join('vendite', 'vendite.id', '=', 'vendite_righe.vendita_id')
+            ->whereNull('vendite.deleted_at')
             ->whereNotNull('acquisto_riga_id')
             ->groupBy('acquisto_riga_id')
-            ->pluck(DB::raw('SUM(quantita_kg)'), 'acquisto_riga_id');
+            ->pluck(DB::raw('SUM(vendite_righe.quantita_kg) as s'), 'acquisto_riga_id');
 
-        $purchasedLots = AcquistoRiga::with(['acquisto' => fn($q) => $q->with('fornitore:id,ragione_sociale,codice')])
+        $purchasedLots = AcquistoRiga::whereHas('acquisto')
+            ->with(['acquisto' => fn($q) => $q->with('fornitore:id,ragione_sociale,codice')])
             ->orderByDesc('data_in')
             ->get(['id', 'acquisto_id', 'nome_prodotto', 'lotto', 'lotto_esterno', 'quantita_kg', 'scadenza', 'data_in'])
             ->map(function ($riga) use ($consumedPurchased, $soldDirectly) {
@@ -218,12 +236,15 @@ class ProduzioneController extends Controller
 
         // Balance for internal lots = produced qty - consumed in downstream productions
         $consumedInternal = DB::table('produzioni_materie_prime')
+            ->join('produzioni', 'produzioni.id', '=', 'produzioni_materie_prime.produzione_id')
+            ->whereNull('produzioni.deleted_at')
             ->whereNotNull('semilavorato_id')
-            ->when($excludeProduzioneId, fn($q) => $q->where('produzione_id', '!=', $excludeProduzioneId))
+            ->when($excludeProduzioneId, fn($q) => $q->where('produzioni_materie_prime.produzione_id', '!=', $excludeProduzioneId))
             ->groupBy('semilavorato_id')
-            ->pluck(DB::raw('SUM(quantita_kg)'), 'semilavorato_id');
+            ->pluck(DB::raw('SUM(produzioni_materie_prime.quantita_kg) as s'), 'semilavorato_id');
 
-        $internalLots = LottoSemilavorato::whereNull('data_out')
+        $internalLots = LottoSemilavorato::whereHas('produzione')
+            ->whereNull('data_out')
             ->orderByDesc('data_produzione')
             ->get(['id', 'produzione_id', 'lotto', 'nome_prodotto', 'quantita_kg', 'data_produzione'])
             ->map(function ($semi) use ($consumedInternal) {
@@ -272,18 +293,27 @@ class ProduzioneController extends Controller
 
         // Fresh consumed totals inside the transaction
         $consumedPurchased = $purchaseIds ? DB::table('produzioni_materie_prime')
+            ->join('produzioni', 'produzioni.id', '=', 'produzioni_materie_prime.produzione_id')
+            ->whereNull('produzioni.deleted_at')
             ->whereNotNull('acquisto_riga_id')->whereIn('acquisto_riga_id', $purchaseIds)
-            ->when($excludeProduzioneId, fn($q) => $q->where('produzione_id', '!=', $excludeProduzioneId))
-            ->pluck(DB::raw('SUM(quantita_kg)'), 'acquisto_riga_id') : collect();
+            ->when($excludeProduzioneId, fn($q) => $q->where('produzioni_materie_prime.produzione_id', '!=', $excludeProduzioneId))
+            ->groupBy('acquisto_riga_id')
+            ->pluck(DB::raw('SUM(produzioni_materie_prime.quantita_kg) as s'), 'acquisto_riga_id') : collect();
 
         $soldDirectly = $purchaseIds ? DB::table('vendite_righe')
+            ->join('vendite', 'vendite.id', '=', 'vendite_righe.vendita_id')
+            ->whereNull('vendite.deleted_at')
             ->whereNotNull('acquisto_riga_id')->whereIn('acquisto_riga_id', $purchaseIds)
-            ->pluck(DB::raw('SUM(quantita_kg)'), 'acquisto_riga_id') : collect();
+            ->groupBy('acquisto_riga_id')
+            ->pluck(DB::raw('SUM(vendite_righe.quantita_kg) as s'), 'acquisto_riga_id') : collect();
 
         $consumedInternal = $internalIds ? DB::table('produzioni_materie_prime')
+            ->join('produzioni', 'produzioni.id', '=', 'produzioni_materie_prime.produzione_id')
+            ->whereNull('produzioni.deleted_at')
             ->whereNotNull('semilavorato_id')->whereIn('semilavorato_id', $internalIds)
-            ->when($excludeProduzioneId, fn($q) => $q->where('produzione_id', '!=', $excludeProduzioneId))
-            ->pluck(DB::raw('SUM(quantita_kg)'), 'semilavorato_id') : collect();
+            ->when($excludeProduzioneId, fn($q) => $q->where('produzioni_materie_prime.produzione_id', '!=', $excludeProduzioneId))
+            ->groupBy('semilavorato_id')
+            ->pluck(DB::raw('SUM(produzioni_materie_prime.quantita_kg) as s'), 'semilavorato_id') : collect();
 
         $errors = [];
 

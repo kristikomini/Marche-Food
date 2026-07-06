@@ -331,3 +331,19 @@ The Artisan command `db:backup` (class `BackupDatabase`) runs daily at 03:00:
 | **2FA (admin)** | `/profilo/2fa/*`, `/2fa/challenge` | TOTP two-factor (RFC 6238) with recovery codes + two-step login. Admin-only. `TotpService`, `TwoFactorController`. |
 | **Estrazione AI certificati** | `POST /fornitori/estrai-certificato` (admin) | Claude Vision extracts `haccp_scadenza` + `moca_numero` from an uploaded certificate. `CertificateExtractionService`. |
 | **Optimistic locking** | on `PUT /acquisti|vendite|produzioni/{id}` | `updated_at` conflict guard (`Controller::assertNotStale`). |
+
+## Modules added 2026-07-06
+
+| Module | Route(s) | Purpose |
+|---|---|---|
+| **Cestino (soft-delete)** | `/cestino`, `POST /cestino/{tipo}/{id}/restore`, `DELETE /cestino/{tipo}/{id}` (admin) | Recover or permanently remove soft-deleted operational documents (acquisti, vendite, produzioni, bolle reso, note credito, imballaggi, detergenti). `CestinoController`. Delete now **soft-deletes** (recoverable) instead of a hard, irreversible DELETE. |
+| **Etichette lotto acquisto/vendita (QR)** | `/acquisti/{id}/etichette`, `/vendite/{id}/etichette` | Printable QR labels per received/sold lot; each QR opens `/tracciabilita?q=<lotto>`. Extends the existing produzione label to purchases/sales. `ReportController`; `labels/lotti.blade.php`. |
+| **Allergeni (Reg. UE 1169/2011)** | on `/materie-prime` (CRUD), surfaced in `/tracciabilita`, the produzione QR label, and the produzione PDF | The 14 EU allergens per raw material (*contiene* + *può contenere / tracce*), **propagated** (union, recursive through semilavorati) to each production lot. `AllergenService`. |
+
+### Soft-delete & restore (data safety)
+
+`Acquisto`, `Vendita`, `Produzione`, `BollaReso`, `NotaCredito`, `LottoImballaggioPrimario`, `LottoDetergente` use Laravel's `SoftDeletes`. Normal lists/edits automatically hide trashed rows (global scope). Admins see trashed documents under **Utilità → Cestino** and can restore them (they reappear everywhere, including inventory/traceability) or delete them permanently. Deleting is **guarded**: a purchase whose lot is consumed by an active production or sold, a production whose semilavorato is consumed downstream or whose lot is sold, a packaging/detergent lot used in an active production, a sale with return slips, or a return slip with a credit note — cannot be trashed until the referencing document is removed first. Trashing a production releases its consumption back to lot balances.
+
+### Allergen tracking (FIC)
+
+Each materia prima declares which of the 14 EU allergens it **contains** and which it **may contain** (cross-contact / tracce), stored as JSON. `AllergenService::forProduzione()` computes a finished lot's declaration as the union of its ingredients' allergens, recursing into any semi-finished ingredient's source production (an allergen that is a declared "contains" is dropped from "may contain"). The result is shown as chips in the materie-prime list and traceability view, and printed on the production QR label and HACCP PDF.

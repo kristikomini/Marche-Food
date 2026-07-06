@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<title>Etichette — {{ $lotto }}</title>
+<title>{{ $titolo }}</title>
 <script src="/vendor/qrcode-generator.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,8 +19,7 @@
   .label .prod { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 2px 0; }
   .label .lot { font-family: monospace; font-size: 1rem; font-weight: 700; color: #1c3d28; }
   .label .meta { font-size: 0.72rem; color: #64748b; margin-top: 4px; }
-  .label .meta .allergeni { color: #b91c1c; font-weight: 600; }
-  .label .meta .allergeni-tracce { color: #b45309; }
+  .empty { max-width: 900px; margin: 2rem auto; text-align: center; color: #64748b; }
   @media print {
     body { background: #fff; padding: 0; }
     .toolbar { display: none; }
@@ -31,32 +30,32 @@
 </head>
 <body>
   <div class="toolbar">
-    <h1>Etichette lotto {{ $lotto }} — {{ $copie }} copia/e</h1>
+    <h1>{{ $titolo }} — {{ count($labels) }} etichetta/e</h1>
     <button class="btn" onclick="window.print()">Stampa</button>
   </div>
 
+  @if(count($labels) === 0)
+    <div class="empty">Nessun lotto con codice da etichettare in questo documento.</div>
+  @else
   <div class="sheet">
-    @for($i = 0; $i < $copie; $i++)
+    @foreach($labels as $l)
+      @for($i = 0; $i < $l['copie']; $i++)
       <div class="label">
-        <div class="qr" data-qr="{{ $traceUrl }}"></div>
+        <div class="qr" data-qr="{{ $l['traceUrl'] }}"></div>
         <div class="info">
           <div class="brand">Marche International Food</div>
-          <div class="prod">{{ $prodotto ?? 'Prodotto' }}</div>
-          <div class="lot">{{ $lotto }}</div>
+          <div class="prod">{{ $l['prodotto'] ?? 'Prodotto' }}</div>
+          <div class="lot">{{ $l['lotto'] }}</div>
           <div class="meta">
-            Prod.: {{ $dataProduzione }}@if($quantita) · {{ $quantita }} kg @endif<br>
-            @if(!empty($allergeni['contiene']))
-              <span class="allergeni"><strong>Allergeni:</strong> {{ implode(', ', $allergeni['contiene']) }}</span><br>
-            @endif
-            @if(!empty($allergeni['tracce']))
-              <span class="allergeni-tracce">Può contenere: {{ implode(', ', $allergeni['tracce']) }}</span><br>
-            @endif
+            @if($l['meta']){{ $l['meta'] }}<br>@endif
             Scansiona per la tracciabilità
           </div>
         </div>
       </div>
-    @endfor
+      @endfor
+    @endforeach
   </div>
+  @endif
 
   <script>
     (function () {

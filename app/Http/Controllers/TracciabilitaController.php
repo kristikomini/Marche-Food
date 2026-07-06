@@ -5,12 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\AcquistoRiga;
 use App\Models\Produzione;
 use App\Models\VenditaRiga;
+use App\Services\AllergenService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class TracciabilitaController extends Controller
 {
+    public function __construct(private AllergenService $allergeni)
+    {
+    }
+
     private const LIMIT_RIGHE    = 50;
     private const LIMIT_PROD     = 20;
     private const LIMIT_VENDITE  = 20;
@@ -34,7 +39,7 @@ class TracciabilitaController extends Controller
 
         $term = "%{$q}%";
         // PostgreSQL uses ILIKE; SQLite (tests) uses case-insensitive LIKE.
-        $op = DB::connection()->getDriverName() === 'pgsql' ? $op : 'like';
+        $op = DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
 
         // ── 1. Forward trace: purchase lots ──────────────────────────────────
         $righeQuery = AcquistoRiga::with([
@@ -56,6 +61,7 @@ class TracciabilitaController extends Controller
                 'scheda.prodotto',
                 'materiePrime.materiaPrima',
                 'materiePrime.acquistoRiga.acquisto.fornitore',
+                'materiePrime.semilavorato.produzione',
             ])
             ->where(function ($query) use ($term, $op) {
                 $query->where('lotto_produzione', $op, $term)
@@ -65,6 +71,11 @@ class TracciabilitaController extends Controller
 
         $totalProduzioni = (clone $prodQuery)->count();
         $produzioni      = $prodQuery->limit(self::LIMIT_PROD)->get();
+
+        // Derived allergen declaration (Reg. UE 1169/2011) per production lot.
+        $produzioni->each(function ($p) {
+            $p->setAttribute('allergeni', $this->allergeni->forProduzioneLabels($p));
+        });
 
         // ── 3. GAP-D6: sales leg — find finished lots delivered to customers ─
         $venditeQuery = VenditaRiga::with(['vendita.cliente'])

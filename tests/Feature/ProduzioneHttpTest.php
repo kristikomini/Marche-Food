@@ -108,6 +108,6 @@ class ProduzioneHttpTest extends TestCase
         $this->assertDatabaseHas('produzioni', ['id' => $prod->id]);
 
         $this->actingAs(User::factory()->admin()->create())->delete("/produzioni/{$prod->id}")->assertRedirect('/produzioni');
-        $this->assertDatabaseMissing('produzioni', ['id' => $prod->id]);
+        $this->assertSoftDeleted('produzioni', ['id' => $prod->id]);
     }
 }

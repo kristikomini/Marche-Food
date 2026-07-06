@@ -92,7 +92,8 @@ class VenditaController extends Controller
 
     private function acquistiRigheForVendita(): array
     {
-        return AcquistoRiga::with(['acquisto.fornitore:id,ragione_sociale'])
+        return AcquistoRiga::whereHas('acquisto')
+            ->with(['acquisto.fornitore:id,ragione_sociale'])
             ->whereNull('data_out')
             ->orderByDesc('data_in')
             ->get(['id', 'acquisto_id', 'nome_prodotto', 'lotto', 'lotto_esterno', 'quantita_kg', 'data_in'])
@@ -159,10 +160,16 @@ class VenditaController extends Controller
 
     public function destroy(Vendita $vendita)
     {
+        // Refuse to trash a sale whose lines still have credit-note return
+        // slips (bolle di reso) attached.
+        if ($vendita->righe()->whereHas('bolleReso')->exists()) {
+            return back()->with('error', 'Impossibile eliminare: questa vendita ha bolle di reso collegate. Elimina prima le bolle di reso.');
+        }
+
         $vendita->delete();
 
         return redirect()->route('vendite.index')
-            ->with('success', 'Vendita eliminata.');
+            ->with('success', 'Vendita spostata nel cestino.');
     }
 
     public function export()

@@ -81,6 +81,6 @@ class ProduzioniTest extends TestCase
              ->delete("/produzioni/{$produzione->id}")
              ->assertRedirect('/produzioni');
 
-        $this->assertDatabaseMissing('produzioni', ['id' => $produzione->id]);
+        $this->assertSoftDeleted('produzioni', ['id' => $produzione->id]);
     }
 }

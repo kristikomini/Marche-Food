@@ -60,9 +60,13 @@ class BollaResoController extends Controller
 
     public function destroy(BollaReso $bolleReso)
     {
+        if ($bolleReso->notaCredito()->exists()) {
+            return back()->with('error', 'Impossibile eliminare: questa bolla di reso ha una nota di credito collegata. Elimina prima la nota di credito.');
+        }
+
         $bolleReso->delete();
 
-        return redirect()->route('bolle-reso.index')->with('success', 'Bolla reso eliminata.');
+        return redirect()->route('bolle-reso.index')->with('success', 'Bolla reso spostata nel cestino.');
     }
 
     private function venditeConRighe()

@@ -102,6 +102,19 @@
   </table>
 </div>
 
+{{-- Allergeni (Reg. UE 1169/2011) --}}
+@if(!empty($allergeni['contiene']) || !empty($allergeni['tracce']))
+<div class="section">
+  <div class="section-title">Allergeni (Reg. UE 1169/2011)</div>
+  @if(!empty($allergeni['contiene']))
+    <div><strong>Contiene:</strong> {{ implode(', ', $allergeni['contiene']) }}</div>
+  @endif
+  @if(!empty($allergeni['tracce']))
+    <div><strong>Può contenere:</strong> {{ implode(', ', $allergeni['tracce']) }}</div>
+  @endif
+</div>
+@endif
+
 {{-- Imballaggi --}}
 @if($produzione->imballaggiPrimari->count() > 0)
 <div class="section">

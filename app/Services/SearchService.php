@@ -77,10 +77,12 @@ class SearchService
         }
 
         $lottiAcquisto = DB::table('acquisti_righe')
-            ->where('lotto', $op, $like)
-            ->orWhere('lotto_esterno', $op, $like)
+            ->join('acquisti', 'acquisti.id', '=', 'acquisti_righe.acquisto_id')
+            ->whereNull('acquisti.deleted_at')
+            ->where(fn ($w) => $w->where('acquisti_righe.lotto', $op, $like)
+                ->orWhere('acquisti_righe.lotto_esterno', $op, $like))
             ->limit(self::LIMIT)
-            ->get(['lotto', 'lotto_esterno', 'nome_prodotto']);
+            ->get(['acquisti_righe.lotto', 'acquisti_righe.lotto_esterno', 'acquisti_righe.nome_prodotto']);
         if ($lottiAcquisto->count()) {
             $gruppi[] = ['tipo' => 'Lotti di acquisto', 'icona' => 'pi-download', 'items' => $lottiAcquisto->map(function ($r) {
                 $lot = $r->lotto ?: $r->lotto_esterno;

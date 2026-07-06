@@ -27,16 +27,21 @@ class InventoryService
     public function purchaseLotBalances(bool $onlyInStock = false): Collection
     {
         $consumed = DB::table('produzioni_materie_prime')
-            ->whereNotNull('acquisto_riga_id')
-            ->groupBy('acquisto_riga_id')
-            ->pluck(DB::raw('SUM(quantita_kg) as s'), 'acquisto_riga_id');
+            ->join('produzioni', 'produzioni.id', '=', 'produzioni_materie_prime.produzione_id')
+            ->whereNull('produzioni.deleted_at')
+            ->whereNotNull('produzioni_materie_prime.acquisto_riga_id')
+            ->groupBy('produzioni_materie_prime.acquisto_riga_id')
+            ->pluck(DB::raw('SUM(produzioni_materie_prime.quantita_kg) as s'), 'produzioni_materie_prime.acquisto_riga_id');
 
         $sold = DB::table('vendite_righe')
-            ->whereNotNull('acquisto_riga_id')
-            ->groupBy('acquisto_riga_id')
-            ->pluck(DB::raw('SUM(quantita_kg) as s'), 'acquisto_riga_id');
+            ->join('vendite', 'vendite.id', '=', 'vendite_righe.vendita_id')
+            ->whereNull('vendite.deleted_at')
+            ->whereNotNull('vendite_righe.acquisto_riga_id')
+            ->groupBy('vendite_righe.acquisto_riga_id')
+            ->pluck(DB::raw('SUM(vendite_righe.quantita_kg) as s'), 'vendite_righe.acquisto_riga_id');
 
-        $lots = AcquistoRiga::with(['acquisto.fornitore:id,ragione_sociale,codice'])
+        $lots = AcquistoRiga::whereHas('acquisto')
+            ->with(['acquisto.fornitore:id,ragione_sociale,codice'])
             ->orderByDesc('data_in')
             ->get([
                 'id', 'acquisto_id', 'nome_prodotto', 'um', 'quantita_kg',
@@ -66,11 +71,14 @@ class InventoryService
     public function semilavoratoBalances(bool $onlyInStock = false): Collection
     {
         $consumed = DB::table('produzioni_materie_prime')
-            ->whereNotNull('semilavorato_id')
-            ->groupBy('semilavorato_id')
-            ->pluck(DB::raw('SUM(quantita_kg) as s'), 'semilavorato_id');
+            ->join('produzioni', 'produzioni.id', '=', 'produzioni_materie_prime.produzione_id')
+            ->whereNull('produzioni.deleted_at')
+            ->whereNotNull('produzioni_materie_prime.semilavorato_id')
+            ->groupBy('produzioni_materie_prime.semilavorato_id')
+            ->pluck(DB::raw('SUM(produzioni_materie_prime.quantita_kg) as s'), 'produzioni_materie_prime.semilavorato_id');
 
-        $lots = LottoSemilavorato::whereNull('data_out')
+        $lots = LottoSemilavorato::whereHas('produzione')
+            ->whereNull('data_out')
             ->orderByDesc('data_produzione')
             ->get(['id', 'produzione_id', 'lotto', 'nome_prodotto', 'quantita_kg', 'data_produzione'])
             ->map(function ($r) use ($consumed) {

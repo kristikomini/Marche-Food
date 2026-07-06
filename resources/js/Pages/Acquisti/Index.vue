@@ -82,11 +82,14 @@
           <span class="badge">{{ data.righe_count }}</span>
         </template>
       </Column>
-      <Column header="Azioni" style="width: 150px">
+      <Column header="Azioni" style="width: 190px">
         <template #body="{ data }">
           <div style="display:flex; gap:0.4rem">
             <a :href="`/acquisti/${data.id}/pdf`" target="_blank">
               <Button icon="pi pi-file-pdf" aria-label="Scarica PDF" size="small" outlined severity="secondary" v-tooltip.top="'Scarica PDF'" />
+            </a>
+            <a :href="`/acquisti/${data.id}/etichette`" target="_blank">
+              <Button icon="pi pi-qrcode" aria-label="Etichette QR lotti" size="small" outlined severity="secondary" v-tooltip.top="'Etichette QR lotti'" />
             </a>
             <Link :href="`/acquisti/${data.id}/edit`">
               <Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined />
@@ -120,6 +123,7 @@
         <div class="m-card-row"><span>Righe</span><span>{{ a.righe_count }}</span></div>
         <div class="m-card-actions">
           <a :href="`/acquisti/${a.id}/pdf`" target="_blank"><Button icon="pi pi-file-pdf" aria-label="Scarica PDF" size="small" outlined severity="secondary" /></a>
+          <a :href="`/acquisti/${a.id}/etichette`" target="_blank"><Button icon="pi pi-qrcode" aria-label="Etichette QR lotti" size="small" outlined severity="secondary" /></a>
           <Link :href="`/acquisti/${a.id}/edit`"><Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined /></Link>
           <Button v-if="isAdmin" icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(a)" />
         </div>

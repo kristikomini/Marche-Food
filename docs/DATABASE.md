@@ -504,3 +504,20 @@ FK `recall_id` (CASCADE), `cliente_id` (SET NULL), `vendita_riga_id` (SET NULL);
 FK `notification_id` (CASCADE), `user_id` (CASCADE), `dismissed_at`; `UNIQUE(notification_id, user_id)`. A row with `dismissed_at` set hides the notification for that user until its `signature` changes.
 
 > `TracciabilitaController` and `SearchService` use `ILIKE` on PostgreSQL and fall back to case-insensitive `LIKE` on other drivers (SQLite/tests).
+
+## 4. Columns added 2026-07-06 (soft-delete, allergens)
+
+Migrations: `2026_07_06_000001_add_soft_deletes_to_operational_tables`, `2026_07_06_000002_add_allergeni_to_materie_prime`.
+
+### Soft-delete — `deleted_at TIMESTAMPTZ NULL`
+Added to the 7 operational **document** tables: `acquisti`, `vendite`, `produzioni`, `bolle_reso`, `note_credito`, `lotti_imballaggi_primari`, `lotti_detergenti`. A non-null `deleted_at` marks the row as trashed; Eloquent's `SoftDeletes` global scope hides it from normal reads. The **line/pivot** tables (`acquisti_righe`, `vendite_righe`, `produzioni_materie_prime`, `produzioni_imballaggi_primari`, `produzioni_detergenti`, `lotti_semilavorati`) intentionally have **no** `deleted_at` — they are left untouched when a parent is trashed and are still edited by hard delete inside the normal update flow.
+
+> **Raw-query caveat.** Because `DB::table()` bypasses the soft-delete scope, all raw balance/report/search/audit queries join the parent document and filter `whereNull('<parent>.deleted_at')` so trashed documents never leak into inventory balances, management reports, global search, or the audit feed.
+
+### `materie_prime` — new columns (allergens)
+| Column | Type | Notes |
+|---|---|---|
+| `allergeni` | JSON nullable | array of allergen codes the material **contains** |
+| `allergeni_tracce` | JSON nullable | array of allergen codes it **may contain** (cross-contact) |
+
+Codes are the 14 EU allergens from `App\Services\AllergenService::EU_ALLERGENS` (`cereali_glutine`, `crostacei`, `uova`, `pesce`, `arachidi`, `soia`, `latte`, `frutta_guscio`, `sedano`, `senape`, `sesamo`, `solfiti`, `lupini`, `molluschi`). Production-lot allergens are **derived** at read time (no stored column) by `AllergenService::forProduzione()`, which unions ingredient allergens recursively through semilavorati.

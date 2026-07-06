@@ -364,3 +364,35 @@ Application-level throttle middleware is applied on sensitive write endpoints. A
 | All other routes | None | |
 
 Infrastructure-level rate limiting (Traefik/Coolify/Hetzner firewall) can add an additional layer but is not required for current threat model.
+
+---
+
+## 4. Endpoints added 2026-07-06
+
+### Cestino (soft-delete recovery)
+
+| Method | Path | Auth | Body | Description |
+|---|---|---|---|---|
+| `GET` | `/cestino` | `admin` | — | List trashed operational documents (all 7 types) |
+| `POST` | `/cestino/{tipo}/{id}/restore` | `admin` | — | Restore a trashed document. `{tipo}` ∈ `acquisti`, `vendite`, `produzioni`, `bolle-reso`, `note-credito`, `imballaggi`, `detergenti` |
+| `DELETE` | `/cestino/{tipo}/{id}` | `admin` | — | Permanently delete a trashed document (force-delete) |
+
+> The `DELETE` verbs on `/acquisti/{id}`, `/vendite/{id}`, `/produzioni/{id}`, `/bolle-reso/{id}`, `/note-credito/{id}`, `/imballaggi/primari/{id}`, `/imballaggi/detergenti/{id}` now perform a **soft delete**. They return a `back()->with('error', …)` (surfaced as a toast) when a delete guard blocks removal of a still-referenced document.
+
+### QR lot labels (purchases / sales)
+
+| Method | Path | Auth | Query | Description |
+|---|---|---|---|---|
+| `GET` | `/acquisti/{id}/etichette` | `auth` | `copie` (1–60, default 1) | HTML sheet of QR labels, one per lot line; each QR opens `/tracciabilita?q=<lotto>` |
+| `GET` | `/vendite/{id}/etichette` | `auth` | `copie` (1–60, default 1) | Same, for a sale's lot lines |
+
+### Anagrafica — Materie Prime (allergen fields)
+
+`POST /materie-prime` and `PUT /materie-prime/{id}` now also accept:
+
+| Field | Type | Rule |
+|---|---|---|
+| `allergeni` | array of strings | each ∈ the 14 EU allergen codes |
+| `allergeni_tracce` | array of strings | each ∈ the 14 EU allergen codes |
+
+The index and edit form receive the allergen option list / label map from the controller. Production allergens are **derived** (not an endpoint field) and appear inside the traceability response, the produzione label, and the produzione PDF.
