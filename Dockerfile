@@ -15,17 +15,23 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libonig-dev \
     libxml2-dev \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
     curl \
     unzip \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install \
+# gd is required by dompdf to rasterise the (transparent PNG) logo in the PDFs.
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
     pdo \
     pdo_pgsql \
     pgsql \
     zip \
-    bcmath
+    bcmath \
+    gd
 
 RUN a2enmod rewrite
 

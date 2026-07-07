@@ -39,8 +39,12 @@
     $eur = fn ($v) => number_format((float) $v, 2, ',', '.');
     $qty = fn ($v, $d = 3) => $v === null ? '' : rtrim(rtrim(number_format((float) $v, $d, ',', '.'), '0'), ',');
 
+    // dompdf needs GD to rasterise a transparent PNG; skip the logo if GD is
+    // unavailable so the PDF still renders instead of throwing a 500.
     $logoPath = public_path('favicon.png');
-    $logo = is_file($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : null;
+    $logo = (extension_loaded('gd') && is_file($logoPath))
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+        : null;
 @endphp
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }

@@ -45,8 +45,12 @@
     // Numero di righe vuote di riempimento per la sezione materie prime.
     $materieVuote = max(0, 8 - $materie->count());
 
+    // dompdf needs GD to rasterise a transparent PNG; skip the logo if GD is
+    // unavailable so the PDF still renders instead of throwing a 500.
     $logoPath = public_path('favicon.png');
-    $logo = is_file($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : null;
+    $logo = (extension_loaded('gd') && is_file($logoPath))
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+        : null;
 @endphp
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
