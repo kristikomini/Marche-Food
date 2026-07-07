@@ -44,6 +44,9 @@
 
     // Numero di righe vuote di riempimento per la sezione materie prime.
     $materieVuote = max(0, 8 - $materie->count());
+
+    $logoPath = public_path('favicon.png');
+    $logo = is_file($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : null;
 @endphp
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -77,7 +80,10 @@
 <div class="titolo">
   <table>
     <tr>
-      <td style="width:22%"><div class="brand">MARCHE<br>INTERNATIONAL FOOD</div></td>
+      <td style="width:22%">
+        @if($logo)<img src="{{ $logo }}" alt="MIF" style="width:26px;height:26px;vertical-align:middle;margin-right:5px">@endif
+        <span class="brand">MARCHE<br>INTERNATIONAL FOOD</span>
+      </td>
       <td style="width:48%"><div class="name">SCHEDA DI PRODUZIONE</div></td>
       <td style="width:30%">
         <div class="rev"><b>{{ $modello }}{{ $revisione !== null ? ' REV' . $revisione : '' }}</b></div>

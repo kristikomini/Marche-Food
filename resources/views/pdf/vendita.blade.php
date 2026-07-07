@@ -38,6 +38,9 @@
 
     $eur = fn ($v) => number_format((float) $v, 2, ',', '.');
     $qty = fn ($v, $d = 3) => $v === null ? '' : rtrim(rtrim(number_format((float) $v, $d, ',', '.'), '0'), ',');
+
+    $logoPath = public_path('favicon.png');
+    $logo = is_file($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : null;
 @endphp
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -70,6 +73,9 @@
   table.tot .k { font-size: 6.5px; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; display: block; }
   table.tot .v { font-size: 11px; font-weight: 700; color: #1e293b; }
   table.tot .grand .v { color: #1f5040; font-size: 13px; }
+  .chk { display: inline-block; width: 11px; height: 11px; border: 1px solid #111; vertical-align: middle; }
+  .vfill { display: inline-block; min-height: 12px; }
+  .brand-logo { width: 34px; height: 34px; vertical-align: middle; margin-right: 8px; }
 
   .scadenze { margin-top: 10px; border: 1px solid #cbd5e1; border-radius: 4px; padding: 6px 8px; font-size: 9px; }
   .scadenze .lbl { font-size: 7px; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; }
@@ -84,14 +90,21 @@
 
 <div class="row">
   <div class="head-left">
-    <div class="brand">
-      <h1>Marche International Food S.r.l.</h1>
-      <p>
-        Via G. Rossini, 63 — 62029 Tolentino (MC)<br>
-        C.F. e P.Iva 01891440438<br>
-        info@marcheinternationalfood.com — Tel. +39 0733 1715820
-      </p>
-    </div>
+    <table style="border-collapse:collapse">
+      <tr>
+        @if($logo)<td style="width:42px; vertical-align:top"><img class="brand-logo" src="{{ $logo }}" alt="MIF"></td>@endif
+        <td style="vertical-align:top">
+          <div class="brand">
+            <h1>Marche International Food S.r.l.</h1>
+            <p>
+              Via G. Rossini, 63 — 62029 Tolentino (MC)<br>
+              C.F. e P.Iva 01891440438<br>
+              info@marcheinternationalfood.com — Tel. +39 0733 1715820
+            </p>
+          </div>
+        </td>
+      </tr>
+    </table>
   </div>
   <div class="head-right">
     <div class="dest-box">
@@ -161,21 +174,68 @@
   </tbody>
 </table>
 
+@php
+    $aliqLabel = $aliquotaPrincipale !== null
+        ? rtrim(rtrim(number_format((float) $aliquotaPrincipale, 2, ',', '.'), '0'), ',')
+        : '';
+@endphp
+
+<!-- Riepilogo economico (griglia completa come da modulo) -->
 <table class="tot">
   <tr>
-    <td style="width:20%"><span class="k">Imponibile</span><span class="v">{{ $eur($imponibile) }}</span></td>
-    <td style="width:12%"><span class="k">Al. IVA</span><span class="v">{{ $aliquotaPrincipale !== null ? rtrim(rtrim(number_format((float) $aliquotaPrincipale, 2, ',', '.'), '0'), ',') : '—' }}</span></td>
-    <td style="width:18%"><span class="k">Importo IVA</span><span class="v">{{ $eur($imposta) }}</span></td>
-    <td style="width:22%"><span class="k">Totale Merce</span><span class="v">{{ $eur($imponibile) }}</span></td>
-    <td style="width:28%" class="grand"><span class="k">Totale a pagare (EUR)</span><span class="v">{{ $eur($totale) }}</span></td>
+    <td style="width:14%"><span class="k">Imponibile</span><span class="v">{{ $eur($imponibile) }}</span></td>
+    <td style="width:8%"><span class="k">Al. IVA</span><span class="v">{{ $aliqLabel }}</span></td>
+    <td style="width:15%"><span class="k">Importo IVA</span><span class="v">{{ $eur($imposta) }}</span></td>
+    <td style="width:17%"><span class="k">Totale Merce</span><span class="v">{{ $eur($imponibile) }}</span></td>
+    <td style="width:10%"><span class="k">% Sconto</span><span class="v">&nbsp;</span></td>
+    <td style="width:16%"><span class="k">Importo Sconto</span><span class="v">&nbsp;</span></td>
+    <td style="width:20%"><span class="k">Netto Merce</span><span class="v">{{ $eur($imponibile) }}</span></td>
+  </tr>
+</table>
+<table class="tot">
+  <tr>
+    <td style="width:14%"><span class="k">Bolli</span><span class="v">&nbsp;</span></td>
+    <td style="width:16%"><span class="k">Spese Incasso</span><span class="v">&nbsp;</span></td>
+    <td style="width:14%"><span class="k">Varie</span><span class="v">&nbsp;</span></td>
+    <td style="width:16%"><span class="k">Acconto</span><span class="v">&nbsp;</span></td>
+    <td style="width:20%" class="grand"><span class="k">Totale a pagare (EUR)</span><span class="v">{{ $eur($totale) }}</span></td>
+    <td style="width:20%" class="grand"><span class="k">Totale Fattura (EUR)</span><span class="v">{{ $eur($totale) }}</span></td>
   </tr>
 </table>
 
-@if($vendita->note)
-<div class="scadenze">
-  <span class="lbl">Note</span><br>{{ $vendita->note }}
-</div>
-@endif
+<!-- Scadenze / Note -->
+<table class="tot">
+  <tr>
+    <td style="width:70%"><span class="k">Scadenze</span><span class="v vfill">{{ $vendita->condizioni_pagamento }}</span></td>
+    <td style="width:30%"><span class="k">Note</span><span class="v vfill">{{ $vendita->note }}</span></td>
+  </tr>
+</table>
+
+<!-- Dati trasporto -->
+<table class="tot">
+  <tr>
+    <td style="width:11%"><span class="k">N° Colli</span><span class="v">&nbsp;</span></td>
+    <td style="width:13%"><span class="k">Porto</span><span class="v">&nbsp;</span></td>
+    <td style="width:34%"><span class="k">Causale del trasporto</span><span class="v">{{ $vendita->causale_trasporto ?: 'VENDITA' }}</span></td>
+    <td style="width:18%"><span class="k">Tot. Peso</span><span class="v">&nbsp;</span></td>
+    <td style="width:24%"><span class="k">Data del trasporto</span><span class="v">{{ Carbon::parse($vendita->data_documento)->format('d/m/Y') }}</span></td>
+  </tr>
+</table>
+
+<!-- Destinatario / controllo / firme -->
+<table class="tot">
+  <tr>
+    <td style="width:60%"><span class="k">Destinatario della merce (se diverso dall'intestatario)</span><span class="v">&nbsp;</span></td>
+    <td style="width:40%">
+      <span class="k">Controllo merci e temperatura</span>
+      <span class="v">OK <span class="chk"></span> &nbsp;&nbsp; KO <span class="chk"></span></span>
+    </td>
+  </tr>
+  <tr>
+    <td style="height:40px; vertical-align:bottom"><span class="k">Firma per uso interno</span></td>
+    <td style="height:40px; vertical-align:bottom"><span class="k">Firma per accettazione merci</span></td>
+  </tr>
+</table>
 
 <div class="footer">
   <div class="cols">
