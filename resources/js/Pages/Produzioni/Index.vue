@@ -44,15 +44,18 @@
       <Column field="operatore" header="Operatore" style="width:130px">
         <template #body="{ data }"><span class="text-muted">{{ data.operatore ?? '—' }}</span></template>
       </Column>
-      <Column header="Azioni" style="width:170px">
+      <Column header="Azioni" style="width:210px">
         <template #body="{ data }">
           <div style="display:flex;gap:0.4rem">
             <Link :href="`/produzioni/${data.id}/edit`"><Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined /></Link>
             <a :href="`/produzioni/${data.id}/etichetta`" target="_blank">
               <Button icon="pi pi-qrcode" aria-label="Etichette QR" size="small" outlined severity="secondary" v-tooltip="'Etichette QR'" />
             </a>
+            <a :href="`/produzioni/${data.id}/scheda`" target="_blank">
+              <Button icon="pi pi-print" aria-label="Scheda di Produzione" size="small" outlined severity="success" v-tooltip="'Scheda di Produzione (PDF)'" />
+            </a>
             <a :href="`/produzioni/${data.id}/pdf`" target="_blank">
-              <Button icon="pi pi-file-pdf" aria-label="Scarica PDF" size="small" outlined severity="danger" v-tooltip="'Scarica PDF'" />
+              <Button icon="pi pi-file-pdf" aria-label="Scarica PDF" size="small" outlined severity="danger" v-tooltip="'Registro di lavorazione (PDF)'" />
             </a>
             <Button v-if="isAdmin" icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDelete(data)" />
           </div>

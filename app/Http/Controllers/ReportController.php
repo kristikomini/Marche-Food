@@ -94,6 +94,28 @@ class ReportController extends Controller
         return $pdf->download($filename);
     }
 
+    /**
+     * Scheda di Produzione (modello M2PO3) — riproduce il modulo cartaceo:
+     * dati prodotto, materie prime con lotto/fornitore, imballaggi, gas,
+     * ciclo di lavoro e funzionamento metal detector. Le parti compilate a
+     * mano (lotti gas, controllo peso, esiti metal detector) restano vuote.
+     */
+    public function schedaProduzionePdf(Produzione $produzione)
+    {
+        $produzione->load([
+            'scheda.prodotto',
+            'materiePrime.materiaPrima',
+            'materiePrime.acquistoRiga.acquisto.fornitore',
+            'materiePrime.semilavorato',
+            'imballaggiPrimari.lottoImballaggio.fornitore',
+        ]);
+
+        $pdf = Pdf::loadView('pdf.scheda-produzione', compact('produzione'))->setPaper('a4', 'portrait');
+        $filename = 'scheda_produzione_' . str_replace(['/', ' '], '_', $produzione->lotto_produzione) . '.pdf';
+
+        return $pdf->stream($filename);
+    }
+
     public function acquistoPdf(Acquisto $acquisto)
     {
         $acquisto->load(['fornitore', 'righe']);

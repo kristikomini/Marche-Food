@@ -22,4 +22,9 @@ class Cliente extends Model
     protected $casts = [
         'attivo' => 'boolean',
     ];
+
+    public function vendite()
+    {
+        return $this->hasMany(Vendita::class);
+    }
 }

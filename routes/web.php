@@ -91,6 +91,7 @@ Route::middleware('auth')->group(function () {
 
     // PDF download
     Route::get('produzioni/{produzione}/pdf', [ReportController::class, 'produzionePdf'])->name('produzioni.pdf');
+    Route::get('produzioni/{produzione}/scheda', [ReportController::class, 'schedaProduzionePdf'])->name('produzioni.scheda');
     Route::get('acquisti/{acquisto}/pdf', [ReportController::class, 'acquistoPdf'])->name('acquisti.pdf');
     Route::get('vendite/{vendita}/pdf', [ReportController::class, 'venditaPdf'])->name('vendite.pdf');
     Route::get('produzioni/{produzione}/etichetta', [ReportController::class, 'produzioneEtichetta'])->name('produzioni.etichetta');
@@ -105,6 +106,11 @@ Route::middleware('auth')->group(function () {
     Route::get('acquisti/export',   [AcquistoController::class,   'export'])->name('acquisti.export');
     Route::get('vendite/export',    [VenditaController::class,    'export'])->name('vendite.export');
     Route::get('produzioni/export', [ProduzioneController::class, 'export'])->name('produzioni.export');
+    Route::get('fornitori/export',  [FornitoreController::class,  'export'])->name('fornitori.export');
+    Route::get('clienti/export',    [ClienteController::class,    'export'])->name('clienti.export');
+
+    // Schede di produzione — maschera cliente (PDF)
+    Route::get('clienti/{cliente}/scheda', [ClienteController::class, 'scheda'])->name('clienti.scheda');
 
     // Profile
     Route::get('profilo', [ProfileController::class, 'show'])->name('profilo');
@@ -144,6 +150,11 @@ Route::middleware('auth')->group(function () {
             ->only(['store', 'destroy'])
             ->parameters(['destinazione-ingredienti' => 'destinazioneIngredienti']);
     });
+
+    // Scheda dettaglio materia prima (lotti in uscita + prodotti collegati).
+    // Registrata dopo la resource admin cosicché `create`/`edit` abbiano priorità.
+    Route::get('materie-prime/{materiePrime}', [MateriaPrimaController::class, 'show'])
+        ->name('materie-prime.show');
 
     // ── SCREEN 1 — ALIMENTI ─────────────────────────────────────────────────
     // Operator: create + edit. Admin: also delete.

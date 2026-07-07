@@ -17,6 +17,8 @@ class Vendita extends Model
         'numero_documento',
         'data_documento',
         'tipo_documento',
+        'condizioni_pagamento',
+        'causale_trasporto',
         'note',
     ];
 

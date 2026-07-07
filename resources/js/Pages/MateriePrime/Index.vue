@@ -29,6 +29,11 @@
           </div>
         </template>
       </Column>
+      <Column header="Dettaglio" style="width:90px; text-align:center">
+        <template #body="{ data }">
+          <Link :href="`/materie-prime/${data.id}`"><Button icon="pi pi-search-plus" aria-label="Dettaglio e tracciabilità" size="small" outlined severity="info" /></Link>
+        </template>
+      </Column>
       <Column v-if="isAdmin" header="Azioni" style="width:100px">
         <template #body="{ data }">
           <div style="display:flex;gap:0.4rem">

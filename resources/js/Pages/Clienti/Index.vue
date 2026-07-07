@@ -2,9 +2,14 @@
   <AppLayout>
     <div class="page-header">
       <h1 class="page-title">Clienti</h1>
-      <Link v-if="isAdmin" href="/clienti/create">
-        <Button label="Nuovo Cliente" icon="pi pi-plus" />
-      </Link>
+      <div class="header-actions">
+        <a :href="exportUrl" class="export-link">
+          <Button label="Esporta Excel" icon="pi pi-file-excel" severity="success" outlined />
+        </a>
+        <Link v-if="isAdmin" href="/clienti/create">
+          <Button label="Nuovo Cliente" icon="pi pi-plus" />
+        </Link>
+      </div>
     </div>
 
     <div class="filters-bar">
@@ -50,6 +55,13 @@
       <Column header="Attivo" style="width: 80px; text-align:center">
         <template #body="{ data }">
           <Tag :value="data.attivo ? 'Sì' : 'No'" :severity="data.attivo ? 'success' : 'secondary'" />
+        </template>
+      </Column>
+      <Column header="Scheda" style="width: 90px; text-align:center">
+        <template #body="{ data }">
+          <a :href="`/clienti/${data.id}/scheda`" target="_blank" rel="noopener" class="export-link">
+            <Button icon="pi pi-id-card" aria-label="Maschera informazioni" size="small" outlined severity="info" />
+          </a>
         </template>
       </Column>
       <Column v-if="isAdmin" header="Azioni" style="width: 110px">
@@ -120,6 +132,14 @@ const filters = ref({
 
 const soloAttivi = ref(!!props.filters?.solo_attivi);
 
+const exportUrl = computed(() => {
+  const params = new URLSearchParams();
+  if (filters.value.search) params.set('search', filters.value.search);
+  if (soloAttivi.value) params.set('solo_attivi', '1');
+  const qs = params.toString();
+  return '/clienti/export' + (qs ? `?${qs}` : '');
+});
+
 let searchTimeout = null;
 function debouncedSearch() {
   clearTimeout(searchTimeout);
@@ -159,6 +179,12 @@ function confirmDelete(cliente) {
   color: var(--ink);
   margin: 0;
 }
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.export-link { text-decoration: none; }
 .filters-bar {
   display: flex;
   align-items: center;

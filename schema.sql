@@ -145,6 +145,8 @@ CREATE TABLE vendite (
     numero_documento VARCHAR(50)  NOT NULL,
     data_documento   DATE         NOT NULL,
     tipo_documento   VARCHAR(5)   NOT NULL CHECK (tipo_documento IN ('DDT','FI','NC')),
+    condizioni_pagamento VARCHAR(200),  -- 2026_07_07_000001 fattura DdT
+    causale_trasporto    VARCHAR(100),  -- 2026_07_07_000001 fattura DdT
     note             TEXT,
     created_by       BIGINT       REFERENCES users(id) ON DELETE SET NULL,  -- 2026_06_23_000002 audit
     updated_by       BIGINT       REFERENCES users(id) ON DELETE SET NULL,
@@ -164,6 +166,13 @@ CREATE TABLE vendite_righe (
     lotto         VARCHAR(100),
     lotto_esterno VARCHAR(100),
     scadenza      DATE,
+    -- 2026_07_07_000001: campi economici Fattura immediata DdT
+    codice_articolo VARCHAR(50),
+    prezzo_unitario NUMERIC(12,4),
+    sconto_1        NUMERIC(5,2),
+    sconto_2        NUMERIC(5,2),
+    aliquota_iva    NUMERIC(5,2),
+    importo_netto   NUMERIC(12,2),
     -- 2026_06_23_000005 / _000007: legano una riga di vendita alla produzione
     -- o al lotto di acquisto (rivendita diretta). Le FK verso produzioni sono
     -- aggiunte in fondo al file (ALTER TABLE) per rispettare l'ordine di creazione.

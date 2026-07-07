@@ -33,6 +33,62 @@ class FornitoreController extends Controller
         ]);
     }
 
+    /**
+     * Esporta l'elenco fornitori in CSV (apribile direttamente in Excel).
+     * Rispetta gli stessi filtri della pagina indice.
+     */
+    public function export(Request $request)
+    {
+        $fornitori = Fornitore::query()
+            ->when($request->search, fn($q, $s) => $q->where('ragione_sociale', 'ilike', "%{$s}%")
+                ->orWhere('codice', 'ilike', "%{$s}%"))
+            ->when($request->tipo, fn($q, $t) => $q->where('tipo', $t))
+            ->orderBy('ragione_sociale')
+            ->get();
+
+        $tipoLabel = [
+            'alimentare'            => 'Alimentare',
+            'imballaggio_primario'  => 'Imballaggio Primario',
+            'detergente_secondario' => 'Detergente',
+            'conto_terzi'           => 'Conto Terzi',
+        ];
+
+        $filename = 'fornitori_' . now()->format('Ymd_His') . '.csv';
+
+        $callback = function () use ($fornitori, $tipoLabel) {
+            $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF"); // BOM UTF-8 per Excel
+            fputcsv($handle, [
+                'Codice', 'Ragione Sociale', 'Tipo', 'Partita IVA', 'Indirizzo',
+                'Email', 'Telefono', 'HACCP Certificato', 'Scad. HACCP',
+                'MOCA Certificato', 'N° MOCA', 'Attivo', 'Note',
+            ], ';');
+
+            foreach ($fornitori as $f) {
+                fputcsv($handle, [
+                    $f->codice,
+                    $f->ragione_sociale,
+                    $tipoLabel[$f->tipo] ?? $f->tipo,
+                    $f->piva,
+                    $f->indirizzo,
+                    $f->email,
+                    $f->telefono,
+                    $f->haccp_certificato ? 'Sì' : 'No',
+                    $f->haccp_scadenza?->format('d/m/Y'),
+                    $f->moca_certificato ? 'Sì' : 'No',
+                    $f->moca_numero,
+                    $f->attivo ? 'Sì' : 'No',
+                    $f->note,
+                ], ';');
+            }
+            fclose($handle);
+        };
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
     public function store(Request $request)
     {
         $data = $this->validated($request);

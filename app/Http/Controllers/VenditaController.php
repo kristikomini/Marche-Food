@@ -64,11 +64,13 @@ class VenditaController extends Controller
         $data = $this->validateRequest($request);
 
         $vendita = Vendita::create([
-            'cliente_id'      => $data['cliente_id'],
-            'numero_documento' => $data['numero_documento'],
-            'data_documento'  => $data['data_documento'],
-            'tipo_documento'  => $data['tipo_documento'],
-            'note'            => $data['note'] ?? null,
+            'cliente_id'           => $data['cliente_id'],
+            'numero_documento'     => $data['numero_documento'],
+            'data_documento'       => $data['data_documento'],
+            'tipo_documento'       => $data['tipo_documento'],
+            'condizioni_pagamento' => $data['condizioni_pagamento'] ?? null,
+            'causale_trasporto'    => $data['causale_trasporto'] ?? null,
+            'note'                 => $data['note'] ?? null,
         ]);
 
         foreach ($data['righe'] as $riga) {
@@ -127,11 +129,13 @@ class VenditaController extends Controller
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($vendita, $data, $toDeleteIds) {
             $vendita->update([
-                'cliente_id'       => $data['cliente_id'],
-                'numero_documento' => $data['numero_documento'],
-                'data_documento'   => $data['data_documento'],
-                'tipo_documento'   => $data['tipo_documento'],
-                'note'             => $data['note'] ?? null,
+                'cliente_id'           => $data['cliente_id'],
+                'numero_documento'     => $data['numero_documento'],
+                'data_documento'       => $data['data_documento'],
+                'tipo_documento'       => $data['tipo_documento'],
+                'condizioni_pagamento' => $data['condizioni_pagamento'] ?? null,
+                'causale_trasporto'    => $data['causale_trasporto'] ?? null,
+                'note'                 => $data['note'] ?? null,
             ]);
 
             if (!empty($toDeleteIds)) {
@@ -186,17 +190,25 @@ class VenditaController extends Controller
         $callback = function () use ($righe) {
             $handle = fopen('php://output', 'w');
             fputs($handle, "\xEF\xBB\xBF");
-            fputcsv($handle, ['Data Doc.', 'Cliente', 'N° Documento', 'Tipo', 'Prodotto', 'Lotto', 'Lotto Esterno', 'Q.tà (kg)', 'Scadenza'], ';');
+            fputcsv($handle, ['Data Doc.', 'Cliente', 'N° Documento', 'Tipo', 'Cod. Art.', 'Prodotto', 'Lotto', 'Lotto Esterno', 'U.M.', 'Q.tà (kg)', 'Q.tà (pz)', 'Prezzo Unit.', 'SC.1%', 'SC.2%', 'IVA %', 'Importo Netto', 'Scadenza'], ';');
             foreach ($righe as $r) {
                 fputcsv($handle, [
                     $r->vendita?->data_documento,
                     $r->vendita?->cliente?->ragione_sociale,
                     $r->vendita?->numero_documento,
                     $r->vendita?->tipo_documento,
+                    $r->codice_articolo,
                     $r->nome_prodotto,
                     $r->lotto,
                     $r->lotto_esterno,
+                    $r->um,
                     $r->quantita_kg,
+                    $r->quantita_pz,
+                    $r->prezzo_unitario,
+                    $r->sconto_1,
+                    $r->sconto_2,
+                    $r->aliquota_iva,
+                    $r->importo_netto,
                     $r->scadenza,
                 ], ';');
             }
@@ -208,23 +220,61 @@ class VenditaController extends Controller
 
     private function validateRequest(Request $request): array
     {
-        return $request->validate([
-            'cliente_id'         => ['required', 'exists:clienti,id'],
-            'numero_documento'   => ['required', 'string', 'max:50'],
-            'data_documento'     => ['required', 'date'],
-            'tipo_documento'     => ['required', 'in:DDT,FI,NC'],
-            'note'               => ['nullable', 'string'],
+        $data = $request->validate([
+            'cliente_id'           => ['required', 'exists:clienti,id'],
+            'numero_documento'     => ['required', 'string', 'max:50'],
+            'data_documento'       => ['required', 'date'],
+            'tipo_documento'       => ['required', 'in:DDT,FI,NC'],
+            'condizioni_pagamento' => ['nullable', 'string', 'max:200'],
+            'causale_trasporto'    => ['nullable', 'string', 'max:100'],
+            'note'                 => ['nullable', 'string'],
             'righe'              => ['required', 'array', 'min:1'],
             'righe.*.id'         => ['nullable', 'integer'],
+            'righe.*.codice_articolo' => ['nullable', 'string', 'max:50'],
             'righe.*.nome_prodotto' => ['required', 'string', 'max:200'],
             'righe.*.pezzatura_gr'  => ['nullable', 'numeric', 'min:0'],
             'righe.*.um'         => ['nullable', 'string', 'max:10'],
             'righe.*.quantita_pz' => ['nullable', 'numeric', 'min:0'],
             'righe.*.quantita_kg' => ['required', 'numeric', 'min:0.001'],
+            'righe.*.prezzo_unitario' => ['nullable', 'numeric', 'min:0'],
+            'righe.*.sconto_1'        => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'righe.*.sconto_2'        => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'righe.*.aliquota_iva'    => ['nullable', 'numeric', 'min:0', 'max:100'],
             'righe.*.lotto'           => ['nullable', 'string', 'max:100'],
             'righe.*.lotto_esterno'   => ['nullable', 'string', 'max:100'],
             'righe.*.scadenza'        => ['nullable', 'date'],
             'righe.*.acquisto_riga_id' => ['nullable', 'integer', 'exists:acquisti_righe,id'],
         ]);
+
+        // Ricalcola l'importo netto di ogni riga lato server (fonte di verità).
+        $data['righe'] = array_map([$this, 'withImportoNetto'], $data['righe']);
+
+        return $data;
+    }
+
+    /**
+     * Importo netto = quantità × prezzo unitario, scontato di SC.1% e SC.2%.
+     * La quantità fatturata è i pezzi se presenti (righe a "N."), altrimenti i kg.
+     */
+    private function withImportoNetto(array $riga): array
+    {
+        $prezzo = $riga['prezzo_unitario'] ?? null;
+
+        if ($prezzo === null || $prezzo === '') {
+            $riga['importo_netto'] = null;
+            return $riga;
+        }
+
+        $qta = (!empty($riga['quantita_pz']) && (float) $riga['quantita_pz'] > 0)
+            ? (float) $riga['quantita_pz']
+            : (float) ($riga['quantita_kg'] ?? 0);
+
+        $lordo = $qta * (float) $prezzo;
+        $lordo *= (1 - ((float) ($riga['sconto_1'] ?? 0) / 100));
+        $lordo *= (1 - ((float) ($riga['sconto_2'] ?? 0) / 100));
+
+        $riga['importo_netto'] = round($lordo, 2);
+
+        return $riga;
     }
 }

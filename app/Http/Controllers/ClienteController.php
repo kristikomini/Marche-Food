@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -34,6 +35,85 @@ class ClienteController extends Controller
     public function create()
     {
         return Inertia::render('Clienti/Form', ['cliente' => null]);
+    }
+
+    /**
+     * Esporta l'elenco clienti in CSV (apribile direttamente in Excel).
+     * Rispetta gli stessi filtri della pagina indice.
+     */
+    public function export(Request $request)
+    {
+        $query = Cliente::query();
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('ragione_sociale', 'ilike', "%{$search}%")
+                  ->orWhere('codice_cliente', 'ilike', "%{$search}%");
+            });
+        }
+        if ($request->input('solo_attivi')) {
+            $query->where('attivo', true);
+        }
+
+        $clienti = $query->orderBy('ragione_sociale')->get();
+
+        $filename = 'clienti_' . now()->format('Ymd_His') . '.csv';
+
+        $callback = function () use ($clienti) {
+            $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF"); // BOM UTF-8 per Excel
+            fputcsv($handle, [
+                'Codice Cliente', 'Ragione Sociale', 'Partita IVA', 'Indirizzo',
+                'Email', 'Telefono', 'Attivo', 'Note',
+            ], ';');
+
+            foreach ($clienti as $c) {
+                fputcsv($handle, [
+                    $c->codice_cliente,
+                    $c->ragione_sociale,
+                    $c->piva,
+                    $c->indirizzo,
+                    $c->email,
+                    $c->telefono,
+                    $c->attivo ? 'Sì' : 'No',
+                    $c->note,
+                ], ';');
+            }
+            fclose($handle);
+        };
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    /**
+     * Maschera informazioni cliente — scheda anagrafica stampabile in PDF,
+     * con riepilogo delle vendite registrate.
+     */
+    public function scheda(Cliente $cliente)
+    {
+        $vendite = $cliente->vendite()
+            ->withCount('righe')
+            ->withSum('righe', 'quantita_kg')
+            ->orderByDesc('data_documento')
+            ->orderByDesc('id')
+            ->get();
+
+        $riepilogo = [
+            'n_documenti'  => $vendite->count(),
+            'totale_kg'    => (float) $vendite->sum('righe_sum_quantita_kg'),
+            'ultima'       => $vendite->first()?->data_documento,
+            'per_tipo'     => $vendite->groupBy('tipo_documento')->map->count(),
+        ];
+
+        $pdf = Pdf::loadView('pdf.cliente', [
+            'cliente'   => $cliente,
+            'vendite'   => $vendite->take(15),
+            'riepilogo' => $riepilogo,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('cliente_' . str_replace([' ', '/'], '_', $cliente->codice_cliente) . '.pdf');
     }
 
     public function store(Request $request)

@@ -2,9 +2,14 @@
   <AppLayout>
     <div class="page-header">
       <h1 class="page-title">Fornitori</h1>
-      <Link v-if="isAdmin" href="/fornitori/create">
-        <Button label="Nuovo Fornitore" icon="pi pi-plus" />
-      </Link>
+      <div class="header-actions">
+        <a :href="exportUrl" class="export-link">
+          <Button label="Esporta Excel" icon="pi pi-file-excel" severity="success" outlined />
+        </a>
+        <Link v-if="isAdmin" href="/fornitori/create">
+          <Button label="Nuovo Fornitore" icon="pi pi-plus" />
+        </Link>
+      </div>
     </div>
 
     <!-- Filters -->
@@ -177,6 +182,14 @@ const filters = ref({
   tipo: props.filters?.tipo ?? '',
 });
 
+const exportUrl = computed(() => {
+  const params = new URLSearchParams();
+  if (filters.value.search) params.set('search', filters.value.search);
+  if (filters.value.tipo) params.set('tipo', filters.value.tipo);
+  const qs = params.toString();
+  return '/fornitori/export' + (qs ? `?${qs}` : '');
+});
+
 function formatDate(d) {
   return d ? new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
 }
@@ -238,6 +251,12 @@ function confirmDelete(fornitore) {
   color: var(--ink);
   margin: 0;
 }
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.export-link { text-decoration: none; }
 .filters-bar {
   display: flex;
   align-items: center;
