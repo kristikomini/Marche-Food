@@ -178,4 +178,5 @@ Per lo schema SQL completo vedere [schema.sql](schema.sql).
 | [docs/CHANGELOG-2026-07-06.md](docs/CHANGELOG-2026-07-06.md) | Soft-delete/Cestino, etichette QR acquisti/vendite, allergeni, test |
 | [docs/REFORM-PLAN-2026-07-08.md](docs/REFORM-PLAN-2026-07-08.md) | **Piano di riforma** scheda/fattura: stato reale, gap analysis, piano a fasi, avanzamento |
 | [docs/CHANGELOG-2026-07-08.md](docs/CHANGELOG-2026-07-08.md) | **Riforma 2026-07-08**: varianti prodotto, scheda vuota+compilata, catalogo gas, cattura produzione, fattura, export Excel |
+| [docs/DEPLOY-REFORM-2026-07-08.md](docs/DEPLOY-REFORM-2026-07-08.md) | **Checklist di deploy** della riforma (backup DB, migrazione distruttiva, commit, Coolify, smoke test, rollback) |
 | [docs/fornitori.md](docs/fornitori.md) | Approfondimento sul modulo Fornitori |

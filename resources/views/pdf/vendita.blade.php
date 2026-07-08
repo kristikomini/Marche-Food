@@ -38,6 +38,9 @@
 
     $eur = fn ($v) => number_format((float) $v, 2, ',', '.');
     $qty = fn ($v, $d = 3) => $v === null ? '' : rtrim(rtrim(number_format((float) $v, $d, ',', '.'), '0'), ',');
+    $trim = fn ($v, $d = 2) => $v === null || $v === '' ? '' : rtrim(rtrim(number_format((float) $v, $d, ',', '.'), '0'), ',');
+
+    $aliqLabel = $aliquotaPrincipale !== null ? $trim($aliquotaPrincipale) : '';
 
     // dompdf needs GD to rasterise a transparent PNG; skip the logo if GD is
     // unavailable so the PDF still renders instead of throwing a 500.
@@ -45,215 +48,313 @@
     $logo = (extension_loaded('gd') && is_file($logoPath))
         ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
         : null;
+
+    $c = $vendita->cliente;
+
+    // Filler height so the item grid keeps its column rules running down the
+    // page like the reference, regardless of how many lines there are.
+    $fillPx = max(0, 300 - (count($righe) * 26));
 @endphp
 <style>
+  @page { margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #1e293b; background: #fff; padding: 20px; }
-  .row { width: 100%; }
-  .row:after { content: ""; display: table; clear: both; }
-  .head-left { float: left; width: 55%; }
-  .head-right { float: right; width: 42%; }
-  .brand h1 { font-size: 14px; font-weight: 700; color: #1f5040; }
-  .brand p { font-size: 8px; color: #64748b; line-height: 1.35; margin-top: 3px; }
-  .dest-box { border: 1px solid #1f5040; border-radius: 4px; padding: 8px 10px; min-height: 70px; }
-  .dest-box .lbl { font-size: 7px; letter-spacing: .08em; color: #94a3b8; text-transform: uppercase; }
-  .dest-box .name { font-size: 12px; font-weight: 700; margin-top: 2px; }
-  .dest-box .addr { font-size: 9px; color: #334155; margin-top: 2px; line-height: 1.35; }
+  body {
+    font-family: "DejaVu Sans", sans-serif;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 7mm 6mm;
+    font-size: 9pt;
+  }
+  .mono { font-family: "DejaVu Sans Mono", monospace; font-weight: bold; }
 
-  table.meta { width: 100%; border-collapse: collapse; margin-top: 12px; }
-  table.meta td { border: 1px solid #cbd5e1; padding: 3px 5px; vertical-align: top; }
-  table.meta .k { font-size: 6.5px; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; display: block; }
-  table.meta .v { font-size: 10px; font-weight: 600; color: #1e293b; }
+  /* ---- top header ---- */
+  table.top { width: 100%; border-collapse: collapse; }
+  table.top > tbody > tr > td { vertical-align: top; padding: 0; }
+  .logo img { width: 150px; height: auto; }
+  .vendor { font-size: 8px; line-height: 1.35; padding: 2px 8px 0 10px; }
+  .vendor b { font-size: 8.5px; }
+  .oval {
+    width: 46px; height: 32px; border: 1.4px solid #000; border-radius: 50%;
+    text-align: center; font-size: 6.5px; font-weight: bold; line-height: 1.35;
+    padding-top: 4px;
+  }
+  .recipient {
+    border: 0.6pt solid #000; border-radius: 7px; padding: 6px 10px; min-height: 74px;
+  }
+  .recipient .sp { font-size: 7px; }
+  .recipient .r { font-size: 11px; font-weight: bold; margin-top: 3px; line-height: 1.5; }
+  .recipient .prov { font-weight: bold; font-size: 11px; }
 
-  table.items { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  table.items th { background: #1f5040; color: #fff; font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 4px 4px; border: 1px solid #1f5040; }
-  table.items td { padding: 4px 4px; border: 1px solid #e2e8f0; font-size: 9px; vertical-align: top; }
-  table.items .desc .lotto { font-size: 8px; color: #64748b; }
-  .r { text-align: right; }
-  .c { text-align: center; }
+  /* ---- field rows ---- */
+  table.fields { width: 100%; border-collapse: separate; border-spacing: 4px 0; margin-top: 5px; }
+  table.fields td { vertical-align: top; padding: 0; }
+  .fld {
+    border: 0.6pt solid #000; border-radius: 7px; padding: 2px 6px 4px; min-height: 30px;
+  }
+  .fld .lab { font-size: 6.6pt; font-weight: bold; white-space: nowrap; }
+  .fld .val {
+    font-family: "DejaVu Sans Mono", monospace; font-size: 9pt; font-weight: bold;
+    padding-left: 2px; min-height: 12px; margin-top: 2px;
+  }
+  .fld .val.center { text-align: center; }
+  .fld .val.big { font-family: "DejaVu Sans", sans-serif; font-weight: bold; font-size: 11px; }
 
-  table.tot { width: 100%; border-collapse: collapse; margin-top: 12px; }
-  table.tot td { border: 1px solid #cbd5e1; padding: 4px 6px; }
-  table.tot .k { font-size: 6.5px; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; display: block; }
-  table.tot .v { font-size: 11px; font-weight: 700; color: #1e293b; }
-  table.tot .grand .v { color: #1f5040; font-size: 13px; }
-  .chk { display: inline-block; width: 11px; height: 11px; border: 1px solid #111; vertical-align: middle; }
-  .vfill { display: inline-block; min-height: 12px; }
-  .brand-logo { width: 34px; height: 34px; vertical-align: middle; margin-right: 8px; }
+  /* ---- items ---- */
+  table.items { width: 100%; border-collapse: collapse; margin-top: 6px; table-layout: fixed; }
+  table.items th {
+    font-size: 7px; font-weight: bold; padding: 3px 4px; text-align: center;
+    vertical-align: middle; border: 0.6pt solid #000; border-right: none;
+  }
+  table.items thead th:last-child { border-right: 0.6pt solid #000; }
+  table.items td {
+    border-left: 0.6pt solid #000; border-bottom: none; padding: 2px 4px; vertical-align: top;
+    font-family: "DejaVu Sans Mono", monospace; font-size: 8.6px; font-weight: bold;
+  }
+  table.items tbody { border-left: 0.6pt solid #000; border-right: 0.6pt solid #000; border-bottom: 0.6pt solid #000; }
+  table.items td:first-child { border-left: none; }
+  table.items td.c-iva { border-right: none; }
+  .c-cod  { width: 11%; text-align: center; }
+  .c-desc { width: 34%; text-align: left; }
+  .c-um   { width: 6%;  text-align: center; }
+  .c-qta  { width: 9%;  text-align: right; }
+  .c-prz  { width: 12%; text-align: right; }
+  .c-s1   { width: 6%;  text-align: center; }
+  .c-s2   { width: 6%;  text-align: center; }
+  .c-imp  { width: 11%; text-align: right; }
+  .c-iva  { width: 5%;  text-align: center; }
+  td.c-desc .lotto { font-weight: normal; display: block; font-family: "DejaVu Sans", sans-serif; font-size: 7.5px; }
 
-  .scadenze { margin-top: 10px; border: 1px solid #cbd5e1; border-radius: 4px; padding: 6px 8px; font-size: 9px; }
-  .scadenze .lbl { font-size: 7px; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; }
-  .footer { margin-top: 18px; border-top: 1px solid #e2e8f0; padding-top: 6px; font-size: 8px; color: #94a3b8; }
-  .footer .cols { width: 100%; }
-  .footer .cols:after { content: ""; display: table; clear: both; }
-  .footer .l { float: left; }
-  .footer .r { float: right; }
+  /* ---- totals ---- */
+  table.tot { width: 100%; border-collapse: separate; border-spacing: 3px 0; margin-top: 4px; }
+  table.tot td { vertical-align: top; padding: 0; }
+  .tbox { border: 0.6pt solid #000; border-radius: 7px; padding: 2px 6px; text-align: center; min-height: 30px; }
+  .tbox .lab { font-size: 6.4px; font-weight: bold; }
+  .tbox .val { font-family: "DejaVu Sans Mono", monospace; font-weight: bold; font-size: 10px; padding-top: 5px; }
+  .subrow { width: 100%; border-collapse: separate; border-spacing: 3px 0; }
+  .subrow td { vertical-align: top; padding: 0; }
+  .cur { font-family: "DejaVu Sans Mono", monospace; font-weight: bold; font-size: 11px; }
+
+  /* ---- bands ---- */
+  .band { border: 0.6pt solid #000; border-radius: 7px; margin-top: 4px; padding: 3px 8px; min-height: 40px; }
+  .band .lab { font-size: 6.6px; font-weight: bold; }
+  .band .val { font-family: "DejaVu Sans Mono", monospace; font-weight: bold; font-size: 9px; margin-top: 3px; }
+  table.tr-row { width: 100%; border-collapse: separate; border-spacing: 4px 0; margin-top: 4px; }
+  table.tr-row td { vertical-align: top; padding: 0; }
+  table.tr-row .band { margin-top: 0; }
+  .ck { display: inline-block; width: 13px; height: 13px; border: 1px solid #000; vertical-align: middle; }
+
+  table.sign { width: 100%; border-collapse: collapse; margin-top: 16px; }
+  table.sign td { font-size: 7px; text-align: center; padding: 0 6px; vertical-align: bottom; }
+  .sign-line { border-top: 0.6pt solid #000; padding-top: 2px; }
 </style>
 </head>
 <body>
 
-<div class="row">
-  <div class="head-left">
-    <table style="border-collapse:collapse">
-      <tr>
-        @if($logo)<td style="width:42px; vertical-align:top"><img class="brand-logo" src="{{ $logo }}" alt="MIF"></td>@endif
-        <td style="vertical-align:top">
-          <div class="brand">
-            <h1>Marche International Food S.r.l.</h1>
-            <p>
-              Via G. Rossini, 63 — 62029 Tolentino (MC)<br>
-              C.F. e P.Iva 01891440438<br>
-              info@marcheinternationalfood.com — Tel. +39 0733 1715820
-            </p>
-          </div>
-        </td>
-      </tr>
-    </table>
-  </div>
-  <div class="head-right">
-    <div class="dest-box">
-      <div class="lbl">Spett.le</div>
-      <div class="name">{{ $vendita->cliente?->ragione_sociale ?? '—' }}</div>
-      <div class="addr">{{ $vendita->cliente?->indirizzo ?? '' }}</div>
-    </div>
-  </div>
-</div>
-
-<table class="meta">
+{{-- ===== HEADER ===== --}}
+<table class="top">
   <tr>
-    <td style="width:12%"><span class="k">Cod. Cliente</span><span class="v">{{ $vendita->cliente?->codice_cliente ?? '—' }}</span></td>
-    <td style="width:22%"><span class="k">Partita IVA</span><span class="v">{{ $vendita->cliente?->piva ?? '—' }}</span></td>
-    <td style="width:14%"><span class="k">Valuta</span><span class="v">{{ $vendita->cliente?->valuta ?: 'Euro' }}</span></td>
-    <td style="width:30%"><span class="k">Tipo Documento</span><span class="v">{{ $tipoLabel[$vendita->tipo_documento] ?? $vendita->tipo_documento }}</span></td>
-    <td style="width:11%"><span class="k">N° Documento</span><span class="v">{{ $vendita->numero_documento }}</span></td>
-    <td style="width:11%"><span class="k">Data</span><span class="v">{{ Carbon::parse($vendita->data_documento)->format('d/m/Y') }}</span></td>
-  </tr>
-  <tr>
-    <td><span class="k">Zona</span><span class="v">{{ $vendita->cliente?->zona ?: '—' }}</span></td>
-    <td><span class="k">Agente</span><span class="v">{{ $vendita->cliente?->agente ?: '—' }}</span></td>
-    <td><span class="k">Categoria</span><span class="v">{{ $vendita->cliente?->categoria ?: '—' }}</span></td>
-    <td><span class="k">Cod. IVA</span><span class="v">{{ $vendita->cliente?->codice_iva ?: '—' }}</span></td>
-    <td colspan="2"><span class="k">Banca d'appoggio</span><span class="v">{{ $vendita->cliente?->banca_appoggio ?: '—' }}</span></td>
-  </tr>
-  <tr>
-    <td colspan="4"><span class="k">Condizioni di pagamento</span><span class="v">{{ $vendita->condizioni_pagamento ?: '—' }}</span></td>
-    <td colspan="2"><span class="k">Causale del trasporto</span><span class="v">{{ $vendita->causale_trasporto ?: 'VENDITA' }}</span></td>
+    <td class="logo" style="width:150px">
+      @if($logo)<img src="{{ $logo }}" alt="Marche International Food">@endif
+    </td>
+    <td class="vendor">
+      <b>Marche International Food S.r.l.</b><br>Via G. Rossini, 63 - 62029 Tolentino (MC)<br>
+      C.F. e P.Iva 01891440438<br>MAIL info@marcheinternationalfood.com<br>PEC mifood@pec.it<br>
+      TEL +39 0733 1715820 | CEL +39 340 9927059<br>marcheinternationalfood.com
+    </td>
+    <td style="width:52px; padding-top:2px">
+      <div class="oval">IT<br>G5J07<br>CE</div>
+    </td>
+    <td style="width:300px; padding-left:10px">
+      <div class="recipient">
+        <div class="sp">SPETT.LE</div>
+        <div class="r">{{ $c?->ragione_sociale ?? '' }}</div>
+        <div class="r">{{ $c?->indirizzo ?? '' }}</div>
+      </div>
+    </td>
   </tr>
 </table>
 
+{{-- ===== FIELD ROW 1 ===== --}}
+<table class="fields">
+  <tr>
+    <td style="width:110px"><div class="fld"><div class="lab">COD.CLIENTE</div><div class="val center">{{ $c?->codice_cliente ?? '' }}</div></div></td>
+    <td style="width:70px"><div class="fld"><div class="lab">IVA</div><div class="val">{{ $c?->codice_iva ?? '' }}</div></div></td>
+    <td style="width:80px"><div class="fld"><div class="lab">ZONA</div><div class="val">{{ $c?->zona ?? '' }}</div></div></td>
+    <td style="width:80px"><div class="fld"><div class="lab">AGENTE</div><div class="val">{{ $c?->agente ?? '' }}</div></div></td>
+    <td style="width:70px"><div class="fld"><div class="lab">CATEG.</div><div class="val">{{ $c?->categoria ?? '' }}</div></div></td>
+    <td><div class="fld"><div class="lab">PARTITA IVA</div><div class="val">{{ $c?->piva ?? '' }}</div></div></td>
+    <td style="width:150px"><div class="fld"><div class="lab">NUMERO DOCUMENTO</div><div class="val center">{{ $vendita->numero_documento }}</div></div></td>
+    <td style="width:120px"><div class="fld"><div class="lab">DATA DOCUMENTO</div><div class="val center">{{ Carbon::parse($vendita->data_documento)->format('d/m/Y') }}</div></div></td>
+    <td style="width:56px"><div class="fld"><div class="lab">PAG.</div><div class="val center">001</div></div></td>
+  </tr>
+</table>
+
+{{-- ===== FIELD ROW 2 ===== --}}
+<table class="fields">
+  <tr>
+    <td><div class="fld"><div class="lab">CONDIZIONI DI PAGAMENTO</div><div class="val">{{ $vendita->condizioni_pagamento ?? '' }}</div></div></td>
+    <td style="width:45%"><div class="fld"><div class="lab">BANCA D'APPOGGIO</div><div class="val">{{ $c?->banca_appoggio ?? '' }}</div></div></td>
+  </tr>
+</table>
+
+{{-- ===== FIELD ROW 3 ===== --}}
+<table class="fields">
+  <tr>
+    <td style="width:210px"><div class="fld"><div class="lab">TELEFONO</div><div class="val">{{ $c?->telefono ?? '' }}</div></div></td>
+    <td style="width:210px"><div class="fld"><div class="lab">CODICE FISCALE</div><div class="val">{{ $c?->piva ?? '' }}</div></div></td>
+    <td style="width:150px"><div class="fld"><div class="lab">VALUTA</div><div class="val">{{ $c?->valuta ?: 'Euro' }}</div></div></td>
+    <td><div class="fld"><div class="lab">TIPO DOCUMENTO</div><div class="val big">{{ $tipoLabel[$vendita->tipo_documento] ?? $vendita->tipo_documento }}</div></div></td>
+  </tr>
+</table>
+
+{{-- ===== ITEMS ===== --}}
 <table class="items">
   <thead>
     <tr>
-      <th style="width:7%">Cod. Art.</th>
-      <th style="width:34%; text-align:left">Descrizione</th>
-      <th style="width:6%">U.M.</th>
-      <th style="width:8%">Q.tà</th>
-      <th style="width:11%">Prezzo Unit.</th>
-      <th style="width:6%">SC.1%</th>
-      <th style="width:6%">SC.2%</th>
-      <th style="width:11%">Importo Netto</th>
-      <th style="width:5%">IVA</th>
+      <th class="c-cod">CODICE ARTICOLO</th>
+      <th class="c-desc" style="text-align:center">D E S C R I Z I O N E</th>
+      <th class="c-um">U.M.</th>
+      <th class="c-qta">QUANTITA'</th>
+      <th class="c-prz">PREZZO UNITARIO</th>
+      <th class="c-s1">SC.1%</th>
+      <th class="c-s2">SC.2%</th>
+      <th class="c-imp">IMPORTO NETTO</th>
+      <th class="c-iva">IVA</th>
     </tr>
   </thead>
   <tbody>
     @forelse($righe as $r)
       @php
         $qtaFatt = (!empty($r->quantita_pz) && (float) $r->quantita_pz > 0) ? $r->quantita_pz : $r->quantita_kg;
+        $lotto = '';
+        if ($r->lotto || $r->lotto_esterno) { $lotto .= 'Lotto N. ' . ($r->lotto ?: $r->lotto_esterno); }
+        if ($r->scadenza) { $lotto .= ' Scad. ' . Carbon::parse($r->scadenza)->format('d/m/Y'); }
       @endphp
       <tr>
-        <td class="c">{{ $r->codice_articolo ?: '—' }}</td>
-        <td class="desc">
-          {{ $r->nome_prodotto }}
-          @if($r->lotto || $r->lotto_esterno || $r->scadenza)
-            <div class="lotto">
-              @if($r->lotto || $r->lotto_esterno) Lotto N. {{ $r->lotto ?: $r->lotto_esterno }} @endif
-              @if($r->scadenza) Scad. {{ Carbon::parse($r->scadenza)->format('d/m/Y') }} @endif
-            </div>
-          @endif
-        </td>
-        <td class="c">{{ $r->um ?: '—' }}</td>
-        <td class="r">{{ $qty($qtaFatt) }}</td>
-        <td class="r">{{ $r->prezzo_unitario !== null ? $eur($r->prezzo_unitario) : '—' }}</td>
-        <td class="r">{{ $r->sconto_1 ? rtrim(rtrim(number_format($r->sconto_1, 2, ',', '.'), '0'), ',') : '' }}</td>
-        <td class="r">{{ $r->sconto_2 ? rtrim(rtrim(number_format($r->sconto_2, 2, ',', '.'), '0'), ',') : '' }}</td>
-        <td class="r">{{ $r->importo_netto !== null ? $eur($r->importo_netto) : '—' }}</td>
-        <td class="c">{{ $r->aliquota_iva !== null ? rtrim(rtrim(number_format($r->aliquota_iva, 2, ',', '.'), '0'), ',') : '' }}</td>
+        <td class="c-cod">{{ $r->codice_articolo ?: '' }}</td>
+        <td class="c-desc">{{ $r->nome_prodotto }}@if($lotto)<span class="lotto">{{ $lotto }}</span>@endif</td>
+        <td class="c-um">{{ $r->um ?: '' }}</td>
+        <td class="c-qta">{{ $qty($qtaFatt) }}</td>
+        <td class="c-prz">{{ $r->prezzo_unitario !== null ? number_format((float) $r->prezzo_unitario, 3, ',', '.') : '' }}</td>
+        <td class="c-s1">{{ $trim($r->sconto_1) }}</td>
+        <td class="c-s2">{{ $trim($r->sconto_2) }}</td>
+        <td class="c-imp">{{ $r->importo_netto !== null ? $eur($r->importo_netto) : '' }}</td>
+        <td class="c-iva">{{ $trim($r->aliquota_iva) }}</td>
       </tr>
     @empty
-      <tr><td colspan="9" style="color:#94a3b8;font-style:italic">Nessuna riga.</td></tr>
     @endforelse
+    @if($fillPx > 0)
+      <tr>
+        <td class="c-cod" style="height:{{ $fillPx }}px">&nbsp;</td>
+        <td class="c-desc"></td><td class="c-um"></td><td class="c-qta"></td><td class="c-prz"></td>
+        <td class="c-s1"></td><td class="c-s2"></td><td class="c-imp"></td><td class="c-iva"></td>
+      </tr>
+    @endif
   </tbody>
 </table>
 
-@php
-    $aliqLabel = $aliquotaPrincipale !== null
-        ? rtrim(rtrim(number_format((float) $aliquotaPrincipale, 2, ',', '.'), '0'), ',')
-        : '';
-@endphp
-
-<!-- Riepilogo economico (griglia completa come da modulo) -->
+{{-- ===== TOTALS ===== --}}
 <table class="tot">
   <tr>
-    <td style="width:14%"><span class="k">Imponibile</span><span class="v">{{ $eur($imponibile) }}</span></td>
-    <td style="width:8%"><span class="k">Al. IVA</span><span class="v">{{ $aliqLabel }}</span></td>
-    <td style="width:15%"><span class="k">Importo IVA</span><span class="v">{{ $eur($imposta) }}</span></td>
-    <td style="width:17%"><span class="k">Totale Merce</span><span class="v">{{ $eur($imponibile) }}</span></td>
-    <td style="width:10%"><span class="k">% Sconto</span><span class="v">&nbsp;</span></td>
-    <td style="width:16%"><span class="k">Importo Sconto</span><span class="v">&nbsp;</span></td>
-    <td style="width:20%"><span class="k">Netto Merce</span><span class="v">{{ $eur($imponibile) }}</span></td>
-  </tr>
-</table>
-<table class="tot">
-  <tr>
-    <td style="width:14%"><span class="k">Bolli</span><span class="v">&nbsp;</span></td>
-    <td style="width:16%"><span class="k">Spese Incasso</span><span class="v">&nbsp;</span></td>
-    <td style="width:14%"><span class="k">Varie</span><span class="v">&nbsp;</span></td>
-    <td style="width:16%"><span class="k">Acconto</span><span class="v">&nbsp;</span></td>
-    <td style="width:20%" class="grand"><span class="k">Totale a pagare (EUR)</span><span class="v">{{ $eur($totale) }}</span></td>
-    <td style="width:20%" class="grand"><span class="k">Totale Fattura (EUR)</span><span class="v">{{ $eur($totale) }}</span></td>
-  </tr>
-</table>
-
-<!-- Scadenze / Note -->
-<table class="tot">
-  <tr>
-    <td style="width:70%"><span class="k">Scadenze</span><span class="v vfill">{{ $vendita->condizioni_pagamento }}</span></td>
-    <td style="width:30%"><span class="k">Note</span><span class="v vfill">{{ $vendita->note }}</span></td>
-  </tr>
-</table>
-
-<!-- Dati trasporto -->
-<table class="tot">
-  <tr>
-    <td style="width:11%"><span class="k">N° Colli</span><span class="v">{{ $vendita->n_colli ?? '' }}</span></td>
-    <td style="width:13%"><span class="k">Porto</span><span class="v">&nbsp;</span></td>
-    <td style="width:34%"><span class="k">Causale del trasporto</span><span class="v">{{ $vendita->causale_trasporto ?: 'VENDITA' }}</span></td>
-    <td style="width:18%"><span class="k">Tot. Peso</span><span class="v">{{ $vendita->peso_totale !== null ? $qty($vendita->peso_totale) . ' kg' : '' }}</span></td>
-    <td style="width:24%"><span class="k">Data del trasporto</span><span class="v">{{ Carbon::parse($vendita->data_trasporto ?: $vendita->data_documento)->format('d/m/Y') }}</span></td>
-  </tr>
-</table>
-
-<!-- Destinatario / controllo / firme -->
-<table class="tot">
-  <tr>
-    <td style="width:60%"><span class="k">Destinatario della merce (se diverso dall'intestatario)</span><span class="v">{{ $vendita->destinatario_diverso ?: '' }}</span></td>
-    <td style="width:40%">
-      <span class="k">Controllo merci e temperatura</span>
-      <span class="v">OK <span class="chk"></span> &nbsp;&nbsp; KO <span class="chk"></span></span>
+    {{-- left block: imponibile / al.iva / importo iva --}}
+    <td style="width:42%">
+      <table class="subrow">
+        <tr>
+          <td><div class="tbox"><div class="lab">IMPONIBILE</div><div class="val">{{ $eur($imponibile) }}</div></div></td>
+          <td style="width:60px"><div class="tbox"><div class="lab">AL.IVA</div><div class="val">{{ $aliqLabel }}</div></div></td>
+          <td><div class="tbox"><div class="lab">IMPORTO IVA</div><div class="val">{{ $eur($imposta) }}</div></div></td>
+        </tr>
+      </table>
+      <table class="subrow" style="margin-top:3px">
+        <tr>
+          <td class="mono" style="text-align:right; padding-right:8px; font-size:9pt">{{ $eur($imponibile) }}</td>
+          <td class="mono" style="width:60px; text-align:center; font-size:9pt">TOT</td>
+          <td class="mono" style="text-align:right; padding-right:8px; font-size:9pt">{{ $eur($imposta) }}</td>
+        </tr>
+      </table>
+    </td>
+    {{-- right block --}}
+    <td>
+      <table class="subrow">
+        <tr>
+          <td><div class="tbox"><div class="lab">TOTALE MERCE</div><div class="val">{{ $eur($imponibile) }}</div></div></td>
+          <td style="width:22%"><div class="tbox"><div class="lab">% SCONTO</div><div class="val">&nbsp;</div></div></td>
+          <td><div class="tbox"><div class="lab">IMPORTO SCONTO</div><div class="val">&nbsp;</div></div></td>
+          <td><div class="tbox"><div class="lab">NETTO MERCE</div><div class="val">{{ $eur($imponibile) }}</div></div></td>
+        </tr>
+      </table>
+      <table class="subrow" style="margin-top:3px">
+        <tr>
+          <td><div class="tbox"><div class="lab">BOLLI</div><div class="val">&nbsp;</div></div></td>
+          <td><div class="tbox"><div class="lab">SPESE INCASSO</div><div class="val">&nbsp;</div></div></td>
+          <td><div class="tbox"><div class="lab">VARIE</div><div class="val">&nbsp;</div></div></td>
+          <td><div class="tbox"><div class="lab">ACCONTO</div><div class="val">&nbsp;</div></div></td>
+        </tr>
+      </table>
+      <table class="subrow" style="margin-top:3px">
+        <tr>
+          <td>
+            <table style="width:100%; border:0.6pt solid #000; border-radius:7px; border-collapse:collapse"><tr>
+              <td style="text-align:center; font-size:6.4px; font-weight:bold; padding:2px 4px">TOTALE A PAGARE</td>
+              <td style="width:34px; text-align:right"><span class="cur">EUR</span></td>
+              <td style="width:78px; text-align:right; padding:2px 6px"><span class="mono" style="font-size:12px">{{ $eur($totale) }}</span></td>
+            </tr></table>
+          </td>
+          <td>
+            <table style="width:100%; border:0.6pt solid #000; border-radius:7px; border-collapse:collapse"><tr>
+              <td style="text-align:center; font-size:6.4px; font-weight:bold; padding:2px 4px">TOTALE FATTURA</td>
+              <td style="width:34px; text-align:right"><span class="cur">EUR</span></td>
+              <td style="width:78px; text-align:right; padding:2px 6px"><span class="mono" style="font-size:12px">{{ $eur($totale) }}</span></td>
+            </tr></table>
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
+</table>
+
+{{-- ===== SCADENZE ===== --}}
+<div class="band"><span class="lab">SCADENZE</span><div class="val">{{ $vendita->condizioni_pagamento ?? '' }}</div></div>
+
+{{-- ===== TRANSPORT ROW ===== --}}
+<table class="tr-row">
   <tr>
-    <td style="height:40px; vertical-align:bottom"><span class="k">Firma per uso interno</span></td>
-    <td style="height:40px; vertical-align:bottom"><span class="k">Firma per accettazione merci</span></td>
+    <td style="width:70px"><div class="band"><span class="lab">N.COLLI</span><div class="val">{{ $vendita->n_colli ?? '' }}</div></div></td>
+    <td style="width:90px"><div class="band"><span class="lab">PORTO</span><div class="val">&nbsp;</div></div></td>
+    <td><div class="band"><span class="lab">CAUSALE DEL TRASPORTO</span><div class="val">{{ $vendita->causale_trasporto ?: 'VENDITA' }}</div></div></td>
+    <td style="width:90px"><div class="band"><span class="lab">TOT. PESO</span><div class="val">{{ $vendita->peso_totale !== null ? $qty($vendita->peso_totale) : '' }}</div></div></td>
+    <td style="width:130px"><div class="band"><span class="lab">DATA DEL TRASPORTO</span><div class="val">{{ Carbon::parse($vendita->data_trasporto ?: $vendita->data_documento)->format('d/m/Y') }}</div></div></td>
   </tr>
 </table>
 
-<div class="footer">
-  <div class="cols">
-    <span class="l">Marche International Food S.r.l. — documento generato dal sistema di tracciabilità HACCP · Stampato il {{ now()->format('d/m/Y H:i') }}</span>
-    <span class="r">Pag. 1</span>
-  </div>
-</div>
+{{-- ===== INCARICATO ===== --}}
+<div class="band"><span class="lab">INCARICATO DEL TRASPORTO</span><div class="val">&nbsp;</div></div>
+
+{{-- ===== DESTINATARIO + CONTROLLO ===== --}}
+<table style="width:100%; border-collapse:collapse; margin-top:4px"><tr>
+  <td style="vertical-align:top">
+    <div class="band" style="min-height:60px; margin-top:0">
+      <span class="lab">DESTINATARIO DELLA MERCE&nbsp;&nbsp;&nbsp;<i>(SE DIVERSO DALL'INTESTATARIO)</i></span>
+      <div class="val" style="margin-top:3px">{{ $vendita->destinatario_diverso ?: '' }}</div>
+    </div>
+  </td>
+  <td style="width:130px; vertical-align:top; padding-left:4px; text-align:center; font-size:7px; font-weight:bold">
+    CONTROLLO<br>MERCI e<br>TEMPERATURA<br>
+    <span style="display:inline-block; margin-top:3px">ok <span class="ck"></span>&nbsp;&nbsp;ko <span class="ck"></span></span>
+  </td>
+</tr></table>
+
+{{-- ===== FIRME ===== --}}
+<table class="sign">
+  <tr>
+    <td style="width:33%"><div class="sign-line">Firma (per uso interno)</div></td>
+    <td style="width:34%"></td>
+    <td style="width:33%"><div class="sign-line">Firma per accettazione merci</div></td>
+  </tr>
+</table>
+
+{{-- ===== NOTE ===== --}}
+<div class="band" style="margin-top:6px"><span class="lab">NOTE</span><div class="val">{{ $vendita->note ?? '' }}</div></div>
 
 </body>
 </html>
