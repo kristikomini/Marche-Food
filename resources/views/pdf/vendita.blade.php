@@ -70,8 +70,8 @@
   /* ---- top header ---- */
   table.top { width: 100%; border-collapse: collapse; }
   table.top > tbody > tr > td { vertical-align: top; padding: 0; }
-  .logo img { width: 150px; height: auto; }
-  .vendor { font-size: 8px; line-height: 1.35; padding: 2px 8px 0 10px; }
+  .logo img { width: 122px; height: auto; }
+  .vendor { font-size: 8px; line-height: 1.35; padding: 2px 8px 0 24px; }
   .vendor b { font-size: 8.5px; }
   .oval {
     width: 46px; height: 32px; border: 1.4px solid #000; border-radius: 50%;
@@ -153,7 +153,7 @@
 {{-- ===== HEADER ===== --}}
 <table class="top">
   <tr>
-    <td class="logo" style="width:150px">
+    <td class="logo" style="width:126px">
       @if($logo)<img src="{{ $logo }}" alt="Marche International Food">@endif
     </td>
     <td class="vendor">
