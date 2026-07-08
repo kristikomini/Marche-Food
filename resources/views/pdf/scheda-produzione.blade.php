@@ -14,6 +14,7 @@
     $dataRev   = $scheda?->data_revisione ? Carbon::parse($scheda->data_revisione)->format('d/m/Y') : null;
 
     $varianti = $prodotto?->varianti ?? collect();
+    $variantiVuote = max(0, 4 - $varianti->count());
     // N° confezioni per variante (dal run).
     $confPerVariante = $produzione->confezioni->keyBy('prodotto_variante_id');
 
@@ -26,7 +27,7 @@
             ?: ($mp->semilavorato ? 'Semilavorato interno' : null);
         return ['nome' => $mp->materiaPrima?->nome ?? '—', 'lotto' => $lotto, 'fornitore' => $fornitore];
     });
-    $materieVuote = max(0, 8 - $materie->count());
+    $materieVuote = max(0, 10 - $materie->count());
 
     // Imballaggi: lotti reali del run; in mancanza, template della scheda.
     $imbRun = $produzione->imballaggiPrimari->map(fn ($i) => [
@@ -40,7 +41,7 @@
             'fornitore'  => $i->fornitore?->ragione_sociale,
         ]);
     }
-    $imbVuote = max(0, 4 - $imbRun->count());
+    $imbVuote = max(0, 6 - $imbRun->count());
 
     // Gas: lotti reali del run; in mancanza, template della scheda.
     $gasRun = $produzione->gas->map(fn ($g) => [
@@ -68,7 +69,7 @@
             : collect(config('haccp.ciclo_lavoro_default', []))->map(fn ($c) => ['numero' => $c['numero'], 'nome' => $c['nome'], 'reg1' => null, 'reg2' => null, 'c' => false]);
         $ciclo = $src;
     }
-    $cicloVuote = max(0, 6 - $ciclo->count());
+    $cicloVuote = max(0, 8 - $ciclo->count());
 
     $md = $produzione->metalDetector;
     $campioni = $campioni ?? config('haccp.metal_detector_campioni', []);
@@ -80,26 +81,27 @@
         : null;
 @endphp
 <style>
+  @page { margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; background: #fff; padding: 18px; }
+  body { font-family: DejaVu Sans, sans-serif; font-size: 10px; line-height: 1.1; color: #111; background: #fff; padding: 6mm 7mm; }
   .titolo { border: 1.5px solid #111; }
   .titolo table { width: 100%; border-collapse: collapse; }
-  .titolo td { padding: 5px 8px; vertical-align: middle; }
-  .titolo .brand { font-size: 8px; font-weight: 700; color: #1f5040; }
-  .titolo .name { font-size: 15px; font-weight: 800; letter-spacing: .04em; text-align: center; }
-  .titolo .rev { font-size: 9px; text-align: center; }
-  .titolo .rev b { font-size: 10px; }
+  .titolo td { padding: 4px 10px; vertical-align: middle; }
+  .titolo .logo { height: 44px; width: auto; }
+  .titolo .name { font-size: 18px; font-weight: 800; letter-spacing: .06em; text-align: center; }
+  .titolo .rev { font-size: 10px; text-align: center; }
+  .titolo .rev b { font-size: 11px; }
   table.grid { width: 100%; border-collapse: collapse; }
-  table.grid td, table.grid th { border: 1px solid #111; padding: 4px 6px; vertical-align: middle; }
+  table.grid td, table.grid th { border: 1px solid #111; padding: 2px 6px; vertical-align: middle; height: 15px; }
   .lbl { font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: .02em; }
   .val { font-size: 11px; font-weight: 600; }
-  .hand { min-height: 16px; }
-  .sect-head td { background: #e8efe9; font-weight: 700; text-transform: uppercase; font-size: 8.5px; letter-spacing: .04em; }
+  .hand { height: 15px; }
+  .sect-head td { background: #dfe4df; font-weight: 700; text-transform: uppercase; font-size: 9px; letter-spacing: .04em; height: auto; }
   .center { text-align: center; }
-  .foot-note { font-size: 8px; color: #333; margin-top: 4px; line-height: 1.5; }
-  .box { display: inline-block; width: 12px; height: 12px; border: 1px solid #111; vertical-align: middle; text-align: center; line-height: 12px; font-weight: 800; }
-  .mt { margin-top: 8px; }
-  .dot { border-bottom: 1px dotted #111; display: inline-block; min-width: 70px; }
+  .foot-note { font-size: 8.5px; color: #222; margin-top: 6px; line-height: 1.6; }
+  .box { display: inline-block; width: 13px; height: 13px; border: 1px solid #111; vertical-align: middle; text-align: center; line-height: 13px; font-weight: 800; }
+  .mt { margin-top: 6px; }
+  .dot { border-bottom: 1px dotted #111; display: inline-block; min-width: 90px; }
   .xmark { font-weight: 800; }
 </style>
 </head>
@@ -108,11 +110,10 @@
 <div class="titolo">
   <table>
     <tr>
-      <td style="width:22%">
-        @if($logo)<img src="{{ $logo }}" alt="MIF" style="width:26px;height:26px;vertical-align:middle;margin-right:5px">@endif
-        <span class="brand">MARCHE<br>INTERNATIONAL FOOD</span>
+      <td style="width:24%">
+        @if($logo)<img src="{{ $logo }}" alt="Marche International Food" class="logo">@endif
       </td>
-      <td style="width:48%"><div class="name">SCHEDA DI PRODUZIONE</div></td>
+      <td style="width:46%"><div class="name">SCHEDA DI PRODUZIONE</div></td>
       <td style="width:30%">
         <div class="rev"><b>{{ $modello }}{{ $revisione !== null ? ' REV' . $revisione : '' }}</b></div>
         <div class="rev">{{ $dataRev ? 'del ' . $dataRev : '' }}</div>
@@ -150,6 +151,9 @@
   @empty
     <tr><td class="hand">&nbsp;</td><td class="hand">&nbsp;</td><td class="hand">n°</td></tr>
   @endforelse
+  @for($i = 0; $i < $variantiVuote; $i++)
+    <tr><td class="hand">&nbsp;</td><td>&nbsp;</td><td>n°</td></tr>
+  @endfor
 </table>
 
 <table class="grid">
