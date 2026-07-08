@@ -50,6 +50,8 @@ class ProduzioneController extends Controller
             'lotti_disponibili'  => $this->lottiDisponibiliForForm(),
             'lotti_imballaggi'   => $this->lottiImballaggiForForm(),
             'lotti_detergenti'   => $this->lottiDetergentiForForm(),
+            'lotti_gas'          => $this->lottiGasForForm(),
+            'campioni'           => config('haccp.metal_detector_campioni', []),
             'lotto_semilavorato' => null,
         ]);
     }
@@ -76,6 +78,10 @@ class ProduzioneController extends Controller
             $this->syncMateriePrime($produzione, $data['materie_prime'] ?? []);
             $this->syncImballaggi($produzione, $data['imballaggi'] ?? []);
             $this->syncDetergenti($produzione, $data['detergenti'] ?? []);
+            $this->syncConfezioni($produzione, $data['confezioni'] ?? []);
+            $this->syncGas($produzione, $data['gas'] ?? []);
+            $this->syncCiclo($produzione, $data['ciclo'] ?? []);
+            $this->syncMetalDetector($produzione, $data['metal_detector'] ?? null);
         });
 
         return redirect()->route('produzioni.index')->with('success', 'Produzione registrata con successo.');
@@ -89,6 +95,10 @@ class ProduzioneController extends Controller
             'materiePrime.semilavorato',
             'imballaggiPrimari.lottoImballaggio.fornitore',
             'detergenti.lottoDetergente.fornitore',
+            'confezioni.variante',
+            'gas.lottoGas.fornitore',
+            'ciclo.flusso',
+            'metalDetector',
             'lottoSemilavorato',
         ]);
 
@@ -99,6 +109,8 @@ class ProduzioneController extends Controller
             'lotti_disponibili'   => $this->lottiDisponibiliForForm($produzione->id),
             'lotti_imballaggi'    => $this->lottiImballaggiForForm(),
             'lotti_detergenti'    => $this->lottiDetergentiForForm(),
+            'lotti_gas'           => $this->lottiGasForForm(),
+            'campioni'            => config('haccp.metal_detector_campioni', []),
             'lotto_semilavorato'  => $produzione->lottoSemilavorato,
         ]);
     }
@@ -134,6 +146,17 @@ class ProduzioneController extends Controller
 
             $produzione->detergenti()->delete();
             $this->syncDetergenti($produzione, $data['detergenti'] ?? []);
+
+            $produzione->confezioni()->delete();
+            $this->syncConfezioni($produzione, $data['confezioni'] ?? []);
+
+            $produzione->gas()->delete();
+            $this->syncGas($produzione, $data['gas'] ?? []);
+
+            $produzione->ciclo()->delete();
+            $this->syncCiclo($produzione, $data['ciclo'] ?? []);
+
+            $this->syncMetalDetector($produzione, $data['metal_detector'] ?? null);
         });
 
         return redirect()->route('produzioni.index')->with('success', 'Produzione aggiornata.');
@@ -193,12 +216,108 @@ class ProduzioneController extends Controller
         }
     }
 
+    private function syncConfezioni(Produzione $produzione, array $righe): void
+    {
+        foreach ($righe as $r) {
+            if (empty($r['prodotto_variante_id'])) {
+                continue;
+            }
+            $produzione->confezioni()->create([
+                'prodotto_variante_id' => $r['prodotto_variante_id'],
+                'n_confezioni'         => $r['n_confezioni'] ?? null,
+            ]);
+        }
+    }
+
+    private function syncGas(Produzione $produzione, array $righe): void
+    {
+        foreach ($righe as $r) {
+            if (empty($r['lotto_gas_id'])) {
+                continue;
+            }
+            $produzione->gas()->create([
+                'lotto_gas_id'   => $r['lotto_gas_id'],
+                'quantita_usata' => $r['quantita_usata'] ?? null,
+                'note'           => $r['note'] ?? null,
+            ]);
+        }
+    }
+
+    private function syncCiclo(Produzione $produzione, array $righe): void
+    {
+        foreach (array_values($righe) as $i => $r) {
+            $produzione->ciclo()->create([
+                'flusso_id'       => $r['flusso_id'] ?? null,
+                'nome'            => $r['nome'] ?? null,
+                'registrazione_1' => $r['registrazione_1'] ?? null,
+                'registrazione_2' => $r['registrazione_2'] ?? null,
+                'controllo'       => !empty($r['controllo']),
+                'ordine'          => $i + 1,
+            ]);
+        }
+    }
+
+    private function syncMetalDetector(Produzione $produzione, ?array $md): void
+    {
+        $produzione->metalDetector()->delete();
+
+        if (!$md) {
+            return;
+        }
+
+        $hasData = collect(['inizio_conf', 'fine_conf', 'campione_1', 'campione_2', 'campione_3', 'note'])
+            ->contains(fn ($k) => !empty($md[$k] ?? null));
+
+        if (!$hasData) {
+            return;
+        }
+
+        $produzione->metalDetector()->create([
+            'inizio_conf' => $md['inizio_conf'] ?? null,
+            'fine_conf'   => $md['fine_conf'] ?? null,
+            'campione_1'  => $md['campione_1'] ?? null,
+            'campione_2'  => $md['campione_2'] ?? null,
+            'campione_3'  => $md['campione_3'] ?? null,
+            'note'        => $md['note'] ?? null,
+        ]);
+    }
+
     private function schedeAttive()
     {
-        return SchedaProduzione::with('prodotto')
+        return SchedaProduzione::with(['prodotto.varianti', 'flussi.flusso'])
             ->where('attiva', true)
             ->orderBy('modello')
-            ->get(['id', 'prodotto_id', 'modello', 'revisione']);
+            ->get(['id', 'prodotto_id', 'modello', 'revisione'])
+            ->map(fn ($s) => [
+                'id'        => $s->id,
+                'prodotto_id' => $s->prodotto_id,
+                'modello'   => $s->modello,
+                'revisione' => $s->revisione,
+                'prodotto'  => $s->prodotto ? [
+                    'id'   => $s->prodotto->id,
+                    'nome' => $s->prodotto->nome,
+                    'varianti' => $s->prodotto->varianti->map(fn ($v) => [
+                        'id' => $v->id,
+                        'codice_prodotto' => $v->codice_prodotto,
+                        'pezzatura_label' => $v->pezzatura_label,
+                    ])->values(),
+                ] : null,
+                // Passi del ciclo di lavoro proposti dalla scheda (per il pre-fill)
+                'ciclo' => $s->flussi->map(fn ($f) => [
+                    'flusso_id' => $f->flusso_id,
+                    'numero'    => $f->flusso?->numero,
+                    'nome'      => $f->flusso?->nome,
+                    'controllo' => $f->flusso?->controllo,
+                ])->values(),
+            ]);
+    }
+
+    private function lottiGasForForm()
+    {
+        return \App\Models\LottoGas::with('fornitore:id,ragione_sociale')
+            ->whereNull('data_out')
+            ->orderByDesc('data_in')
+            ->get(['id', 'fornitore_id', 'componente', 'lotto', 'numero_ddt', 'quantita', 'um', 'data_in']);
     }
 
     private function lottiDisponibiliForForm(?int $excludeProduzioneId = null): array
@@ -403,6 +522,26 @@ class ProduzioneController extends Controller
             'detergenti.*.lotto_detergente_id'  => ['required', 'exists:lotti_detergenti,id'],
             'detergenti.*.quantita_usata'       => ['nullable', 'numeric', 'min:0'],
             'detergenti.*.note'                 => ['nullable', 'string'],
+            'confezioni'           => ['array'],
+            'confezioni.*.prodotto_variante_id' => ['required', 'exists:prodotto_varianti,id'],
+            'confezioni.*.n_confezioni'         => ['nullable', 'integer', 'min:0'],
+            'gas'                  => ['array'],
+            'gas.*.lotto_gas_id'   => ['required', 'exists:lotti_gas,id'],
+            'gas.*.quantita_usata' => ['nullable', 'numeric', 'min:0'],
+            'gas.*.note'           => ['nullable', 'string'],
+            'ciclo'                => ['array'],
+            'ciclo.*.flusso_id'        => ['nullable', 'exists:flussi_produzione,id'],
+            'ciclo.*.nome'             => ['nullable', 'string', 'max:150'],
+            'ciclo.*.registrazione_1'  => ['nullable', 'string', 'max:200'],
+            'ciclo.*.registrazione_2'  => ['nullable', 'string', 'max:200'],
+            'ciclo.*.controllo'        => ['boolean'],
+            'metal_detector'              => ['nullable', 'array'],
+            'metal_detector.inizio_conf'  => ['nullable', 'string', 'max:20'],
+            'metal_detector.fine_conf'    => ['nullable', 'string', 'max:20'],
+            'metal_detector.campione_1'   => ['nullable', 'string', 'in:OK,KO'],
+            'metal_detector.campione_2'   => ['nullable', 'string', 'in:OK,KO'],
+            'metal_detector.campione_3'   => ['nullable', 'string', 'in:OK,KO'],
+            'metal_detector.note'         => ['nullable', 'string'],
         ]);
 
         // XOR: exactly one of acquisto_riga_id / semilavorato_id must be present per row
@@ -495,14 +634,21 @@ class ProduzioneController extends Controller
     public function print(Produzione $produzione)
     {
         $produzione->load([
-            'scheda.prodotto',
+            'scheda.prodotto.varianti',
             'scheda.flussi.flusso',
             'materiePrime.materiaPrima',
             'materiePrime.acquistoRiga.acquisto.fornitore',
             'imballaggiPrimari.lottoImballaggio.fornitore',
             'detergenti.lottoDetergente.fornitore',
+            'confezioni.variante',
+            'gas.lottoGas.fornitore',
+            'ciclo.flusso',
+            'metalDetector',
         ]);
 
-        return Inertia::render('Produzioni/Print', ['produzione' => $produzione]);
+        return Inertia::render('Produzioni/Print', [
+            'produzione' => $produzione,
+            'campioni'   => config('haccp.metal_detector_campioni', []),
+        ]);
     }
 }

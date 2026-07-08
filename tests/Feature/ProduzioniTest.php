@@ -38,7 +38,7 @@ class ProduzioniTest extends TestCase
 
     public function test_operator_cannot_delete_produzione(): void
     {
-        $prodotto = Prodotto::create(['nome' => 'Prodotto Test', 'codice_prodotto' => 'P001']);
+        $prodotto = Prodotto::create(['nome' => 'Prodotto Test', ]);
         $scheda   = SchedaProduzione::create([
             'prodotto_id'   => $prodotto->id,
             'modello'       => 'TEST',
@@ -62,7 +62,7 @@ class ProduzioniTest extends TestCase
 
     public function test_admin_can_delete_produzione(): void
     {
-        $prodotto = Prodotto::create(['nome' => 'Prodotto Test 2', 'codice_prodotto' => 'P002']);
+        $prodotto = Prodotto::create(['nome' => 'Prodotto Test 2', ]);
         $scheda   = SchedaProduzione::create([
             'prodotto_id'    => $prodotto->id,
             'modello'        => 'TEST',

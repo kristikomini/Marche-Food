@@ -103,14 +103,22 @@ class ReportController extends Controller
     public function schedaProduzionePdf(Produzione $produzione)
     {
         $produzione->load([
-            'scheda.prodotto',
+            'scheda.prodotto.varianti',
+            'scheda.imballaggi.fornitore',
+            'scheda.gas.fornitore',
             'materiePrime.materiaPrima',
             'materiePrime.acquistoRiga.acquisto.fornitore',
             'materiePrime.semilavorato',
             'imballaggiPrimari.lottoImballaggio.fornitore',
+            'confezioni.variante',
+            'gas.lottoGas.fornitore',
+            'ciclo.flusso',
+            'metalDetector',
         ]);
 
-        $pdf = Pdf::loadView('pdf.scheda-produzione', compact('produzione'))->setPaper('a4', 'portrait');
+        $campioni = config('haccp.metal_detector_campioni', []);
+
+        $pdf = Pdf::loadView('pdf.scheda-produzione', compact('produzione', 'campioni'))->setPaper('a4', 'portrait');
         $filename = 'scheda_produzione_' . str_replace(['/', ' '], '_', $produzione->lotto_produzione) . '.pdf';
 
         return $pdf->stream($filename);

@@ -20,10 +20,17 @@ class Vendita extends Model
         'condizioni_pagamento',
         'causale_trasporto',
         'note',
+        'n_colli',
+        'peso_totale',
+        'data_trasporto',
+        'destinatario_diverso',
     ];
 
     protected $casts = [
         'data_documento' => 'date',
+        'data_trasporto' => 'date',
+        'peso_totale'    => 'decimal:3',
+        'n_colli'        => 'integer',
     ];
 
     public function cliente()

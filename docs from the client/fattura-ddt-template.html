@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Fattura immediata DdT - template</title>
+<style>
+  /* ==== PRINT SETUP: exact A4, no browser margins ==== */
+  @page { size: A4 portrait; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #efefef; }
+
+  /* Colours / line weights tuned to match the original gestionale printout */
+  :root{
+    --ink:#1a1a1a;
+    --line:#000;          /* box borders */
+    --line-thin:0.6pt;
+    --label:6.6pt;        /* tiny field labels */
+    --value:9pt;          /* handwritten-into-box values */
+    --radius:7px;         /* the rounded field boxes */
+  }
+
+  .sheet{
+    width:210mm; min-height:297mm;
+    margin:12px auto; background:#fff;
+    padding:7mm 6mm;
+    color:var(--ink);
+    font-family: Arial, "Helvetica Neue", sans-serif;
+    box-shadow:0 2px 14px rgba(0,0,0,.25);
+  }
+  @media print{
+    html,body{background:#fff;}
+    .sheet{margin:0; box-shadow:none; width:auto; min-height:auto;}
+  }
+
+  /* value font = monospaced draft printer look */
+  .mono{ font-family:"Courier New", monospace; font-size:var(--value); font-weight:700; letter-spacing:.2px;}
+
+  /* ---------- TOP: logo / health-mark / recipient ---------- */
+  .top{ display:flex; align-items:flex-start; gap:10px; }
+  .logo{ width:150px; flex:0 0 auto; }
+  .logo .mark{ display:flex; align-items:flex-end; gap:3px; height:34px; }
+  .logo .mark .b{ background:#4b4b4b; }
+  .logo .mark .b1{ width:22px; height:22px; }
+  .logo .mark .b2{ width:22px; height:34px; border-radius:14px 14px 0 0;}
+  .logo .mark .b3{ width:22px; height:28px; }
+  .logo .dot{ width:15px;height:15px;border-radius:50%;background:#8a8a8a;margin:0 0 2px 6px;}
+  .logo .name{ font-weight:800; font-size:15px; letter-spacing:2px; margin-top:2px;}
+  .logo .sub{ font-size:7.5px; letter-spacing:3px; }
+  .vendor{ flex:1; font-size:8px; line-height:1.35; padding-top:2px;}
+  .vendor b{ font-size:8.5px; }
+  .health{ flex:0 0 auto; margin-top:2px;}
+  .health .oval{ width:44px;height:30px;border:1.4px solid #000;border-radius:50%;
+     display:flex;flex-direction:column;align-items:center;justify-content:center;
+     font-size:6.5px;font-weight:700;line-height:1;}
+  .recipient{ flex:0 0 300px; border:var(--line-thin) solid var(--line); border-radius:var(--radius);
+     padding:6px 10px; min-height:74px; position:relative; }
+  .recipient .sp{ font-size:7px; }
+  .recipient .r{ font-size:11px; font-weight:700; margin-top:4px; line-height:1.5;}
+  .recipient .prov{ position:absolute; right:10px; bottom:8px; font-weight:700;}
+
+  /* ---------- FIELD BOX HELPERS ---------- */
+  .row{ display:flex; gap:4px; margin-top:5px; }
+  .fld{ border:var(--line-thin) solid var(--line); border-radius:var(--radius);
+        padding:2px 6px 4px; position:relative; min-height:30px; display:flex; flex-direction:column; justify-content:space-between;}
+  .fld > .lab{ font-size:var(--label); font-weight:700; letter-spacing:.2px; white-space:nowrap; }
+  .fld > .val{ font-family:"Courier New",monospace; font-size:var(--value); font-weight:700; padding-left:2px; min-height:12px; }
+  .fld .val.center{ text-align:center; }
+
+  /* top strip proportions */
+  .f-cod{flex:0 0 110px;} .f-iva{flex:0 0 70px;} .f-zona{flex:0 0 80px;}
+  .f-age{flex:0 0 80px;} .f-cat{flex:0 0 70px;} .f-piva{flex:1;}
+  .f-num{flex:0 0 150px;} .f-data{flex:0 0 120px;} .f-pag{flex:0 0 56px;}
+  .f-cond{flex:1;} .f-banca{flex:0 0 45%;}
+  .f-tel{flex:0 0 210px;} .f-cf{flex:0 0 210px;} .f-val{flex:0 0 150px;} .f-tipo{flex:1;}
+  .f-tipo .val{ font-family:Arial,sans-serif; font-weight:800; font-size:11px; }
+
+  /* ---------- ITEMS TABLE ---------- */
+  table.items{ width:100%; border-collapse:collapse; margin-top:5px; table-layout:fixed;}
+  table.items th{ font-size:7px; font-weight:700; letter-spacing:.2px; padding:3px 4px;
+     border:none; text-align:center; vertical-align:middle; }
+  table.items thead tr{ border-bottom:var(--line-thin) solid #000; }
+  table.items td{ border-left:var(--line-thin) solid #000; padding:2px 4px; vertical-align:top;
+     font-family:"Courier New",monospace; font-size:8.6px; font-weight:700;}
+  table.items td:first-child{ border-left:none; }
+  /* outer frame around the whole grid */
+  .grid-frame{ border:var(--line-thin) solid #000; border-top:none; }
+  table.items thead{ border:var(--line-thin) solid #000; border-bottom:1px solid #000;}
+  .c-cod{width:11%;} .c-desc{width:34%; text-align:left;} .c-um{width:6%; text-align:center;}
+  .c-qta{width:9%; text-align:right;} .c-prz{width:12%; text-align:right;}
+  .c-s1{width:6%;} .c-s2{width:6%;} .c-imp{width:11%; text-align:right;} .c-iva{width:5%; text-align:center;}
+  td.c-desc .lotto{ font-weight:400; display:block; }
+  .items-body{ min-height:360px; }  /* keeps the big empty area like the original */
+
+  /* ---------- TOTALS BLOCK ---------- */
+  .totrow{ display:flex; margin-top:4px; gap:0;}
+  .tbox{ border:var(--line-thin) solid #000; border-radius:var(--radius); padding:2px 6px; text-align:center;}
+  .tbox .lab{ font-size:6.4px; font-weight:700; }
+  .tbox .val{ font-family:"Courier New",monospace; font-weight:700; font-size:10px; padding-top:8px; }
+  .left-tot{ flex:0 0 42%; display:flex; flex-direction:column; gap:3px;}
+  .left-tot .lt-top{ display:flex; gap:3px;}
+  .left-tot .lt-bot{ display:flex; gap:3px; align-items:center;}
+  .right-tot{ flex:1; display:flex; flex-direction:column; gap:3px; margin-left:3px;}
+  .rt-1{ display:flex; gap:3px; } .rt-2{ display:flex; gap:3px;} .rt-3{ display:flex; gap:3px;}
+  .grow{ flex:1; } .w25{flex:0 0 24%;}
+  .pay .val, .fatt .val{ font-size:12px; }
+  .cur{ font-family:"Courier New",monospace; font-weight:700; font-size:11px; align-self:flex-end; }
+
+  /* scadenze + transport */
+  .band{ border:var(--line-thin) solid #000; border-radius:var(--radius); margin-top:4px; padding:3px 8px; min-height:40px;}
+  .band .lab{ font-size:6.6px; font-weight:700; }
+  .band .val{ font-family:"Courier New",monospace; font-weight:700; font-size:9px; margin-top:3px;}
+  .tr-row{ display:flex; gap:4px; margin-top:4px;}
+  .foot .band{ min-height:34px; }
+  .sign{ display:flex; justify-content:space-between; align-items:flex-end; font-size:7px; margin-top:14px; padding:0 6px;}
+  .sign .line{ border-top:.6pt solid #000; width:30%; text-align:center; padding-top:2px;}
+  .ck{ display:inline-block; width:13px;height:13px;border:1px solid #000; vertical-align:middle;}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- =================== TOP =================== -->
+  <div class="top">
+    <div class="logo">
+      <div class="mark">
+        <span class="b b1"></span><span class="b b2"></span><span class="b b3"></span>
+        <span class="dot"></span>
+      </div>
+      <div class="name">MARCHE</div>
+      <div class="sub">INTERNATIONAL FOOD</div>
+    </div>
+    <div class="vendor">
+      <b>Marche International Food S.r.l.</b><br>
+      Via G. Rossini, 63 - 62029 Tolentino (MC)<br>
+      C.F. e P.Iva 01891440438<br>
+      MAIL info@marcheinternationalfood.com<br>
+      PEC mifood@pec.it<br>
+      TEL +39 0733 1715820 | CEL +39 340 9927059<br>
+      marcheinternationalfood.com
+    </div>
+    <div class="health"><div class="oval"><span>IT</span><span>G5J07</span><span>CE</span></div></div>
+    <div class="recipient">
+      <div class="sp">SPETT.LE</div>
+      <div class="r">ORMA GROUP SRL</div>
+      <span class="prov">FM</span>
+      <div class="r">VIA STAZIONE 90</div>
+      <div class="r">63024 GROTTAZZOLINA</div>
+    </div>
+  </div>
+
+  <!-- =================== FIELD STRIP =================== -->
+  <div class="row">
+    <div class="fld f-cod"><span class="lab">COD.CLIENTE</span><span class="val center">41</span></div>
+    <div class="fld f-iva"><span class="lab">IVA</span><span class="val"></span></div>
+    <div class="fld f-zona"><span class="lab">ZONA</span><span class="val"></span></div>
+    <div class="fld f-age"><span class="lab">AGENTE</span><span class="val"></span></div>
+    <div class="fld f-cat"><span class="lab">CATEG.</span><span class="val"></span></div>
+    <div class="fld f-piva"><span class="lab">PARTITA IVA</span><span class="val">01508150677</span></div>
+    <div class="fld f-num"><span class="lab">NUMERO DOCUMENTO</span><span class="val center">344</span></div>
+    <div class="fld f-data"><span class="lab">DATA DOCUMENTO</span><span class="val center">22/06/2026</span></div>
+    <div class="fld f-pag"><span class="lab">PAG.</span><span class="val center">001</span></div>
+  </div>
+
+  <div class="row">
+    <div class="fld f-cond"><span class="lab">CONDIZIONI DI PAGAMENTO</span><span class="val">8 BONIFICO BANCARIO 90+10 GG FM</span></div>
+    <div class="fld f-banca"><span class="lab">BANCA D'APPOGGIO</span><span class="val"></span></div>
+  </div>
+
+  <div class="row">
+    <div class="fld f-tel"><span class="lab">TELEFONO</span><span class="val">0734633264</span></div>
+    <div class="fld f-cf"><span class="lab">CODICE FISCALE</span><span class="val">01508150677</span></div>
+    <div class="fld f-val"><span class="lab">VALUTA</span><span class="val">Euro</span></div>
+    <div class="fld f-tipo"><span class="lab">TIPO DOCUMENTO</span><span class="val">Fattura immediata DdT</span></div>
+  </div>
+
+  <!-- =================== ITEMS =================== -->
+  <table class="items">
+    <thead>
+      <tr>
+        <th class="c-cod">CODICE ARTICOLO</th>
+        <th class="c-desc" style="text-align:center">D E S C R I Z I O N E</th>
+        <th class="c-um">U.M.</th>
+        <th class="c-qta">QUANTITA'</th>
+        <th class="c-prz">PREZZO UNITARIO</th>
+        <th class="c-s1">SC.1%</th>
+        <th class="c-s2">SC.2%</th>
+        <th class="c-imp">IMPORTO NETTO</th>
+        <th class="c-iva">IVA</th>
+      </tr>
+    </thead>
+  </table>
+  <div class="grid-frame">
+  <table class="items">
+    <colgroup>
+      <col class="c-cod"><col class="c-desc"><col class="c-um"><col class="c-qta">
+      <col class="c-prz"><col class="c-s1"><col class="c-s2"><col class="c-imp"><col class="c-iva">
+    </colgroup>
+    <tbody class="items-body">
+      <tr>
+        <td class="c-cod">046</td>
+        <td class="c-desc">SALMONE MARINATO 1000g<span class="lotto">Lotto N. 19/06/2026 Scad. 17/10/2026</span></td>
+        <td class="c-um">KG</td><td class="c-qta">10</td><td class="c-prz">15,900</td>
+        <td class="c-s1"></td><td class="c-s2"></td><td class="c-imp">159,00</td><td class="c-iva">10</td>
+      </tr>
+      <tr>
+        <td class="c-cod">242</td>
+        <td class="c-desc">INSALATA RUSSA KG 1<span class="lotto">Lotto N. 22/06/2026 Scad. 20/09/2026</span></td>
+        <td class="c-um">KG</td><td class="c-qta">10</td><td class="c-prz">4,100</td>
+        <td class="c-s1"></td><td class="c-s2"></td><td class="c-imp">41,00</td><td class="c-iva">10</td>
+      </tr>
+      <tr>
+        <td class="c-cod">032</td>
+        <td class="c-desc">PEPERONI GRIGLIATI<span class="lotto">Lotto N. 22/06/2026 Scad. 20/09/2026</span></td>
+        <td class="c-um">KG</td><td class="c-qta">30</td><td class="c-prz">6,000</td>
+        <td class="c-s1"></td><td class="c-s2"></td><td class="c-imp">180,00</td><td class="c-iva">10</td>
+      </tr>
+      <tr>
+        <td class="c-cod">051</td>
+        <td class="c-desc">ALICI MARINATE GR. 200<span class="lotto">Lotto N. 22/06/2026 Scad. 19/11/2026</span></td>
+        <td class="c-um">N.</td><td class="c-qta">40</td><td class="c-prz">1,900</td>
+        <td class="c-s1"></td><td class="c-s2"></td><td class="c-imp">76,00</td><td class="c-iva">10</td>
+      </tr>
+      <tr>
+        <td class="c-cod">282</td>
+        <td class="c-desc">ALICI PICCANTI GR 200<span class="lotto">Lotto N. 22/06/2026 Scad. 19/11/2026</span></td>
+        <td class="c-um">N.</td><td class="c-qta">20</td><td class="c-prz">1,900</td>
+        <td class="c-s1"></td><td class="c-s2"></td><td class="c-imp">38,00</td><td class="c-iva">10</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- =================== TOTALS =================== -->
+  <div class="totrow">
+    <div class="left-tot">
+      <div class="lt-top">
+        <div class="tbox grow"><div class="lab">IMPONIBILE</div><div class="val">494,00</div></div>
+        <div class="tbox" style="flex:0 0 60px"><div class="lab">AL.IVA</div><div class="val">10</div></div>
+        <div class="tbox grow"><div class="lab">IMPORTO IVA</div><div class="val">49,40</div></div>
+      </div>
+      <div class="lt-bot">
+        <div class="mono" style="flex:1;text-align:right;padding-right:8px">494,00</div>
+        <div class="mono" style="flex:0 0 60px;text-align:center">TOT</div>
+        <div class="mono" style="flex:1;text-align:right;padding-right:8px">49,40</div>
+      </div>
+    </div>
+    <div class="right-tot">
+      <div class="rt-1">
+        <div class="tbox grow"><div class="lab">TOTALE MERCE</div><div class="val">494,00</div></div>
+        <div class="tbox w25"><div class="lab">% SCONTO</div><div class="val"></div></div>
+        <div class="tbox grow"><div class="lab">IMPORTO SCONTO</div><div class="val"></div></div>
+        <div class="tbox grow"><div class="lab">NETTO MERCE</div><div class="val">494,00</div></div>
+      </div>
+      <div class="rt-2">
+        <div class="tbox grow"><div class="lab">BOLLI</div><div class="val"></div></div>
+        <div class="tbox grow"><div class="lab">SPESE INCASSO</div><div class="val"></div></div>
+        <div class="tbox grow"><div class="lab">VARIE</div><div class="val"></div></div>
+        <div class="tbox grow"><div class="lab">&nbsp;</div><div class="val"></div></div>
+        <div class="tbox grow"><div class="lab">ACCONTO</div><div class="val"></div></div>
+      </div>
+      <div class="rt-3">
+        <div class="tbox pay grow" style="display:flex;justify-content:space-between;align-items:center">
+          <div style="text-align:center;flex:1"><div class="lab">TOTALE A PAGARE</div></div>
+          <div class="cur">EUR</div>
+          <div class="mono" style="font-size:12px;padding:0 6px">543,40</div>
+        </div>
+        <div class="tbox fatt grow" style="display:flex;justify-content:space-between;align-items:center">
+          <div style="text-align:center;flex:1"><div class="lab">TOTALE FATTURA</div></div>
+          <div class="cur">EUR</div>
+          <div class="mono" style="font-size:12px;padding:0 6px">543,40</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- scadenze -->
+  <div class="band">
+    <span class="lab">SCADENZE</span>
+    <div class="val">1)&nbsp;&nbsp;RD.&nbsp;&nbsp;&nbsp;&nbsp;543,40&nbsp;&nbsp;&nbsp;10/10/2026</div>
+  </div>
+
+  <!-- transport -->
+  <div class="tr-row">
+    <div class="band" style="flex:0 0 70px"><span class="lab">N.COLLI</span></div>
+    <div class="band" style="flex:0 0 90px"><span class="lab">PORTO</span></div>
+    <div class="band" style="flex:1"><span class="lab">CAUSALE DEL TRASPORTO</span><div class="val">VENDITA</div></div>
+    <div class="band" style="flex:0 0 90px"><span class="lab">TOT. PESO</span></div>
+    <div class="band" style="flex:0 0 130px"><span class="lab">DATA DEL TRASPORTO</span><div class="val">22/06/2026</div></div>
+  </div>
+
+  <div class="foot">
+    <div class="band"><span class="lab">INCARICATO DEL TRASPORTO</span></div>
+    <div class="band" style="min-height:60px;position:relative">
+      <span class="lab">DESTINATARIO DELLA MERCE&nbsp;&nbsp;&nbsp;<i>(SE DIVERSO DALL'INTESTATARIO)</i></span>
+      <div style="position:absolute; right:120px; top:4px; font-size:7px; font-weight:700; text-align:center">
+        CONTROLLO<br>MERCI e<br>TEMPERATURA<br>
+        <span style="display:inline-block;margin-top:2px">ok <span class="ck"></span>&nbsp;&nbsp;ko <span class="ck"></span></span>
+      </div>
+    </div>
+    <div class="sign">
+      <div class="line">Firma (per uso interno)</div>
+      <div></div>
+      <div class="line">Firma per accettazione merci</div>
+    </div>
+    <div class="band" style="margin-top:2px"><span class="lab">NOTE</span></div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -353,3 +353,13 @@ Each materia prima declares which of the 14 EU allergens it **contains** and whi
 - **Log Attività → append-only change log.** The `/audit` page now reads an immutable `audit_logs` history (every create/update/delete/restore with before→after field values), not just the current `created_by`/`updated_by`. `Auditable` trait → `AuditLog` → `AuditService::changeLog()`.
 - **Lotto → materia prima.** Purchase lines can link to a raw material (`acquisti_righe.materia_prima_id`, optional select on the acquisti form); linked lots inherit the material's allergens on the purchase-lot QR label and traceability node.
 - **Access-control ordering fix.** The `admin` middleware now runs before route-model binding (`bootstrap/app.php`), so an unauthorised operator is redirected rather than receiving a 404.
+
+### Reform 2026-07-08
+
+- **Prodotto → varianti.** `Prodotto` ora ha `varianti()` (`ProdottoVariante`): ogni variante porta `codice_prodotto` + pezzatura. `ProdottoController` gestisce l'array varianti con unicità del codice.
+- **Scheda template.** `SchedaProduzione` ha `imballaggi()`/`gas()` (`SchedaImballaggio`/`SchedaGas`); `SchedaProduzioneController@pdfVuota` stampa il template vuoto (`pdf/scheda-produzione-vuota.blade.php`).
+- **Cattura produzione.** `Produzione` ha `confezioni()`, `gas()`, `ciclo()`, `metalDetector()` (`ProduzioneConfezione/Gas/Ciclo/MetalDetector`); `ProduzioneController` cattura e valida i gruppi e pre-compila dalla scheda; PDF compilato data-driven.
+- **Catalogo gas (Screen 2).** `LottoGas` (soft-delete/audit) gestito da `ImballaggioController` (tab Gas) e incluso nel Cestino.
+- **Fattura.** `Cliente` porta i campi anagrafici fattura; `Vendita` i dati trasporto; `VenditaRiga` collega la variante (`variante()`) per l'auto-fill. `pdf/vendita.blade.php` aggiornato.
+- **Export Excel.** `App\Support\SimpleXlsxWriter` (senza dipendenze, `ext-zip`) usato dagli export fornitori/clienti; fallback CSV via `Controller::downloadCsv`.
+- **config/haccp.php** — aggiunge `metal_detector_campioni` e `ciclo_lavoro_default`.

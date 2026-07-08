@@ -19,4 +19,25 @@ return [
         'trim',
         explode(',', (string) env('HACCP_ALERT_EMAILS', ''))
     ))),
+
+    /*
+    | Campioni fissi del test metal detector stampati sulla Scheda di Produzione
+    | (come da modulo cartaceo M2PO3). Ordine = ordine di stampa.
+    */
+    'metal_detector_campioni' => [
+        ['n' => 1, 'materiale' => 'Materiale Ferroso',     'diametro' => '2,5 mm', 'codice' => '260920'],
+        ['n' => 2, 'materiale' => 'Materiale Non Ferroso', 'diametro' => '3,5 mm', 'codice' => '260967'],
+        ['n' => 3, 'materiale' => 'Materiale Aisi 316',    'diametro' => '4,5 mm', 'codice' => '260948'],
+    ],
+
+    /*
+    | Passi standard del ciclo di lavoro proposti nella scheda (numero → nome).
+    | Modificabili per scheda tramite flussi_produzione + schede_produzione_flussi.
+    */
+    'ciclo_lavoro_default' => [
+        ['numero' => 1,  'nome' => 'Prelievo prodotti'],
+        ['numero' => 3,  'nome' => 'Preparazione ingred. + additivi'],
+        ['numero' => 7,  'nome' => 'Porzionatura e confezionamento'],
+        ['numero' => 10, 'nome' => 'Immagaz. Preparaz. pallet e Sped.'],
+    ],
 ];

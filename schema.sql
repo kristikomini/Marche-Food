@@ -67,13 +67,11 @@ CREATE TABLE clienti (
     updated_at       TIMESTAMPTZ  DEFAULT NOW()
 );
 
+-- NB (Reform 2026-07-08): codice_prodotto / pezzatura_* / um_id sono stati
+-- spostati su prodotto_varianti (vedi sezione "REFORM 2026-07-08" in coda).
 CREATE TABLE prodotti (
     id               BIGSERIAL PRIMARY KEY,
-    codice_prodotto  VARCHAR(20)  NOT NULL UNIQUE,
     nome             VARCHAR(200) NOT NULL,
-    pezzatura_valore NUMERIC(10,3),
-    pezzatura_um     VARCHAR(10),
-    um_id            BIGINT REFERENCES unita_misura(id),
     attivo           BOOLEAN      NOT NULL DEFAULT TRUE,
     note             TEXT,
     created_at       TIMESTAMPTZ  DEFAULT NOW(),
@@ -395,7 +393,7 @@ CREATE INDEX idx_acquisti_righe_data_in    ON acquisti_righe(data_in);
 CREATE INDEX idx_vendite_cliente           ON vendite(cliente_id);
 CREATE INDEX idx_vendite_data              ON vendite(data_documento);
 CREATE INDEX idx_vendite_righe_lotto       ON vendite_righe(lotto);
-CREATE INDEX idx_prodotti_codice           ON prodotti(codice_prodotto);
+-- idx_prodotti_codice rimosso (codice ora su prodotto_varianti, vedi coda file).
 CREATE INDEX idx_produzioni_scheda         ON produzioni(scheda_id);
 CREATE INDEX idx_produzioni_lotto          ON produzioni(lotto_produzione);
 CREATE INDEX idx_prod_mp_produzione        ON produzioni_materie_prime(produzione_id);
@@ -537,4 +535,141 @@ CREATE INDEX idx_audit_logs_auditable ON audit_logs(auditable_type, auditable_id
 CREATE INDEX idx_audit_logs_created   ON audit_logs(created_at);
 CREATE INDEX idx_audit_logs_event     ON audit_logs(event);
 
--- Fine schema (allineato alle migrazioni fino a 2026_07_06_000004).
+-- =====================================================================
+-- REFORM 2026-07-08 — Scheda di Produzione & Fattura (migrazioni 2026_07_08_*)
+-- =====================================================================
+
+-- Fase 1 — Varianti pezzatura prodotto (prodotti perde codice/pezzatura/um_id)
+CREATE TABLE prodotto_varianti (
+    id               BIGSERIAL PRIMARY KEY,
+    prodotto_id      BIGINT NOT NULL REFERENCES prodotti(id) ON DELETE CASCADE,
+    codice_prodotto  VARCHAR(20) NOT NULL UNIQUE,
+    pezzatura_valore NUMERIC(10,3),
+    pezzatura_um     VARCHAR(10),
+    um_id            BIGINT REFERENCES unita_misura(id),
+    descrizione      VARCHAR(200),
+    ordine           INTEGER NOT NULL DEFAULT 0,
+    attiva           BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at       TIMESTAMPTZ DEFAULT NOW(),
+    updated_at       TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_varianti_prodotto ON prodotto_varianti(prodotto_id);
+CREATE INDEX idx_varianti_um       ON prodotto_varianti(um_id);
+
+-- Fase 2 — Template scheda: imballaggi + gas
+CREATE TABLE schede_imballaggi (
+    id                   BIGSERIAL PRIMARY KEY,
+    scheda_id            BIGINT NOT NULL REFERENCES schede_produzione(id) ON DELETE CASCADE,
+    componente           VARCHAR(200) NOT NULL,
+    prodotto_variante_id BIGINT REFERENCES prodotto_varianti(id) ON DELETE SET NULL,
+    fornitore_id         BIGINT REFERENCES fornitori(id) ON DELETE SET NULL,
+    ordine               INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_schede_imb_scheda ON schede_imballaggi(scheda_id);
+
+CREATE TABLE schede_gas (
+    id           BIGSERIAL PRIMARY KEY,
+    scheda_id    BIGINT NOT NULL REFERENCES schede_produzione(id) ON DELETE CASCADE,
+    nome         VARCHAR(200) NOT NULL,
+    fornitore_id BIGINT REFERENCES fornitori(id) ON DELETE SET NULL,
+    ordine       INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_schede_gas_scheda ON schede_gas(scheda_id);
+
+-- Fase 3 — Catalogo gas (Screen 2) + cattura produzione
+CREATE TABLE lotti_gas (
+    id              BIGSERIAL PRIMARY KEY,
+    fornitore_id    BIGINT NOT NULL REFERENCES fornitori(id),
+    codice_articolo VARCHAR(50),
+    componente      VARCHAR(200) NOT NULL,
+    um              VARCHAR(10),
+    quantita        NUMERIC(10,3),
+    lotto           VARCHAR(100),
+    scadenza        DATE,
+    numero_ddt      VARCHAR(50),
+    data_in         DATE NOT NULL,
+    data_out        DATE,
+    note            TEXT,
+    created_by      BIGINT REFERENCES users(id),
+    updated_by      BIGINT REFERENCES users(id),
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at      TIMESTAMPTZ
+);
+CREATE INDEX idx_gas_fornitore ON lotti_gas(fornitore_id);
+
+CREATE TABLE produzioni_confezioni (
+    id                   BIGSERIAL PRIMARY KEY,
+    produzione_id        BIGINT NOT NULL REFERENCES produzioni(id) ON DELETE CASCADE,
+    prodotto_variante_id BIGINT NOT NULL REFERENCES prodotto_varianti(id),
+    n_confezioni         INTEGER
+);
+CREATE INDEX idx_prod_conf_produzione ON produzioni_confezioni(produzione_id);
+CREATE INDEX idx_prod_conf_variante   ON produzioni_confezioni(prodotto_variante_id);
+
+CREATE TABLE produzioni_gas (
+    id             BIGSERIAL PRIMARY KEY,
+    produzione_id  BIGINT NOT NULL REFERENCES produzioni(id) ON DELETE CASCADE,
+    lotto_gas_id   BIGINT NOT NULL REFERENCES lotti_gas(id) ON DELETE RESTRICT,
+    quantita_usata NUMERIC(12,3),
+    note           TEXT
+);
+CREATE INDEX idx_prod_gas_produzione ON produzioni_gas(produzione_id);
+CREATE INDEX idx_prod_gas_lotto      ON produzioni_gas(lotto_gas_id);
+
+CREATE TABLE produzioni_ciclo (
+    id              BIGSERIAL PRIMARY KEY,
+    produzione_id   BIGINT NOT NULL REFERENCES produzioni(id) ON DELETE CASCADE,
+    flusso_id       BIGINT REFERENCES flussi_produzione(id) ON DELETE SET NULL,
+    nome            VARCHAR(150),
+    registrazione_1 VARCHAR(200),
+    registrazione_2 VARCHAR(200),
+    controllo       BOOLEAN NOT NULL DEFAULT FALSE,
+    ordine          INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_prod_ciclo_produzione ON produzioni_ciclo(produzione_id);
+
+CREATE TABLE produzioni_metal_detector (
+    id            BIGSERIAL PRIMARY KEY,
+    produzione_id BIGINT NOT NULL UNIQUE REFERENCES produzioni(id) ON DELETE CASCADE,
+    inizio_conf   VARCHAR(20),
+    fine_conf     VARCHAR(20),
+    campione_1    VARCHAR(3),
+    campione_2    VARCHAR(3),
+    campione_3    VARCHAR(3),
+    note          TEXT
+);
+
+-- Fase 4 — Fedeltà fattura
+ALTER TABLE clienti
+    ADD COLUMN zona                 VARCHAR(50),
+    ADD COLUMN agente               VARCHAR(100),
+    ADD COLUMN categoria            VARCHAR(50),
+    ADD COLUMN banca_appoggio       VARCHAR(150),
+    ADD COLUMN codice_iva           VARCHAR(20),
+    ADD COLUMN valuta               VARCHAR(20) DEFAULT 'Euro',
+    ADD COLUMN aliquota_iva_default NUMERIC(5,2);
+
+ALTER TABLE vendite
+    ADD COLUMN n_colli              INTEGER,
+    ADD COLUMN peso_totale          NUMERIC(10,3),
+    ADD COLUMN data_trasporto       DATE,
+    ADD COLUMN destinatario_diverso TEXT;
+
+ALTER TABLE vendite_righe ADD COLUMN prodotto_variante_id BIGINT;  -- FK applicativa (validata via exists)
+CREATE INDEX idx_vendite_righe_variante ON vendite_righe(prodotto_variante_id);
+
+-- Fase 0 — indici FK aggiuntivi
+CREATE INDEX idx_vendite_righe_acquisto_riga ON vendite_righe(acquisto_riga_id);
+CREATE INDEX idx_lotti_semilav_produzione    ON lotti_semilavorati(produzione_id);
+CREATE INDEX idx_materie_prime_um            ON materie_prime(um_id);
+CREATE INDEX idx_acquisti_righe_prodotto     ON acquisti_righe(prodotto_id);
+CREATE INDEX idx_vendite_righe_prodotto      ON vendite_righe(prodotto_id);
+CREATE INDEX idx_dest_ingred_materia         ON destinazione_ingredienti(materia_prima_id);
+CREATE INDEX idx_ricette_fornitore           ON ricette(fornitore_id);
+CREATE INDEX idx_ricette_mar_materia         ON ricette_marinature(materia_prima_id);
+CREATE INDEX idx_ricette_mar_fornitore       ON ricette_marinature(fornitore_id);
+CREATE INDEX idx_recall_notifiche_cliente    ON recall_notifiche(cliente_id);
+CREATE INDEX idx_recall_notifiche_vendita    ON recall_notifiche(vendita_riga_id);
+
+-- Fine schema (allineato alle migrazioni fino a 2026_07_08_000005).

@@ -29,7 +29,7 @@ class InventoryServiceTest extends TestCase
         $this->actingAs(User::factory()->admin()->create());
 
         $forn = Fornitore::create(['ragione_sociale' => 'F', 'tipo' => 'alimentare']);
-        $prod = Prodotto::create(['codice_prodotto' => 'P1', 'nome' => 'Tonno', 'attivo' => true]);
+        $prod = Prodotto::create(['nome' => 'Tonno', 'attivo' => true]);
         $mp   = MateriaPrima::create(['nome' => 'Tonno']);
         $acq  = Acquisto::create(['fornitore_id' => $forn->id, 'numero_documento' => 'D1', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
         $riga = AcquistoRiga::create(['acquisto_id' => $acq->id, 'nome_prodotto' => 'Tonno', 'quantita_kg' => 100, 'lotto' => 'L1', 'data_in' => '2026-06-01']);
@@ -58,7 +58,7 @@ class InventoryServiceTest extends TestCase
         $this->actingAs(User::factory()->admin()->create());
 
         $forn = Fornitore::create(['ragione_sociale' => 'F', 'tipo' => 'alimentare']);
-        $prod = Prodotto::create(['codice_prodotto' => 'P1', 'nome' => 'Tonno', 'attivo' => true]);
+        $prod = Prodotto::create(['nome' => 'Tonno', 'attivo' => true]);
         $mp   = MateriaPrima::create(['nome' => 'Tonno']);
         $acq  = Acquisto::create(['fornitore_id' => $forn->id, 'numero_documento' => 'D1', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
         $riga = AcquistoRiga::create(['acquisto_id' => $acq->id, 'nome_prodotto' => 'Tonno', 'quantita_kg' => 100, 'lotto' => 'L1', 'data_in' => '2026-06-01']);

@@ -69,6 +69,23 @@
               <InputText v-model="form.causale_trasporto" placeholder="VENDITA" fluid />
             </div>
 
+            <div class="field">
+              <label>N° Colli</label>
+              <InputNumber v-model="form.n_colli" :min="0" fluid />
+            </div>
+            <div class="field">
+              <label>Peso totale (kg)</label>
+              <InputNumber v-model="form.peso_totale" :min-fraction-digits="0" :max-fraction-digits="3" :min="0" fluid />
+            </div>
+            <div class="field">
+              <label>Data trasporto</label>
+              <DatePicker v-model="form.data_trasporto" date-format="dd/mm/yy" show-button-bar fluid />
+            </div>
+            <div class="field">
+              <label>Destinatario (se diverso)</label>
+              <InputText v-model="form.destinatario_diverso" fluid />
+            </div>
+
             <div class="field" style="grid-column: span 4">
               <label>Note</label>
               <InputText v-model="form.note" fluid />
@@ -93,6 +110,7 @@
           <table class="righe-table">
             <thead>
               <tr>
+                <th style="min-width:220px">Prodotto (catalogo)</th>
                 <th style="width:80px">Cod. Art.</th>
                 <th style="min-width:200px">Prodotto / Descrizione *</th>
                 <th style="width:90px">Pezzatura g</th>
@@ -113,6 +131,18 @@
             </thead>
             <tbody>
               <tr v-for="(riga, i) in form.righe" :key="i">
+                <td>
+                  <Select
+                    v-model="riga.prodotto_variante_id"
+                    :options="prodotti"
+                    :option-label="prodottoLabel"
+                    option-value="variante_id"
+                    placeholder="— cerca prodotto —"
+                    :show-clear="true"
+                    filter fluid size="small"
+                    @change="(e) => onProdottoChange(riga, e.value)"
+                  />
+                </td>
                 <td>
                   <InputText v-model="riga.codice_articolo" fluid size="small" />
                 </td>
@@ -244,7 +274,25 @@ const props = defineProps({
   vendita:         Object,
   clienti:         Array,
   acquisti_righe:  Array,
+  prodotti:        { type: Array, default: () => [] },
 });
+
+function prodottoLabel(p) {
+  const pezz = p.pezzatura_label ? ` ${p.pezzatura_label}` : '';
+  return `${p.codice_prodotto} — ${p.nome}${pezz}`;
+}
+
+// Auto-fill della riga quando si sceglie un prodotto dal catalogo.
+function onProdottoChange(riga, varianteId) {
+  const p = (props.prodotti || []).find(x => x.variante_id === varianteId);
+  if (!p) { riga.prodotto_id = null; return; }
+  riga.prodotto_id      = p.prodotto_id;
+  riga.codice_articolo  = p.codice_prodotto ?? riga.codice_articolo;
+  riga.nome_prodotto    = p.pezzatura_label ? `${p.nome} ${p.pezzatura_label}` : p.nome;
+  if (p.pezzatura_valore != null && (p.pezzatura_um === 'gr' || p.pezzatura_um === 'g')) {
+    riga.pezzatura_gr = Number(p.pezzatura_valore);
+  }
+}
 
 const isEdit = computed(() => !!props.vendita);
 
@@ -270,7 +318,9 @@ function acquistoRigaLabel(r) {
 
 function emptyRiga() {
   return {
-    id:               null,
+    id:                   null,
+    prodotto_id:          null,
+    prodotto_variante_id: null,
     codice_articolo:  '',
     nome_prodotto:    '',
     pezzatura_gr:     null,
@@ -319,7 +369,9 @@ const totali = computed(() => {
 
 function mapRiga(r) {
   return {
-    id:               r.id               ?? null,
+    id:                   r.id                   ?? null,
+    prodotto_id:          r.prodotto_id          ?? null,
+    prodotto_variante_id: r.prodotto_variante_id ?? null,
     codice_articolo:  r.codice_articolo  ?? '',
     nome_prodotto:    r.nome_prodotto    ?? '',
     pezzatura_gr:     r.pezzatura_gr     ? Number(r.pezzatura_gr)  : null,
@@ -350,6 +402,10 @@ const form = useForm({
   condizioni_pagamento: props.vendita?.condizioni_pagamento ?? '',
   causale_trasporto:    props.vendita?.causale_trasporto    ?? '',
   note:            props.vendita?.note            ?? '',
+  n_colli:              props.vendita?.n_colli              ?? null,
+  peso_totale:          props.vendita?.peso_totale ? Number(props.vendita.peso_totale) : null,
+  data_trasporto:       props.vendita?.data_trasporto ? new Date(props.vendita.data_trasporto) : null,
+  destinatario_diverso: props.vendita?.destinatario_diverso ?? '',
   righe: props.vendita?.righe?.length
     ? props.vendita.righe.map(mapRiga)
     : [emptyRiga()],
@@ -363,6 +419,10 @@ watch(() => props.vendita, (v) => {
   form.condizioni_pagamento = v?.condizioni_pagamento ?? '';
   form.causale_trasporto    = v?.causale_trasporto    ?? '';
   form.note                 = v?.note             ?? '';
+  form.n_colli              = v?.n_colli ?? null;
+  form.peso_totale          = v?.peso_totale ? Number(v.peso_totale) : null;
+  form.data_trasporto       = v?.data_trasporto ? new Date(v.data_trasporto) : null;
+  form.destinatario_diverso = v?.destinatario_diverso ?? '';
   form.righe = v?.righe?.length ? v.righe.map(mapRiga) : [emptyRiga()];
   form.clearErrors();
 });
@@ -380,6 +440,9 @@ function submit() {
     ...form.data(),
     data_documento: form.data_documento
       ? form.data_documento.toISOString().slice(0, 10)
+      : null,
+    data_trasporto: form.data_trasporto
+      ? form.data_trasporto.toISOString().slice(0, 10)
       : null,
     righe: form.righe.map(r => ({
       ...r,

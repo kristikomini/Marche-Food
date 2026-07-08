@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\LottoImballaggioPrimario;
 use App\Models\LottoDetergente;
+use App\Models\LottoGas;
 use App\Models\Fornitore;
 use App\Models\ProduzioneImballaggioPrimario;
 use App\Models\ProduzioneDetergente;
+use App\Models\ProduzioneGas;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -37,10 +39,21 @@ class ImballaggioController extends Controller
             ->orderByDesc('data_in')->orderByDesc('id')
             ->paginate(20, ['*'], 'page_d')->withQueryString();
 
+        $searchG = $request->input('search_g');
+        $gas = LottoGas::with('fornitore')
+            ->when($searchG, fn($q) => $q->where(function ($q) use ($searchG) {
+                $q->where('componente', 'ilike', "%{$searchG}%")
+                  ->orWhere('lotto', 'ilike', "%{$searchG}%")
+                  ->orWhere('numero_ddt', 'ilike', "%{$searchG}%");
+            }))
+            ->orderByDesc('data_in')->orderByDesc('id')
+            ->paginate(20, ['*'], 'page_g')->withQueryString();
+
         return Inertia::render('Imballaggi/Index', [
             'primari'    => $primari,
             'detergenti' => $detergenti,
-            'filters'    => $request->only(['search_p', 'search_d', 'tab']),
+            'gas'        => $gas,
+            'filters'    => $request->only(['search_p', 'search_d', 'search_g', 'tab']),
         ]);
     }
 
@@ -138,7 +151,77 @@ class ImballaggioController extends Controller
             ->with('success', 'Lotto spostato nel cestino.');
     }
 
+    // ─── GAS ─────────────────────────────────────────────────────────────────
+
+    public function createGas()
+    {
+        return Inertia::render('Imballaggi/FormGas', [
+            'lotto'     => null,
+            'fornitori' => $this->fornitoriGas(),
+        ]);
+    }
+
+    public function storeGas(Request $request)
+    {
+        LottoGas::create($this->validateGas($request));
+
+        return redirect()->route('imballaggi.index', ['tab' => 'gas'])
+            ->with('success', 'Lotto gas registrato.');
+    }
+
+    public function editGas(LottoGas $gas)
+    {
+        return Inertia::render('Imballaggi/FormGas', [
+            'lotto'     => $gas,
+            'fornitori' => $this->fornitoriGas(),
+        ]);
+    }
+
+    public function updateGas(Request $request, LottoGas $gas)
+    {
+        $gas->update($this->validateGas($request));
+
+        return redirect()->route('imballaggi.index', ['tab' => 'gas'])
+            ->with('success', 'Lotto gas aggiornato.');
+    }
+
+    public function destroyGas(LottoGas $gas)
+    {
+        if (ProduzioneGas::where('lotto_gas_id', $gas->id)->whereHas('produzione')->exists()) {
+            return back()->with('error', 'Impossibile eliminare: questo lotto gas è utilizzato in una produzione attiva.');
+        }
+
+        $gas->delete();
+
+        return redirect()->route('imballaggi.index', ['tab' => 'gas'])
+            ->with('success', 'Lotto spostato nel cestino.');
+    }
+
     // ─── HELPERS ─────────────────────────────────────────────────────────────
+
+    private function fornitoriGas()
+    {
+        return Fornitore::where('attivo', true)
+            ->orderBy('ragione_sociale')
+            ->get(['id', 'ragione_sociale', 'codice']);
+    }
+
+    private function validateGas(Request $request): array
+    {
+        return $request->validate([
+            'fornitore_id'    => ['required', 'exists:fornitori,id'],
+            'componente'      => ['required', 'string', 'max:200'],
+            'codice_articolo' => ['nullable', 'string', 'max:50'],
+            'um'              => ['nullable', 'string', 'max:10'],
+            'quantita'        => ['nullable', 'numeric', 'min:0'],
+            'lotto'           => ['nullable', 'string', 'max:100'],
+            'scadenza'        => ['nullable', 'date'],
+            'numero_ddt'      => ['nullable', 'string', 'max:50'],
+            'data_in'         => ['required', 'date'],
+            'data_out'        => ['nullable', 'date', 'after_or_equal:data_in'],
+            'note'            => ['nullable', 'string'],
+        ]);
+    }
 
     private function fornitoriPrimari()
     {

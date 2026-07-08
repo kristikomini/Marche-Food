@@ -47,12 +47,15 @@ class SearchService
             ])];
         }
 
-        $prodotti = Prodotto::where('nome', $op, $like)
-            ->orWhere('codice_prodotto', $op, $like)
-            ->limit(self::LIMIT)->get(['id', 'nome', 'codice_prodotto']);
+        $prodotti = Prodotto::with('varianti')
+            ->where('nome', $op, $like)
+            ->orWhereHas('varianti', fn ($v) => $v->where('codice_prodotto', $op, $like))
+            ->limit(self::LIMIT)->get(['id', 'nome']);
         if ($prodotti->count()) {
             $gruppi[] = ['tipo' => 'Prodotti', 'icona' => 'pi-tag', 'items' => $prodotti->map(fn ($p) => [
-                'label' => $p->nome, 'sub' => $p->codice_prodotto, 'url' => '/prodotti',
+                'label' => $p->nome,
+                'sub'   => $p->varianti->pluck('codice_prodotto')->filter()->implode(', '),
+                'url'   => '/prodotti',
             ])];
         }
 

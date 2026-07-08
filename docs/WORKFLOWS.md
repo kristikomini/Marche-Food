@@ -238,3 +238,36 @@ The `Auditable` trait (on the 8 operational models) now does two things: it stam
 ## 20. Allergens on incoming lots (2026-07-06)
 
 A purchase line can be linked to a raw material via `acquisti_righe.materia_prima_id` (an optional select on the acquisti form). When linked, that lot inherits the material's allergen declaration, which is then shown on the purchase-lot QR label (`/acquisti/{id}/etichette`) and on the purchase node in the traceability view — extending the allergen story from finished lots back to received lots.
+
+## 21. Scheda di produzione: template vs run (Reform 2026-07-08)
+
+Il modulo Scheda ora modella due livelli, entrambi stampabili come nel modulo cartaceo:
+
+- **Template (scheda)** — anagrafica di prodotto+revisione (`schede_produzione` con
+  `modello`/`revisione`), con: **varianti/pezzature** del prodotto (`prodotto_varianti`,
+  righe CODICE/PEZZATURA), ricetta (`ricette`), imballaggi primari template
+  (`schede_imballaggi`), gas template (`schede_gas`), ciclo di lavoro
+  (`schede_produzione_flussi` → `flussi_produzione`). Stampa **PDF vuoto**:
+  `GET /schede/{id}/pdf` (campi lotto/registrazioni vuoti, da compilare a mano).
+- **Run (produzione)** — `produzioni` + cattura reale: materie prime con lotto/fornitore
+  (`produzioni_materie_prime`, tracciabilità), N° confezioni per variante
+  (`produzioni_confezioni`), lotti gas (`produzioni_gas` → catalogo `lotti_gas`),
+  imballaggi (`produzioni_imballaggi_primari`), ciclo compilato con due colonne
+  REGISTRAZIONI + controllo «C» (`produzioni_ciclo`), test metal detector
+  (`produzioni_metal_detector`: inizio/fine conf., Campione 1/2/3 OK/KO). Stampa **PDF
+  compilato**: `GET /produzioni/{id}/scheda` (data-driven; fallback al template dove un
+  campo non è compilato).
+
+**Automazione**: alla selezione della scheda nel form produzione, le confezioni sono
+pre-compilate dalle varianti del prodotto e il ciclo dai flussi della scheda; nel form
+vendita, la scelta di un prodotto a catalogo auto-compila codice articolo, descrizione e
+pezzatura della riga.
+
+## 22. Fattura/DDT vendite (Reform 2026-07-08)
+
+I campi anagrafici della fattura (zona, agente, categoria, banca d'appoggio, codice IVA,
+valuta, aliquota IVA di default) risiedono su **`clienti`** e vengono riusati su ogni
+documento; i dati di trasporto (n. colli, peso totale, data trasporto, destinatario
+diverso) su **`vendite`**. L'importo netto di riga è ricalcolato lato server
+(`quantità × prezzo`, scontato di SC.1% e SC.2%); i totali IVA sono aggregati per
+aliquota nel PDF.

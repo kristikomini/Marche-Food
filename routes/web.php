@@ -183,13 +183,19 @@ Route::middleware('auth')->group(function () {
     Route::post('imballaggi/detergenti',                  [ImballaggioController::class, 'storeDetergente'])->name('imballaggi.detergenti.store');
     Route::get('imballaggi/detergenti/{detergente}/edit', [ImballaggioController::class, 'editDetergente'])->name('imballaggi.detergenti.edit');
     Route::put('imballaggi/detergenti/{detergente}',      [ImballaggioController::class, 'updateDetergente'])->name('imballaggi.detergenti.update');
+    Route::get('imballaggi/gas/create',       [ImballaggioController::class, 'createGas'])->name('imballaggi.gas.create');
+    Route::post('imballaggi/gas',             [ImballaggioController::class, 'storeGas'])->name('imballaggi.gas.store');
+    Route::get('imballaggi/gas/{gas}/edit',   [ImballaggioController::class, 'editGas'])->name('imballaggi.gas.edit');
+    Route::put('imballaggi/gas/{gas}',        [ImballaggioController::class, 'updateGas'])->name('imballaggi.gas.update');
 
     // ── SCREEN 3 — PRODUZIONE ───────────────────────────────────────────────
     // Schede: index for all, CRUD admin only. Produzioni: operator + admin.
     // Flussi: admin only (workflow configuration).
 
     Route::get('schede', [SchedaProduzioneController::class, 'index'])->name('schede.index');
+    Route::get('schede/confronto', [SchedaProduzioneController::class, 'confronto'])->name('schede.confronto');
     Route::get('schede/{schede}/print', [SchedaProduzioneController::class, 'print'])->name('schede.print');
+    Route::get('schede/{schede}/pdf', [SchedaProduzioneController::class, 'pdfVuota'])->name('schede.pdf');
     Route::get('acquisti/{acquisto}/print', [AcquistoController::class, 'print'])->name('acquisti.print');
     Route::get('produzioni/{produzione}/print', [ProduzioneController::class, 'print'])->name('produzioni.print');
     Route::post('produzioni/{produzione}/semilavorato', [ProduzioneController::class, 'storeSemilavorato'])->name('produzioni.semilavorato.store');
@@ -207,6 +213,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('note-credito/{noteCredito}',[NotaCreditoController::class, 'destroy'])->name('note-credito.destroy');
         Route::delete('imballaggi/primari/{primario}',    [ImballaggioController::class, 'destroyPrimario'])->name('imballaggi.primari.destroy');
         Route::delete('imballaggi/detergenti/{detergente}', [ImballaggioController::class, 'destroyDetergente'])->name('imballaggi.detergenti.destroy');
+        Route::delete('imballaggi/gas/{gas}',               [ImballaggioController::class, 'destroyGas'])->name('imballaggi.gas.destroy');
         Route::delete('produzioni/{produzione}',   [ProduzioneController::class, 'destroy'])->name('produzioni.destroy');
 
         // Schede CRUD

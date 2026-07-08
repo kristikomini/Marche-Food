@@ -56,6 +56,34 @@
         </section>
       </div>
 
+      <!-- CONFEZIONI PER VARIANTE -->
+      <div v-if="form.confezioni.length" class="form-card mb-4">
+        <div class="righe-header">
+          <div>
+            <h2 class="section-title" style="margin:0">N° confezioni prodotte</h2>
+            <p class="section-sub">Precompilato dalle varianti/pezzature del prodotto della scheda</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="righe-table">
+            <thead>
+              <tr>
+                <th style="width:140px">Codice</th>
+                <th style="width:160px">Pezzatura</th>
+                <th style="width:160px">N° confezioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(c, i) in form.confezioni" :key="i">
+                <td><span class="mono">{{ c.codice }}</span></td>
+                <td>{{ c.pezzatura_label || '—' }}</td>
+                <td><InputNumber v-model="c.n_confezioni" :min="0" fluid size="small" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- MATERIE PRIME UTILIZZATE -->
       <div class="form-card mb-4">
         <div class="righe-header">
@@ -174,6 +202,45 @@
         </div>
       </div>
 
+      <!-- GAS -->
+      <div class="form-card mb-4">
+        <div class="righe-header">
+          <div>
+            <h2 class="section-title" style="margin:0">Gas utilizzati</h2>
+            <p class="section-sub">Collegare i lotti gas (MAP) usati in questa produzione</p>
+          </div>
+          <Button type="button" label="Aggiungi" icon="pi pi-plus" size="small" outlined @click="addGas" />
+        </div>
+        <div class="table-wrapper">
+          <table class="righe-table">
+            <thead>
+              <tr>
+                <th style="min-width:280px">Lotto Gas *</th>
+                <th style="width:130px">Q.tà Usata</th>
+                <th style="min-width:160px">Note</th>
+                <th style="width:44px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(r, i) in form.gas" :key="i">
+                <td>
+                  <Select v-model="r.lotto_gas_id" :options="lotti_gas" :option-label="gasLabel" option-value="id"
+                          placeholder="Seleziona lotto..." filter fluid size="small"
+                          :invalid="!!form.errors[`gas.${i}.lotto_gas_id`]" />
+                </td>
+                <td><InputNumber v-model="r.quantita_usata" :min-fraction-digits="3" :max-fraction-digits="3" fluid size="small" /></td>
+                <td><InputText v-model="r.note" fluid size="small" /></td>
+                <td><Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="removeGas(i)" /></td>
+              </tr>
+              <tr v-if="!form.gas.length">
+                <td colspan="4" style="text-align:center;color:var(--ink-3);padding:1rem">Nessun gas collegato.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-actions-sub"><span class="righe-count">{{ form.gas.length }} riga/righe</span></div>
+      </div>
+
       <!-- DETERGENTI -->
       <div class="form-card mb-4">
         <div class="righe-header">
@@ -224,10 +291,64 @@
           </table>
         </div>
 
-        <div class="form-actions">
-          <span class="righe-count">{{ form.detergenti.length }} riga/righe</span>
-          <Button type="submit" :label="isEdit ? 'Salva modifiche' : 'Registra produzione'" icon="pi pi-check" :loading="form.processing" />
+        <div class="form-actions-sub"><span class="righe-count">{{ form.detergenti.length }} riga/righe</span></div>
+      </div>
+
+      <!-- CICLO DI LAVORO -->
+      <div class="form-card mb-4">
+        <div class="righe-header">
+          <div>
+            <h2 class="section-title" style="margin:0">Ciclo di lavoro</h2>
+            <p class="section-sub">Registrazioni e controllo (C) per fase — precompilato dalla scheda</p>
+          </div>
+          <Button type="button" label="Aggiungi fase" icon="pi pi-plus" size="small" outlined @click="addCiclo" />
         </div>
+        <div class="table-wrapper">
+          <table class="righe-table">
+            <thead>
+              <tr>
+                <th style="min-width:220px">Fase</th>
+                <th style="min-width:160px">Registrazioni</th>
+                <th style="min-width:160px">Registrazioni</th>
+                <th style="width:60px;text-align:center">C</th>
+                <th style="width:44px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(c, i) in form.ciclo" :key="i">
+                <td>{{ c.numero ? c.numero + '  ' : '' }}{{ c.nome }}</td>
+                <td><InputText v-model="c.registrazione_1" fluid size="small" /></td>
+                <td><InputText v-model="c.registrazione_2" fluid size="small" /></td>
+                <td style="text-align:center"><Checkbox v-model="c.controllo" :binary="true" /></td>
+                <td><Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="removeCiclo(i)" /></td>
+              </tr>
+              <tr v-if="!form.ciclo.length">
+                <td colspan="5" style="text-align:center;color:var(--ink-3);padding:1rem">Nessuna fase.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- METAL DETECTOR -->
+      <div class="form-card mb-4">
+        <section class="form-section">
+          <h2 class="section-title">Funzionamento Metal Detector</h2>
+          <div class="form-grid-4">
+            <div class="field"><label>Inizio conf.</label><InputText v-model="form.metal_detector.inizio_conf" placeholder="es. 08:30" fluid /></div>
+            <div class="field"><label>Fine conf.</label><InputText v-model="form.metal_detector.fine_conf" placeholder="es. 12:15" fluid /></div>
+            <div class="field" style="grid-column:span 2"></div>
+            <div v-for="c in (campioni || [])" :key="c.n" class="field">
+              <label>Campione {{ c.n }} ({{ c.materiale }})</label>
+              <Select v-model="form.metal_detector['campione_' + c.n]" :options="['OK','KO']" placeholder="—" show-clear fluid />
+            </div>
+            <div class="field" style="grid-column:span 4"><label>Note</label><InputText v-model="form.metal_detector.note" fluid /></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="form-actions-outer">
+        <Button type="submit" :label="isEdit ? 'Salva modifiche' : 'Registra produzione'" icon="pi pi-check" :loading="form.processing" />
       </div>
     </form>
 
@@ -306,7 +427,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
@@ -314,6 +435,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Select from 'primevue/select';
 import DatePicker from 'primevue/datepicker';
+import Checkbox from 'primevue/checkbox';
 
 const props = defineProps({
   produzione:       Object,
@@ -322,6 +444,8 @@ const props = defineProps({
   lotti_disponibili: Array,
   lotti_imballaggi: Array,
   lotti_detergenti: Array,
+  lotti_gas:        { type: Array, default: () => [] },
+  campioni:         { type: Array, default: () => [] },
   lotto_semilavorato: Object,
 });
 
@@ -370,6 +494,12 @@ function detergenteLabel(r) {
   return `${r.componente} | ${fornitore} | Lotto: ${lotto}`;
 }
 
+function gasLabel(r) {
+  const lotto    = r.lotto || '—';
+  const fornitore = r.fornitore?.ragione_sociale ?? '?';
+  return `${r.componente} | ${fornitore} | Lotto: ${lotto}`;
+}
+
 // ── Form state ────────────────────────────────────────────────────────────────
 
 function emptyMateriaPrima() {
@@ -380,6 +510,49 @@ function emptyImballaggio() {
 }
 function emptyDetergente() {
   return { lotto_detergente_id: null, quantita_usata: null, note: '' };
+}
+function emptyGas() { return { lotto_gas_id: null, quantita_usata: null, note: '' }; }
+function emptyCiclo() { return { flusso_id: null, numero: null, nome: '', registrazione_1: '', registrazione_2: '', controllo: false }; }
+
+function pezzaturaLabel(v) {
+  if (!v) return '';
+  if (v.pezzatura_label) return v.pezzatura_label;
+  if (v.pezzatura_valore == null || v.pezzatura_valore === '') return v.pezzatura_um || '';
+  const n = Number(v.pezzatura_valore);
+  const val = Number.isFinite(n) ? n.toLocaleString('it-IT', { maximumFractionDigits: 3 }) : v.pezzatura_valore;
+  return `${v.pezzatura_um ? v.pezzatura_um + ' ' : ''}${val}`.trim();
+}
+
+function mapConfezioni(p) {
+  if (!p?.confezioni?.length) return [];
+  return p.confezioni.map(c => ({
+    prodotto_variante_id: c.prodotto_variante_id,
+    codice: c.variante?.codice_prodotto ?? '',
+    pezzatura_label: pezzaturaLabel(c.variante),
+    n_confezioni: c.n_confezioni ?? null,
+  }));
+}
+function mapCiclo(p) {
+  if (!p?.ciclo?.length) return [];
+  return p.ciclo.map(c => ({
+    flusso_id: c.flusso_id ?? null,
+    numero: c.flusso?.numero ?? null,
+    nome: c.nome ?? c.flusso?.nome ?? '',
+    registrazione_1: c.registrazione_1 ?? '',
+    registrazione_2: c.registrazione_2 ?? '',
+    controllo: !!c.controllo,
+  }));
+}
+function mapMetalDetector(p) {
+  const m = p?.metal_detector;
+  return {
+    inizio_conf: m?.inizio_conf ?? '',
+    fine_conf:   m?.fine_conf ?? '',
+    campione_1:  m?.campione_1 ?? null,
+    campione_2:  m?.campione_2 ?? null,
+    campione_3:  m?.campione_3 ?? null,
+    note:        m?.note ?? '',
+  };
 }
 
 const form = useForm({
@@ -412,6 +585,12 @@ const form = useForm({
         note:                x.note ?? '',
       }))
     : [],
+  confezioni: mapConfezioni(props.produzione),
+  gas: props.produzione?.gas?.length
+    ? props.produzione.gas.map(x => ({ lotto_gas_id: x.lotto_gas_id, quantita_usata: x.quantita_usata ? Number(x.quantita_usata) : null, note: x.note ?? '' }))
+    : [],
+  ciclo: mapCiclo(props.produzione),
+  metal_detector: mapMetalDetector(props.produzione),
 });
 
 watch(() => props.produzione, (p) => {
@@ -443,6 +622,12 @@ watch(() => props.produzione, (p) => {
         note:                x.note ?? '',
       }))
     : [];
+  form.confezioni = mapConfezioni(p);
+  form.gas = p?.gas?.length
+    ? p.gas.map(x => ({ lotto_gas_id: x.lotto_gas_id, quantita_usata: x.quantita_usata ? Number(x.quantita_usata) : null, note: x.note ?? '' }))
+    : [];
+  form.ciclo = mapCiclo(p);
+  form.metal_detector = mapMetalDetector(p);
   form.clearErrors();
 });
 
@@ -452,6 +637,10 @@ function addImballaggio()      { form.imballaggi.push(emptyImballaggio()); }
 function removeImballaggio(i)  { form.imballaggi.splice(i, 1); }
 function addDetergente()       { form.detergenti.push(emptyDetergente()); }
 function removeDetergente(i)   { form.detergenti.splice(i, 1); }
+function addGas()              { form.gas.push(emptyGas()); }
+function removeGas(i)          { form.gas.splice(i, 1); }
+function addCiclo()            { form.ciclo.push(emptyCiclo()); }
+function removeCiclo(i)        { form.ciclo.splice(i, 1); }
 
 function submit() {
   const payload = {
@@ -479,6 +668,27 @@ const showSemiForm = ref(false);
 const schedaSelezionata = computed(() =>
   (props.schede ?? []).find(s => s.id === form.scheda_id) ?? null
 );
+
+// Automazione: quando si sceglie una scheda, precompila confezioni (dalle
+// varianti del prodotto) e ciclo di lavoro (dai flussi della scheda) se vuoti.
+function prefillFromScheda() {
+  const s = schedaSelezionata.value;
+  if (!s) return;
+  if (!form.confezioni.length && s.prodotto?.varianti?.length) {
+    form.confezioni = s.prodotto.varianti.map(v => ({
+      prodotto_variante_id: v.id, codice: v.codice_prodotto,
+      pezzatura_label: v.pezzatura_label, n_confezioni: null,
+    }));
+  }
+  if (!form.ciclo.length && s.ciclo?.length) {
+    form.ciclo = s.ciclo.map(c => ({
+      flusso_id: c.flusso_id, numero: c.numero, nome: c.nome,
+      registrazione_1: '', registrazione_2: '', controllo: false,
+    }));
+  }
+}
+watch(() => form.scheda_id, prefillFromScheda);
+onMounted(prefillFromScheda);
 
 const semiForm = useForm({
   lotto:         '',
@@ -521,6 +731,8 @@ function submitSemi() {
 .righe-table td { padding:0.4rem 0.5rem; border-bottom:1px solid var(--border); vertical-align:middle; }
 .form-actions { padding:1rem 1.5rem; background:var(--surface-2); display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--border); }
 .form-actions-sub { padding:0.5rem 1.5rem; background:var(--surface-2); display:flex; align-items:center; justify-content:flex-start; border-top:1px solid var(--border); }
+.form-actions-outer { display:flex; justify-content:flex-end; margin-top:1rem; }
+.mono { font-family:var(--font-mono, monospace); }
 .righe-count { font-size:0.85rem; color:var(--ink-2); }
 .balance-ok { font-size:0.82rem; font-weight:600; color:var(--ok); font-family:var(--font-mono); }
 .balance-negative { font-size:0.82rem; font-weight:600; color:var(--danger); font-family:var(--font-mono); }

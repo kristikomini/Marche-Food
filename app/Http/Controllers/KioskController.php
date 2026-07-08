@@ -19,7 +19,7 @@ class KioskController extends Controller
 {
     public function index()
     {
-        $schede = SchedaProduzione::with(['prodotto:id,nome', 'ricette.materiaPrima:id,nome'])
+        $schede = SchedaProduzione::with(['prodotto.varianti', 'ricette.materiaPrima:id,nome'])
             ->where('attiva', true)
             ->orderBy('modello')
             ->get()
@@ -32,11 +32,15 @@ class KioskController extends Controller
                     'materia_prima_id' => $r->materia_prima_id,
                     'nome' => $r->materiaPrima?->nome,
                 ])->values(),
+                'varianti' => $s->prodotto?->varianti->map(fn ($v) => [
+                    'id' => $v->id, 'codice' => $v->codice_prodotto, 'pezzatura' => $v->pezzatura_label,
+                ])->values() ?? [],
             ]);
 
         return Inertia::render('Produzioni/Kiosk', [
-            'schede'  => $schede,
-            'materie' => MateriaPrima::orderBy('nome')->get(['id', 'nome']),
+            'schede'   => $schede,
+            'materie'  => MateriaPrima::orderBy('nome')->get(['id', 'nome']),
+            'campioni' => config('haccp.metal_detector_campioni', []),
         ]);
     }
 

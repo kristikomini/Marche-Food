@@ -34,7 +34,7 @@ class TracciabilitaHttpTest extends TestCase
     public function test_search_returns_matching_legs_for_a_lot(): void
     {
         $forn = Fornitore::create(['ragione_sociale' => 'Pesca', 'tipo' => 'alimentare']);
-        $prod = Prodotto::create(['codice_prodotto' => 'P1', 'nome' => 'Tonno', 'attivo' => true]);
+        $prod = Prodotto::create(['nome' => 'Tonno', 'attivo' => true]);
         $acq  = Acquisto::create(['fornitore_id' => $forn->id, 'numero_documento' => 'D1', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
         AcquistoRiga::create(['acquisto_id' => $acq->id, 'nome_prodotto' => 'Tonno', 'quantita_kg' => 50, 'lotto' => 'TRACE-1', 'data_in' => '2026-06-01']);
 

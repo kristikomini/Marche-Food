@@ -43,16 +43,20 @@ class Screen3Seeder extends Seeder
             MateriaPrima::firstOrCreate(['codice' => $m['codice']], $m);
         }
 
-        // Prodotti finiti
+        // Prodotti finiti (con variante/pezzatura di default)
         $prodotti = [
-            ['codice_prodotto' => 'P001', 'nome' => 'Tonno all\'olio di oliva 800g',     'pezzatura_valore' => 800, 'pezzatura_um' => 'g', 'attivo' => true],
-            ['codice_prodotto' => 'P002', 'nome' => 'Tonno in salamoia 800g',             'pezzatura_valore' => 800, 'pezzatura_um' => 'g', 'attivo' => true],
-            ['codice_prodotto' => 'P003', 'nome' => 'Sgombro all\'olio 200g',             'pezzatura_valore' => 200, 'pezzatura_um' => 'g', 'attivo' => true],
-            ['codice_prodotto' => 'P004', 'nome' => 'Salmone affumicato 100g',            'pezzatura_valore' => 100, 'pezzatura_um' => 'g', 'attivo' => true],
-            ['codice_prodotto' => 'P005', 'nome' => 'Tonno all\'olio di girasole 800g',   'pezzatura_valore' => 800, 'pezzatura_um' => 'g', 'attivo' => true],
+            ['codice' => 'P001', 'nome' => 'Tonno all\'olio di oliva 800g',   'pezzatura_valore' => 800, 'pezzatura_um' => 'g'],
+            ['codice' => 'P002', 'nome' => 'Tonno in salamoia 800g',           'pezzatura_valore' => 800, 'pezzatura_um' => 'g'],
+            ['codice' => 'P003', 'nome' => 'Sgombro all\'olio 200g',           'pezzatura_valore' => 200, 'pezzatura_um' => 'g'],
+            ['codice' => 'P004', 'nome' => 'Salmone affumicato 100g',          'pezzatura_valore' => 100, 'pezzatura_um' => 'g'],
+            ['codice' => 'P005', 'nome' => 'Tonno all\'olio di girasole 800g', 'pezzatura_valore' => 800, 'pezzatura_um' => 'g'],
         ];
         foreach ($prodotti as $p) {
-            Prodotto::firstOrCreate(['codice_prodotto' => $p['codice_prodotto']], $p);
+            $prodotto = Prodotto::firstOrCreate(['nome' => $p['nome']], ['attivo' => true]);
+            $prodotto->varianti()->firstOrCreate(
+                ['codice_prodotto' => $p['codice']],
+                ['pezzatura_valore' => $p['pezzatura_valore'], 'pezzatura_um' => $p['pezzatura_um'], 'ordine' => 0, 'attiva' => true]
+            );
         }
     }
 }

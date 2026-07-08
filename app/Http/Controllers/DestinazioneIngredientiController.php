@@ -22,7 +22,12 @@ class DestinazioneIngredientiController extends Controller
 
         return Inertia::render('DestinazioneIngredienti/Index', [
             'destinazioni' => $destinazioni,
-            'prodotti'     => Prodotto::where('attivo', true)->orderBy('nome')->get(['id', 'codice_prodotto', 'nome']),
+            'prodotti'     => Prodotto::with('varianti')->where('attivo', true)->orderBy('nome')->get(['id', 'nome'])
+                ->map(fn ($p) => [
+                    'id'              => $p->id,
+                    'nome'            => $p->nome,
+                    'codice_prodotto' => $p->varianti->pluck('codice_prodotto')->filter()->implode(', '),
+                ]),
             'materie'      => MateriaPrima::orderBy('nome')->get(['id', 'nome']),
         ]);
     }

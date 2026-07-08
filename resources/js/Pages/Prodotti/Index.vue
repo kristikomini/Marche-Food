@@ -13,16 +13,20 @@
     </div>
 
     <DataTable :value="prodotti.data" class="mt-4" striped-rows size="small">
-      <Column field="codice_prodotto" header="Codice" style="width:120px" />
+      <Column header="Codici" style="width:150px">
+        <template #body="{ data }">
+          <span class="text-muted">{{ (data.varianti || []).map(v => v.codice_prodotto).join(', ') || '—' }}</span>
+        </template>
+      </Column>
       <Column field="nome" header="Nome">
         <template #body="{ data }">
           <Link v-if="isAdmin" :href="`/prodotti/${data.id}/edit`" class="row-link">{{ data.nome }}</Link>
           <span v-else>{{ data.nome }}</span>
         </template>
       </Column>
-      <Column header="Pezzatura" style="width:130px">
+      <Column header="Pezzature / Varianti" style="width:220px">
         <template #body="{ data }">
-          <span v-if="data.pezzatura_valore" class="text-muted">{{ data.pezzatura_valore }} {{ data.pezzatura_um }}</span>
+          <span v-if="(data.varianti || []).length" class="text-muted">{{ data.varianti.map(pezzaturaLabel).filter(Boolean).join(' · ') || '—' }}</span>
           <span v-else class="text-muted">—</span>
         </template>
       </Column>
@@ -72,6 +76,13 @@ const filters = ref({ search: props.filters?.search ?? '' });
 
 let t = null;
 function debouncedSearch() { clearTimeout(t); t = setTimeout(() => router.get('/prodotti', filters.value, { preserveState: true, replace: true }), 400); }
+
+function pezzaturaLabel(v) {
+  if (v.pezzatura_valore == null || v.pezzatura_valore === '') return v.pezzatura_um || '';
+  const n = Number(v.pezzatura_valore);
+  const val = Number.isFinite(n) ? n.toLocaleString('it-IT', { maximumFractionDigits: 3 }) : v.pezzatura_valore;
+  return `${v.pezzatura_um ? v.pezzatura_um + ' ' : ''}${val}`.trim();
+}
 
 function confirmDelete(p) {
   confirm.require({

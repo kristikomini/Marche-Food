@@ -55,7 +55,7 @@ class MateriaPrimaController extends Controller
         // 1) Lotti di produzione in uscita collegati a questa materia prima.
         $lottiProduzione = Produzione::query()
             ->whereHas('materiePrime', fn ($q) => $q->where('materia_prima_id', $id))
-            ->with('scheda.prodotto')
+            ->with('scheda.prodotto.varianti')
             ->withSum(
                 ['materiePrime as qta_materia_kg' => fn ($q) => $q->where('materia_prima_id', $id)],
                 'quantita_kg'
@@ -68,7 +68,7 @@ class MateriaPrimaController extends Controller
                 'lotto_produzione'     => $p->lotto_produzione,
                 'data_produzione'      => optional($p->data_produzione)->toDateString(),
                 'prodotto'             => $p->scheda?->prodotto?->nome,
-                'codice_prodotto'      => $p->scheda?->prodotto?->codice_prodotto,
+                'codice_prodotto'      => $p->scheda?->prodotto?->varianti->pluck('codice_prodotto')->filter()->implode(', '),
                 'quantita_prodotta_kg' => $p->quantita_prodotta_kg,
                 'qta_materia_kg'       => $p->qta_materia_kg,
             ]);
@@ -81,11 +81,12 @@ class MateriaPrimaController extends Controller
                 $q->whereHas('schede.ricette', fn ($r) => $r->where('materia_prima_id', $id))
                   ->orWhereIn('id', $daDestinazione);
             })
+            ->with('varianti')
             ->orderBy('nome')
-            ->get(['id', 'codice_prodotto', 'nome', 'attivo'])
+            ->get(['id', 'nome', 'attivo'])
             ->map(fn ($p) => [
                 'id'              => $p->id,
-                'codice_prodotto' => $p->codice_prodotto,
+                'codice_prodotto' => $p->varianti->pluck('codice_prodotto')->filter()->implode(', '),
                 'nome'            => $p->nome,
                 'attivo'          => (bool) $p->attivo,
                 'in_ricetta'      => $p->schede()->whereHas('ricette', fn ($r) => $r->where('materia_prima_id', $id))->exists(),

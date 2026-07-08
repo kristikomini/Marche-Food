@@ -32,7 +32,7 @@
         <div class="info-block" style="grid-column:span 2">
           <div class="info-label">Prodotto Finito</div>
           <div class="info-val">{{ scheda.prodotto?.nome ?? '—' }}</div>
-          <div class="info-sub">{{ scheda.prodotto?.codice_prodotto }}</div>
+          <div class="info-sub">{{ (scheda.prodotto?.varianti || []).map(v => v.codice_prodotto).filter(Boolean).join(', ') }}</div>
         </div>
         <div class="info-block">
           <div class="info-label">Marinatura</div>

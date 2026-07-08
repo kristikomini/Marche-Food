@@ -9,7 +9,7 @@ class VenditaRiga extends Model
     protected $table = 'vendite_righe';
 
     protected $fillable = [
-        'vendita_id', 'prodotto_id', 'nome_prodotto', 'pezzatura_gr',
+        'vendita_id', 'prodotto_id', 'prodotto_variante_id', 'nome_prodotto', 'pezzatura_gr',
         'um', 'quantita_pz', 'quantita_kg', 'lotto', 'lotto_esterno', 'scadenza',
         'produzione_id', 'acquisto_riga_id',
         'codice_articolo', 'prezzo_unitario', 'sconto_1', 'sconto_2',
@@ -41,6 +41,11 @@ class VenditaRiga extends Model
     public function acquistoRiga()
     {
         return $this->belongsTo(AcquistoRiga::class);
+    }
+
+    public function variante()
+    {
+        return $this->belongsTo(ProdottoVariante::class, 'prodotto_variante_id');
     }
 
     public function bolleReso()

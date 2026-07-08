@@ -145,3 +145,16 @@ Created by the migrations `2026_07_01_000002` / `_000004`:
 | `notification_reads (notification_id, user_id)` | UNIQUE | One dismissal row per user/notification |
 
 `users.two_factor_*` columns are unindexed by design (looked up only for the already-loaded authenticating user).
+
+## Reform 2026-07-08 — indici aggiunti
+
+Migration `2026_07_08_000001` (FK mancanti): `idx_vendite_righe_acquisto_riga`,
+`idx_lotti_semilav_produzione`, `idx_materie_prime_um`, `idx_acquisti_righe_prodotto`,
+`idx_vendite_righe_prodotto`, `idx_dest_ingred_materia`, `idx_ricette_fornitore`,
+`idx_ricette_mar_materia`, `idx_ricette_mar_fornitore`, `idx_recall_notifiche_cliente`,
+`idx_recall_notifiche_vendita`.
+
+Nuove tabelle (indici sulle FK): `idx_varianti_prodotto/um`, `idx_schede_imb_scheda`,
+`idx_schede_gas_scheda`, `idx_gas_fornitore`, `idx_prod_conf_produzione/variante`,
+`idx_prod_gas_produzione/lotto`, `idx_prod_ciclo_produzione`, `idx_vendite_righe_variante`.
+`produzioni_metal_detector.produzione_id` è UNIQUE (una riga per produzione).

@@ -50,4 +50,24 @@ class Produzione extends Model
     {
         return $this->hasOne(LottoSemilavorato::class);
     }
+
+    public function confezioni()
+    {
+        return $this->hasMany(ProduzioneConfezione::class);
+    }
+
+    public function gas()
+    {
+        return $this->hasMany(ProduzioneGas::class);
+    }
+
+    public function ciclo()
+    {
+        return $this->hasMany(ProduzioneCiclo::class)->orderBy('ordine');
+    }
+
+    public function metalDetector()
+    {
+        return $this->hasOne(ProduzioneMetalDetector::class);
+    }
 }

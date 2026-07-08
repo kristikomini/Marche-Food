@@ -13,40 +13,67 @@
     $revisione = $scheda?->revisione;
     $dataRev   = $scheda?->data_revisione ? Carbon::parse($scheda->data_revisione)->format('d/m/Y') : null;
 
-    $pezzatura = null;
-    if ($prodotto && $prodotto->pezzatura_valore) {
-        $pezzatura = rtrim(rtrim(number_format((float) $prodotto->pezzatura_valore, 3, ',', '.'), '0'), ',')
-            . ' ' . ($prodotto->pezzatura_um ?? '');
-    }
+    $varianti = $prodotto?->varianti ?? collect();
+    // N° confezioni per variante (dal run).
+    $confPerVariante = $produzione->confezioni->keyBy('prodotto_variante_id');
 
-    // Materie prime utilizzate nel run (con lotto e fornitore reali).
+    // Materie prime realmente utilizzate (lotto + fornitore reali).
     $materie = $produzione->materiePrime->map(function ($mp) {
         $lotto = $mp->acquistoRiga?->lotto
             ?: $mp->acquistoRiga?->lotto_esterno
             ?: $mp->semilavorato?->lotto;
         $fornitore = $mp->acquistoRiga?->acquisto?->fornitore?->ragione_sociale
             ?: ($mp->semilavorato ? 'Semilavorato interno' : null);
-        return [
-            'nome'      => $mp->materiaPrima?->nome ?? '—',
-            'lotto'     => $lotto,
-            'fornitore' => $fornitore,
-        ];
+        return ['nome' => $mp->materiaPrima?->nome ?? '—', 'lotto' => $lotto, 'fornitore' => $fornitore];
     });
+    $materieVuote = max(0, 8 - $materie->count());
 
-    // Righe imballaggi: etichette standard del modello; se il run ha lotti
-    // collegati, li mostriamo, altrimenti la riga resta da compilare a mano.
-    $imbStandard = ['Vaschetta gr 200', 'Film gr 200', 'Vaschetta kg1', 'Film kg1'];
+    // Imballaggi: lotti reali del run; in mancanza, template della scheda.
     $imbRun = $produzione->imballaggiPrimari->map(fn ($i) => [
         'componente' => $i->lottoImballaggio?->componente,
         'lotto'      => $i->lottoImballaggio?->lotto,
         'fornitore'  => $i->lottoImballaggio?->fornitore?->ragione_sociale,
     ]);
+    if ($imbRun->isEmpty() && $scheda) {
+        $imbRun = $scheda->imballaggi->map(fn ($i) => [
+            'componente' => $i->componente, 'lotto' => null,
+            'fornitore'  => $i->fornitore?->ragione_sociale,
+        ]);
+    }
+    $imbVuote = max(0, 4 - $imbRun->count());
 
-    // Numero di righe vuote di riempimento per la sezione materie prime.
-    $materieVuote = max(0, 8 - $materie->count());
+    // Gas: lotti reali del run; in mancanza, template della scheda.
+    $gasRun = $produzione->gas->map(fn ($g) => [
+        'nome'      => $g->lottoGas?->componente,
+        'lotto'     => $g->lottoGas?->lotto,
+        'fornitore' => $g->lottoGas?->fornitore?->ragione_sociale,
+    ]);
+    if ($gasRun->isEmpty() && $scheda) {
+        $gasRun = $scheda->gas->map(fn ($g) => [
+            'nome' => $g->nome, 'lotto' => null, 'fornitore' => $g->fornitore?->ragione_sociale,
+        ]);
+    }
 
-    // dompdf needs GD to rasterise a transparent PNG; skip the logo if GD is
-    // unavailable so the PDF still renders instead of throwing a 500.
+    // Ciclo di lavoro: compilato dal run; in mancanza, flussi della scheda o default.
+    $ciclo = $produzione->ciclo->map(fn ($c) => [
+        'numero' => $c->flusso?->numero,
+        'nome'   => $c->nome ?: $c->flusso?->nome,
+        'reg1'   => $c->registrazione_1,
+        'reg2'   => $c->registrazione_2,
+        'c'      => $c->controllo,
+    ]);
+    if ($ciclo->isEmpty()) {
+        $src = ($scheda && $scheda->flussi->isNotEmpty())
+            ? $scheda->flussi->map(fn ($f) => ['numero' => $f->flusso?->numero, 'nome' => $f->flusso?->nome, 'reg1' => $f->flusso?->controllo, 'reg2' => null, 'c' => false])
+            : collect(config('haccp.ciclo_lavoro_default', []))->map(fn ($c) => ['numero' => $c['numero'], 'nome' => $c['nome'], 'reg1' => null, 'reg2' => null, 'c' => false]);
+        $ciclo = $src;
+    }
+    $cicloVuote = max(0, 6 - $ciclo->count());
+
+    $md = $produzione->metalDetector;
+    $campioni = $campioni ?? config('haccp.metal_detector_campioni', []);
+    $mdVal = fn ($n) => $md ? ($md->{'campione_' . $n} ?? null) : null;
+
     $logoPath = public_path('favicon.png');
     $logo = (extension_loaded('gd') && is_file($logoPath))
         ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
@@ -62,25 +89,22 @@
   .titolo .name { font-size: 15px; font-weight: 800; letter-spacing: .04em; text-align: center; }
   .titolo .rev { font-size: 9px; text-align: center; }
   .titolo .rev b { font-size: 10px; }
-
   table.grid { width: 100%; border-collapse: collapse; }
   table.grid td, table.grid th { border: 1px solid #111; padding: 4px 6px; vertical-align: middle; }
   .lbl { font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: .02em; }
   .val { font-size: 11px; font-weight: 600; }
   .hand { min-height: 16px; }
-
   .sect-head td { background: #e8efe9; font-weight: 700; text-transform: uppercase; font-size: 8.5px; letter-spacing: .04em; }
-  .muted { color: #555; }
   .center { text-align: center; }
-  .campioni td { border: none; font-size: 8.5px; padding: 1px 0; }
   .foot-note { font-size: 8px; color: #333; margin-top: 4px; line-height: 1.5; }
-  .box { display: inline-block; width: 12px; height: 12px; border: 1px solid #111; vertical-align: middle; }
+  .box { display: inline-block; width: 12px; height: 12px; border: 1px solid #111; vertical-align: middle; text-align: center; line-height: 12px; font-weight: 800; }
   .mt { margin-top: 8px; }
+  .dot { border-bottom: 1px dotted #111; display: inline-block; min-width: 70px; }
+  .xmark { font-weight: 800; }
 </style>
 </head>
 <body>
 
-<!-- Intestazione -->
 <div class="titolo">
   <table>
     <tr>
@@ -97,7 +121,6 @@
   </table>
 </div>
 
-<!-- Prodotto / data / codice -->
 <table class="grid mt">
   <tr>
     <td style="width:28%" class="lbl">PRODOTTO:</td>
@@ -118,14 +141,17 @@
     <td style="width:33%">PEZZATURA</td>
     <td style="width:33%">N° CONFEZIONI</td>
   </tr>
-  <tr>
-    <td class="val">{{ $prodotto?->codice_prodotto ?? '' }}</td>
-    <td class="val">{{ $pezzatura ?? '' }}</td>
-    <td class="hand">&nbsp;</td>
-  </tr>
+  @forelse($varianti as $v)
+    <tr>
+      <td class="val">{{ $v->codice_prodotto }}</td>
+      <td class="val">{{ $v->pezzatura_label ?? '' }}</td>
+      <td class="val">{{ optional($confPerVariante->get($v->id))->n_confezioni !== null ? 'n° ' . $confPerVariante->get($v->id)->n_confezioni : 'n°' }}</td>
+    </tr>
+  @empty
+    <tr><td class="hand">&nbsp;</td><td class="hand">&nbsp;</td><td class="hand">n°</td></tr>
+  @endforelse
 </table>
 
-<!-- Materie prime -->
 <table class="grid">
   <tr class="sect-head">
     <td style="width:46%">MATERIE PRIME</td>
@@ -133,52 +159,40 @@
     <td style="width:27%">FORNITORE</td>
   </tr>
   @foreach($materie as $m)
-    <tr>
-      <td>{{ $m['nome'] }}</td>
-      <td class="val">{{ $m['lotto'] ?: '' }}</td>
-      <td>{{ $m['fornitore'] ?: '' }}</td>
-    </tr>
+    <tr><td>{{ $m['nome'] }}</td><td class="val">{{ $m['lotto'] ?: '' }}</td><td>{{ $m['fornitore'] ?: '' }}</td></tr>
   @endforeach
   @for($i = 0; $i < $materieVuote; $i++)
     <tr><td class="hand">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
   @endfor
 </table>
 
-<!-- Imballaggi primari -->
 <table class="grid">
   <tr class="sect-head">
     <td style="width:46%">IMBALLAGGI PRIMARI</td>
     <td style="width:27%">LOTTO</td>
     <td style="width:27%">FORNITORE</td>
   </tr>
-  @forelse($imbRun as $imb)
-    <tr>
-      <td>{{ $imb['componente'] ?: '' }}</td>
-      <td class="val">{{ $imb['lotto'] ?: '' }}</td>
-      <td>{{ $imb['fornitore'] ?: '' }}</td>
-    </tr>
-  @empty
-    @foreach($imbStandard as $label)
-      <tr><td>{{ $label }}</td><td class="hand">&nbsp;</td><td>&nbsp;</td></tr>
-    @endforeach
-  @endforelse
+  @foreach($imbRun as $imb)
+    <tr><td>{{ $imb['componente'] ?: '' }}</td><td class="val">{{ $imb['lotto'] ?: '' }}</td><td>{{ $imb['fornitore'] ?: '' }}</td></tr>
+  @endforeach
+  @for($i = 0; $i < $imbVuote; $i++)
+    <tr><td class="hand">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+  @endfor
 </table>
 
-<!-- Gas -->
 <table class="grid">
   <tr class="sect-head">
     <td style="width:46%">GAS</td>
     <td style="width:27%">LOTTO</td>
     <td style="width:27%">FORNITORE</td>
   </tr>
-  <tr>
-    <td>TRESARIS NC30 bombola grande</td>
-    <td class="hand">&nbsp;</td>
-    <td>LINDE GAS</td>
-  </tr>
+  @forelse($gasRun as $g)
+    <tr><td>{{ $g['nome'] ?: '' }}</td><td class="val">{{ $g['lotto'] ?: '' }}</td><td>{{ $g['fornitore'] ?: '' }}</td></tr>
+  @empty
+    <tr><td class="hand">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+  @endforelse
 </table>
 
-<!-- Ciclo di lavoro -->
 <table class="grid">
   <tr class="sect-head">
     <td style="width:46%">CICLO DI LAVORO</td>
@@ -186,28 +200,39 @@
     <td style="width:20%">REGISTRAZIONI</td>
     <td style="width:7%" class="center">C</td>
   </tr>
-  <tr><td>1 &nbsp; Prelievo prodotti</td><td>&nbsp;</td><td>&nbsp;</td><td class="hand center">&nbsp;</td></tr>
-  <tr><td>3 &nbsp; Preparazione ingred. + additivi</td><td>&nbsp;</td><td>&nbsp;</td><td class="hand center">&nbsp;</td></tr>
-  <tr><td>7 &nbsp; Porzionatura e confezionamento</td><td><b>Controllo peso:</b></td><td>&nbsp;</td><td class="hand center">&nbsp;</td></tr>
-  <tr><td>10 &nbsp; Immagaz. Preparaz. pallet e Sped.</td><td>&nbsp;</td><td>&nbsp;</td><td class="hand center">&nbsp;</td></tr>
+  @foreach($ciclo as $c)
+    <tr>
+      <td>{{ $c['numero'] ? $c['numero'] . '  ' : '' }}{{ $c['nome'] }}</td>
+      <td class="val">{{ $c['reg1'] ?: '' }}</td>
+      <td class="val">{{ $c['reg2'] ?: '' }}</td>
+      <td class="center xmark">{{ !empty($c['c']) ? 'X' : '' }}</td>
+    </tr>
+  @endforeach
+  @for($i = 0; $i < $cicloVuote; $i++)
+    <tr><td class="hand">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+  @endfor
 </table>
 
-<!-- Metal detector -->
 <table class="grid">
   <tr class="sect-head">
     <td style="width:46%">FUNZIONAMENTO METAL DETECTOR</td>
-    <td style="width:27%">Inizio conf. .......................</td>
-    <td style="width:27%">Fine conf. .......................</td>
+    <td style="width:27%">Inizio conf. <span class="dot">{{ $md?->inizio_conf }}</span></td>
+    <td style="width:27%">Fine conf. <span class="dot">{{ $md?->fine_conf }}</span></td>
   </tr>
-  <tr><td>Campione 1 Rilevato</td><td class="center">OK <span class="box"></span></td><td class="center">KO <span class="box"></span></td></tr>
-  <tr><td>Campione 2 Rilevato</td><td class="center">OK <span class="box"></span></td><td class="center">KO <span class="box"></span></td></tr>
-  <tr><td>Campione 3 Rilevato</td><td class="center">OK <span class="box"></span></td><td class="center">KO <span class="box"></span></td></tr>
+  @foreach($campioni as $c)
+    @php $val = $mdVal($c['n']); @endphp
+    <tr>
+      <td>Campione {{ $c['n'] }} Rilevato</td>
+      <td class="center">OK <span class="box">{{ $val === 'OK' ? 'X' : '' }}</span></td>
+      <td class="center">KO <span class="box">{{ $val === 'KO' ? 'X' : '' }}</span></td>
+    </tr>
+  @endforeach
 </table>
 
 <div class="foot-note">
-  Campione 1: Materiale Ferroso - Diametro 2,5 mm - Codice 260920<br>
-  Campione 2: Materiale Non Ferroso - Diametro 3,5 mm - Codice 260967<br>
-  Campione 3: Materiale Aisi 316 - Diametro 4,5 mm - Codice 260948
+  @foreach($campioni as $c)
+    Campione {{ $c['n'] }}: {{ $c['materiale'] }} - Diametro {{ $c['diametro'] }} - Codice {{ $c['codice'] }}<br>
+  @endforeach
 </div>
 
 </body>

@@ -53,40 +53,36 @@ class FornitoreController extends Controller
             'conto_terzi'           => 'Conto Terzi',
         ];
 
-        $filename = 'fornitori_' . now()->format('Ymd_His') . '.csv';
+        $headers = [
+            'Codice', 'Ragione Sociale', 'Tipo', 'Partita IVA', 'Indirizzo',
+            'Email', 'Telefono', 'HACCP Certificato', 'Scad. HACCP',
+            'MOCA Certificato', 'N° MOCA', 'Attivo', 'Note',
+        ];
 
-        $callback = function () use ($fornitori, $tipoLabel) {
-            $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF"); // BOM UTF-8 per Excel
-            fputcsv($handle, [
-                'Codice', 'Ragione Sociale', 'Tipo', 'Partita IVA', 'Indirizzo',
-                'Email', 'Telefono', 'HACCP Certificato', 'Scad. HACCP',
-                'MOCA Certificato', 'N° MOCA', 'Attivo', 'Note',
-            ], ';');
+        $rows = $fornitori->map(fn ($f) => [
+            $f->codice,
+            $f->ragione_sociale,
+            $tipoLabel[$f->tipo] ?? $f->tipo,
+            $f->piva,
+            $f->indirizzo,
+            $f->email,
+            $f->telefono,
+            $f->haccp_certificato ? 'Sì' : 'No',
+            $f->haccp_scadenza?->format('d/m/Y'),
+            $f->moca_certificato ? 'Sì' : 'No',
+            $f->moca_numero,
+            $f->attivo ? 'Sì' : 'No',
+            $f->note,
+        ])->all();
 
-            foreach ($fornitori as $f) {
-                fputcsv($handle, [
-                    $f->codice,
-                    $f->ragione_sociale,
-                    $tipoLabel[$f->tipo] ?? $f->tipo,
-                    $f->piva,
-                    $f->indirizzo,
-                    $f->email,
-                    $f->telefono,
-                    $f->haccp_certificato ? 'Sì' : 'No',
-                    $f->haccp_scadenza?->format('d/m/Y'),
-                    $f->moca_certificato ? 'Sì' : 'No',
-                    $f->moca_numero,
-                    $f->attivo ? 'Sì' : 'No',
-                    $f->note,
-                ], ';');
-            }
-            fclose($handle);
-        };
+        $base = 'fornitori_' . now()->format('Ymd_His');
 
-        return response()->streamDownload($callback, $filename, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-        ]);
+        if ($request->input('format') === 'csv') {
+            return $this->downloadCsv("{$base}.csv", $headers, $rows);
+        }
+
+        return \App\Support\SimpleXlsxWriter::make('Fornitori')
+            ->headers($headers)->rows($rows)->download("{$base}.xlsx");
     }
 
     public function store(Request $request)

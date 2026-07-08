@@ -8,7 +8,7 @@ Sistema gestionale web per la tracciabilità alimentare conforme HACCP di **Marc
 |------|----------|
 | **Screen 1 — Alimenti** | Acquisti (DDT/Fatture fornitori) con lotti, Vendite clienti, Bolle Reso, Note di Credito |
 | **Screen 2 — Imballaggi** | Lotti imballaggi primari (MOCA) e detergenti certificati |
-| **Screen 3 — Produzione** | Schede di produzione con ricette, Flussi HACCP, Produzioni con tracciabilità lotti |
+| **Screen 3 — Produzione** | Schede di produzione con **varianti/pezzature** prodotto, ricette, imballaggi/gas template, Flussi HACCP; Produzioni con cattura di N° confezioni, lotti gas, ciclo di lavoro (registrazioni + controllo) e test metal detector; **PDF scheda vuota** (template) e **compilata** (data-driven) fedeli al modulo cartaceo |
 | **Anagrafica** | Fornitori, Clienti, Prodotti, Materie Prime (con **allergeni** UE 1169/2011), Destinazione Ingredienti |
 | **Conformità** | Tracciabilità bidirezionale lotti, Recall workflow, Log attività (audit), Etichette lotto con QR (produzioni, acquisti, vendite), Allergeni derivati sui lotti di produzione |
 | **Sicurezza dati** | Soft-delete con **Cestino** (ripristino / eliminazione definitiva), Optimistic locking, 2FA (admin), Notifiche in-app |
@@ -176,4 +176,6 @@ Per lo schema SQL completo vedere [schema.sql](schema.sql).
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Gap analysis deployment/piattaforma e piano a fasi |
 | [docs/CHANGELOG-2026-07-01.md](docs/CHANGELOG-2026-07-01.md) | Modifiche della sessione di hardening (luglio 2026) |
 | [docs/CHANGELOG-2026-07-06.md](docs/CHANGELOG-2026-07-06.md) | Soft-delete/Cestino, etichette QR acquisti/vendite, allergeni, test |
+| [docs/REFORM-PLAN-2026-07-08.md](docs/REFORM-PLAN-2026-07-08.md) | **Piano di riforma** scheda/fattura: stato reale, gap analysis, piano a fasi, avanzamento |
+| [docs/CHANGELOG-2026-07-08.md](docs/CHANGELOG-2026-07-08.md) | **Riforma 2026-07-08**: varianti prodotto, scheda vuota+compilata, catalogo gas, cattura produzione, fattura, export Excel |
 | [docs/fornitori.md](docs/fornitori.md) | Approfondimento sul modulo Fornitori |

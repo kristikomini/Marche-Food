@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Acquisto;
 use App\Models\BollaReso;
 use App\Models\LottoDetergente;
+use App\Models\LottoGas;
 use App\Models\LottoImballaggioPrimario;
 use App\Models\NotaCredito;
 use App\Models\Produzione;
@@ -29,6 +30,7 @@ class CestinoController extends Controller
         'note-credito' => ['model' => NotaCredito::class,              'label' => 'numero_documento', 'titolo' => 'Nota di Credito'],
         'imballaggi'   => ['model' => LottoImballaggioPrimario::class, 'label' => 'componente',       'titolo' => 'Lotto Imballaggio'],
         'detergenti'   => ['model' => LottoDetergente::class,          'label' => 'componente',       'titolo' => 'Lotto Detergente'],
+        'gas'          => ['model' => LottoGas::class,                 'label' => 'componente',       'titolo' => 'Lotto Gas'],
     ];
 
     public function index()

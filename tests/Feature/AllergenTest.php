@@ -55,7 +55,7 @@ class AllergenTest extends TestCase
         $sale    = MateriaPrima::create(['nome' => 'Sale']); // no allergens
 
         $fornitore = Fornitore::create(['ragione_sociale' => 'F', 'tipo' => 'alimentare']);
-        $prodotto  = Prodotto::create(['codice_prodotto' => 'P', 'nome' => 'Polpetta', 'attivo' => true]);
+        $prodotto  = Prodotto::create(['nome' => 'Polpetta', 'attivo' => true]);
         $scheda    = SchedaProduzione::create(['prodotto_id' => $prodotto->id, 'modello' => 'M', 'revisione' => 0, 'data_revisione' => '2026-06-01', 'attiva' => true]);
         $acq       = Acquisto::create(['fornitore_id' => $fornitore->id, 'numero_documento' => 'D', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
         $riga      = AcquistoRiga::create(['acquisto_id' => $acq->id, 'nome_prodotto' => 'Tonno', 'quantita_kg' => 100, 'lotto' => 'L1', 'data_in' => '2026-06-01']);
@@ -83,7 +83,7 @@ class AllergenTest extends TestCase
     {
         $mp = MateriaPrima::create(['nome' => 'Misto', 'allergeni' => ['latte'], 'allergeni_tracce' => ['latte', 'soia']]);
 
-        $prodotto = Prodotto::create(['codice_prodotto' => 'P2', 'nome' => 'Crema', 'attivo' => true]);
+        $prodotto = Prodotto::create(['nome' => 'Crema', 'attivo' => true]);
         $scheda   = SchedaProduzione::create(['prodotto_id' => $prodotto->id, 'modello' => 'M2', 'revisione' => 0, 'data_revisione' => '2026-06-01', 'attiva' => true]);
         $prod     = Produzione::create(['scheda_id' => $scheda->id, 'lotto_produzione' => 'C1', 'data_produzione' => '2026-06-04']);
         $prod->materiePrime()->create(['materia_prima_id' => $mp->id, 'quantita_kg' => 5]);

@@ -123,10 +123,17 @@
   <tr>
     <td style="width:12%"><span class="k">Cod. Cliente</span><span class="v">{{ $vendita->cliente?->codice_cliente ?? '—' }}</span></td>
     <td style="width:22%"><span class="k">Partita IVA</span><span class="v">{{ $vendita->cliente?->piva ?? '—' }}</span></td>
-    <td style="width:14%"><span class="k">Valuta</span><span class="v">Euro</span></td>
+    <td style="width:14%"><span class="k">Valuta</span><span class="v">{{ $vendita->cliente?->valuta ?: 'Euro' }}</span></td>
     <td style="width:30%"><span class="k">Tipo Documento</span><span class="v">{{ $tipoLabel[$vendita->tipo_documento] ?? $vendita->tipo_documento }}</span></td>
     <td style="width:11%"><span class="k">N° Documento</span><span class="v">{{ $vendita->numero_documento }}</span></td>
     <td style="width:11%"><span class="k">Data</span><span class="v">{{ Carbon::parse($vendita->data_documento)->format('d/m/Y') }}</span></td>
+  </tr>
+  <tr>
+    <td><span class="k">Zona</span><span class="v">{{ $vendita->cliente?->zona ?: '—' }}</span></td>
+    <td><span class="k">Agente</span><span class="v">{{ $vendita->cliente?->agente ?: '—' }}</span></td>
+    <td><span class="k">Categoria</span><span class="v">{{ $vendita->cliente?->categoria ?: '—' }}</span></td>
+    <td><span class="k">Cod. IVA</span><span class="v">{{ $vendita->cliente?->codice_iva ?: '—' }}</span></td>
+    <td colspan="2"><span class="k">Banca d'appoggio</span><span class="v">{{ $vendita->cliente?->banca_appoggio ?: '—' }}</span></td>
   </tr>
   <tr>
     <td colspan="4"><span class="k">Condizioni di pagamento</span><span class="v">{{ $vendita->condizioni_pagamento ?: '—' }}</span></td>
@@ -218,18 +225,18 @@
 <!-- Dati trasporto -->
 <table class="tot">
   <tr>
-    <td style="width:11%"><span class="k">N° Colli</span><span class="v">&nbsp;</span></td>
+    <td style="width:11%"><span class="k">N° Colli</span><span class="v">{{ $vendita->n_colli ?? '' }}</span></td>
     <td style="width:13%"><span class="k">Porto</span><span class="v">&nbsp;</span></td>
     <td style="width:34%"><span class="k">Causale del trasporto</span><span class="v">{{ $vendita->causale_trasporto ?: 'VENDITA' }}</span></td>
-    <td style="width:18%"><span class="k">Tot. Peso</span><span class="v">&nbsp;</span></td>
-    <td style="width:24%"><span class="k">Data del trasporto</span><span class="v">{{ Carbon::parse($vendita->data_documento)->format('d/m/Y') }}</span></td>
+    <td style="width:18%"><span class="k">Tot. Peso</span><span class="v">{{ $vendita->peso_totale !== null ? $qty($vendita->peso_totale) . ' kg' : '' }}</span></td>
+    <td style="width:24%"><span class="k">Data del trasporto</span><span class="v">{{ Carbon::parse($vendita->data_trasporto ?: $vendita->data_documento)->format('d/m/Y') }}</span></td>
   </tr>
 </table>
 
 <!-- Destinatario / controllo / firme -->
 <table class="tot">
   <tr>
-    <td style="width:60%"><span class="k">Destinatario della merce (se diverso dall'intestatario)</span><span class="v">&nbsp;</span></td>
+    <td style="width:60%"><span class="k">Destinatario della merce (se diverso dall'intestatario)</span><span class="v">{{ $vendita->destinatario_diverso ?: '' }}</span></td>
     <td style="width:40%">
       <span class="k">Controllo merci e temperatura</span>
       <span class="v">OK <span class="chk"></span> &nbsp;&nbsp; KO <span class="chk"></span></span>

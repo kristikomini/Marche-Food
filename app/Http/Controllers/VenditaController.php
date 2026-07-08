@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Vendita;
 use App\Models\Cliente;
 use App\Models\AcquistoRiga;
+use App\Models\Prodotto;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -54,8 +55,9 @@ class VenditaController extends Controller
     {
         return Inertia::render('Vendite/Form', [
             'vendita'        => null,
-            'clienti'        => Cliente::where('attivo', true)->orderBy('ragione_sociale')->get(['id', 'ragione_sociale', 'codice_cliente']),
+            'clienti'        => Cliente::where('attivo', true)->orderBy('ragione_sociale')->get(),
             'acquisti_righe' => $this->acquistiRigheForVendita(),
+            'prodotti'       => $this->prodottiForVendita(),
         ]);
     }
 
@@ -63,15 +65,7 @@ class VenditaController extends Controller
     {
         $data = $this->validateRequest($request);
 
-        $vendita = Vendita::create([
-            'cliente_id'           => $data['cliente_id'],
-            'numero_documento'     => $data['numero_documento'],
-            'data_documento'       => $data['data_documento'],
-            'tipo_documento'       => $data['tipo_documento'],
-            'condizioni_pagamento' => $data['condizioni_pagamento'] ?? null,
-            'causale_trasporto'    => $data['causale_trasporto'] ?? null,
-            'note'                 => $data['note'] ?? null,
-        ]);
+        $vendita = Vendita::create($this->venditaAttributes($data));
 
         foreach ($data['righe'] as $riga) {
             $vendita->righe()->create($riga);
@@ -87,9 +81,29 @@ class VenditaController extends Controller
 
         return Inertia::render('Vendite/Form', [
             'vendita'        => $vendita,
-            'clienti'        => Cliente::where('attivo', true)->orderBy('ragione_sociale')->get(['id', 'ragione_sociale', 'codice_cliente']),
+            'clienti'        => Cliente::where('attivo', true)->orderBy('ragione_sociale')->get(),
             'acquisti_righe' => $this->acquistiRigheForVendita(),
+            'prodotti'       => $this->prodottiForVendita(),
         ]);
+    }
+
+    /**
+     * Opzioni "variante prodotto" per l'auto-fill delle righe vendita
+     * (codice articolo, descrizione, pezzatura).
+     */
+    private function prodottiForVendita(): array
+    {
+        return Prodotto::with('varianti')->where('attivo', true)->orderBy('nome')->get(['id', 'nome'])
+            ->flatMap(fn ($p) => $p->varianti->map(fn ($v) => [
+                'variante_id'      => $v->id,
+                'prodotto_id'      => $p->id,
+                'codice_prodotto'  => $v->codice_prodotto,
+                'nome'             => $p->nome,
+                'pezzatura_valore' => $v->pezzatura_valore,
+                'pezzatura_um'     => $v->pezzatura_um,
+                'pezzatura_label'  => $v->pezzatura_label,
+            ]))
+            ->values()->all();
     }
 
     private function acquistiRigheForVendita(): array
@@ -128,15 +142,7 @@ class VenditaController extends Controller
         }
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($vendita, $data, $toDeleteIds) {
-            $vendita->update([
-                'cliente_id'           => $data['cliente_id'],
-                'numero_documento'     => $data['numero_documento'],
-                'data_documento'       => $data['data_documento'],
-                'tipo_documento'       => $data['tipo_documento'],
-                'condizioni_pagamento' => $data['condizioni_pagamento'] ?? null,
-                'causale_trasporto'    => $data['causale_trasporto'] ?? null,
-                'note'                 => $data['note'] ?? null,
-            ]);
+            $vendita->update($this->venditaAttributes($data));
 
             if (!empty($toDeleteIds)) {
                 $vendita->righe()->whereIn('id', $toDeleteIds)->delete();
@@ -218,6 +224,23 @@ class VenditaController extends Controller
         return response()->streamDownload($callback, 'vendite_' . now()->format('Ymd_His') . '.csv', $headers);
     }
 
+    private function venditaAttributes(array $data): array
+    {
+        return [
+            'cliente_id'           => $data['cliente_id'],
+            'numero_documento'     => $data['numero_documento'],
+            'data_documento'       => $data['data_documento'],
+            'tipo_documento'       => $data['tipo_documento'],
+            'condizioni_pagamento' => $data['condizioni_pagamento'] ?? null,
+            'causale_trasporto'    => $data['causale_trasporto'] ?? null,
+            'note'                 => $data['note'] ?? null,
+            'n_colli'              => $data['n_colli'] ?? null,
+            'peso_totale'          => $data['peso_totale'] ?? null,
+            'data_trasporto'       => $data['data_trasporto'] ?? null,
+            'destinatario_diverso' => $data['destinatario_diverso'] ?? null,
+        ];
+    }
+
     private function validateRequest(Request $request): array
     {
         $data = $request->validate([
@@ -228,8 +251,14 @@ class VenditaController extends Controller
             'condizioni_pagamento' => ['nullable', 'string', 'max:200'],
             'causale_trasporto'    => ['nullable', 'string', 'max:100'],
             'note'                 => ['nullable', 'string'],
+            'n_colli'              => ['nullable', 'integer', 'min:0'],
+            'peso_totale'          => ['nullable', 'numeric', 'min:0'],
+            'data_trasporto'       => ['nullable', 'date'],
+            'destinatario_diverso' => ['nullable', 'string'],
             'righe'              => ['required', 'array', 'min:1'],
             'righe.*.id'         => ['nullable', 'integer'],
+            'righe.*.prodotto_id'          => ['nullable', 'integer', 'exists:prodotti,id'],
+            'righe.*.prodotto_variante_id' => ['nullable', 'integer', 'exists:prodotto_varianti,id'],
             'righe.*.codice_articolo' => ['nullable', 'string', 'max:50'],
             'righe.*.nome_prodotto' => ['required', 'string', 'max:200'],
             'righe.*.pezzatura_gr'  => ['nullable', 'numeric', 'min:0'],

@@ -79,6 +79,27 @@
         </div>
       </div>
 
+      <!-- Confezioni + Metal detector (opzionali) -->
+      <div v-if="confezioni.length || campioni.length" class="k-extra">
+        <div v-if="confezioni.length" class="k-extra-block">
+          <div class="k-sub">N° confezioni prodotte</div>
+          <div v-for="(c, i) in confezioni" :key="i" class="k-conf-row">
+            <span class="k-conf-lbl">{{ c.codice }} · {{ c.pezzatura || '—' }}</span>
+            <input v-model="c.n_confezioni" type="number" min="0" inputmode="numeric" class="k-input k-conf-input" :aria-label="`Confezioni ${c.codice}`" />
+          </div>
+        </div>
+        <div v-if="campioni.length" class="k-extra-block">
+          <div class="k-sub">Metal detector</div>
+          <div v-for="cp in campioni" :key="cp.n" class="k-md-row">
+            <span class="k-conf-lbl">Campione {{ cp.n }}</span>
+            <div class="k-chips">
+              <button type="button" class="k-chip" :class="{ sel: md['campione_' + cp.n] === 'OK' }" @click="md['campione_' + cp.n] = 'OK'">OK</button>
+              <button type="button" class="k-chip" :class="{ sel: md['campione_' + cp.n] === 'KO' }" @click="md['campione_' + cp.n] = 'KO'">KO</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="k-submit">
         <button class="k-btn k-btn-submit" :disabled="!ingredienti.length || submitting" @click="submit">
           <i class="pi pi-check" aria-hidden="true" /> Registra produzione ({{ ingredienti.length }})
@@ -94,14 +115,17 @@ import { ref, computed, nextTick, onBeforeUnmount } from 'vue';
 import { router } from '@inertiajs/vue3';
 
 const props = defineProps({
-  schede:  { type: Array, default: () => [] },
-  materie: { type: Array, default: () => [] },
+  schede:   { type: Array, default: () => [] },
+  materie:  { type: Array, default: () => [] },
+  campioni: { type: Array, default: () => [] },
 });
 
 const step = ref('scheda');
 const scheda = ref(null);
 const lottoProduzione = ref('');
 const ingredienti = ref([]);
+const confezioni = ref([]);
+const md = ref({ campione_1: null, campione_2: null, campione_3: null });
 
 const scanInput = ref(null);
 const scanCode = ref('');
@@ -125,6 +149,8 @@ function chooseScheda(s) {
   const now = new Date();
   const p = (n) => String(n).padStart(2, '0');
   lottoProduzione.value = `LP-${now.getFullYear()}${p(now.getMonth()+1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}`;
+  confezioni.value = (s.varianti || []).map(v => ({ prodotto_variante_id: v.id, codice: v.codice, pezzatura: v.pezzatura, n_confezioni: null }));
+  md.value = { campione_1: null, campione_2: null, campione_3: null };
   step.value = 'build';
   nextTick(() => scanInput.value?.focus());
 }
@@ -133,6 +159,8 @@ function reset() {
   step.value = 'scheda';
   scheda.value = null;
   ingredienti.value = [];
+  confezioni.value = [];
+  md.value = { campione_1: null, campione_2: null, campione_3: null };
   clearFound();
   stopCamera();
 }
@@ -186,11 +214,18 @@ function addIngredient() {
 
 function submit() {
   submitting.value = true; submitError.value = '';
+  const confezioniPayload = confezioni.value
+    .filter(c => c.n_confezioni !== null && c.n_confezioni !== '')
+    .map(c => ({ prodotto_variante_id: c.prodotto_variante_id, n_confezioni: Number(c.n_confezioni) }));
+  const hasMd = ['campione_1', 'campione_2', 'campione_3'].some(k => md.value[k]);
+
   router.post('/produzioni', {
     scheda_id: scheda.value.id,
     lotto_produzione: lottoProduzione.value,
     data_produzione: new Date().toISOString().slice(0, 10),
     materie_prime: ingredienti.value.map(({ materia_prima_id, source_type, acquisto_riga_id, quantita_kg }) => ({ materia_prima_id, source_type, acquisto_riga_id, quantita_kg })),
+    confezioni: confezioniPayload,
+    metal_detector: hasMd ? md.value : null,
   }, {
     onError: (errors) => { submitError.value = Object.values(errors)[0] || 'Errore nella registrazione.'; },
     onFinish: () => { submitting.value = false; },
@@ -287,6 +322,11 @@ onBeforeUnmount(stopCamera);
 .k-key-wide { grid-column: span 3; }
 .k-btn-add { background: #2e6b57; color: #fff; width: 100%; justify-content: center; margin-top: 0.75rem; }
 .k-btn-add:disabled { opacity: 0.5; }
+.k-extra { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; }
+.k-extra-block { background: #183a2e; border-radius: 14px; padding: 1rem 1.25rem; flex: 1; min-width: 260px; }
+.k-conf-row, .k-md-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.6rem; }
+.k-conf-lbl { color: #e9eeeb; font-size: 0.95rem; }
+.k-conf-input { width: 110px; font-size: 1rem; padding: 0.5rem 0.75rem; }
 .k-submit { position: sticky; bottom: 0; padding-top: 0.5rem; }
 .k-btn-submit { background: #2e7d55; color: #fff; width: 100%; justify-content: center; font-size: 1.15rem; padding: 1.1rem; }
 .k-btn-submit:disabled { opacity: 0.5; }

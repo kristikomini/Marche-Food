@@ -57,6 +57,19 @@
         </div>
       </section>
 
+      <section class="form-section">
+        <h2 class="section-title">Dati fatturazione (fattura / DDT)</h2>
+        <div class="form-grid">
+          <div class="field"><label>Zona</label><InputText v-model="form.zona" fluid /></div>
+          <div class="field"><label>Agente</label><InputText v-model="form.agente" fluid /></div>
+          <div class="field"><label>Categoria</label><InputText v-model="form.categoria" fluid /></div>
+          <div class="field"><label>Codice IVA</label><InputText v-model="form.codice_iva" fluid /></div>
+          <div class="field"><label>Banca d'appoggio</label><InputText v-model="form.banca_appoggio" fluid /></div>
+          <div class="field"><label>Valuta</label><InputText v-model="form.valuta" placeholder="Euro" fluid /></div>
+          <div class="field"><label>Aliquota IVA di default (%)</label><InputNumber v-model="form.aliquota_iva_default" :min="0" :max="100" :min-fraction-digits="0" :max-fraction-digits="2" fluid /></div>
+        </div>
+      </section>
+
       <div class="form-actions">
         <Button
           type="submit"
@@ -75,6 +88,7 @@ import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 import Textarea from 'primevue/textarea';
 import ToggleSwitch from 'primevue/toggleswitch';
 
@@ -93,6 +107,13 @@ const form = useForm({
   telefono:        props.cliente?.telefono        ?? '',
   attivo:          props.cliente?.attivo          ?? true,
   note:            props.cliente?.note            ?? '',
+  zona:                 props.cliente?.zona                 ?? '',
+  agente:               props.cliente?.agente               ?? '',
+  categoria:            props.cliente?.categoria            ?? '',
+  banca_appoggio:       props.cliente?.banca_appoggio       ?? '',
+  codice_iva:           props.cliente?.codice_iva           ?? '',
+  valuta:               props.cliente?.valuta               ?? 'Euro',
+  aliquota_iva_default: props.cliente?.aliquota_iva_default ? Number(props.cliente.aliquota_iva_default) : null,
 });
 
 watch(() => props.cliente, (c) => {
@@ -104,6 +125,13 @@ watch(() => props.cliente, (c) => {
   form.telefono        = c?.telefono        ?? '';
   form.attivo          = c?.attivo          ?? true;
   form.note            = c?.note            ?? '';
+  form.zona                 = c?.zona                 ?? '';
+  form.agente               = c?.agente               ?? '';
+  form.categoria            = c?.categoria            ?? '';
+  form.banca_appoggio       = c?.banca_appoggio       ?? '';
+  form.codice_iva           = c?.codice_iva           ?? '';
+  form.valuta               = c?.valuta               ?? 'Euro';
+  form.aliquota_iva_default = c?.aliquota_iva_default ? Number(c.aliquota_iva_default) : null;
   form.clearErrors();
 });
 

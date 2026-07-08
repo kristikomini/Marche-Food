@@ -4,6 +4,18 @@
 Database: **PostgreSQL 18**
 Source of truth DDL: `schema.sql` at project root.
 
+> **Riforma 2026-07-08** — vedi la sezione "Reform 2026-07-08" in coda a `schema.sql`
+> e il changelog `CHANGELOG-2026-07-08.md`. In sintesi:
+> - `prodotti` **non** ha più `codice_prodotto/pezzatura_valore/pezzatura_um/um_id`:
+>   questi vivono ora su **`prodotto_varianti`** (un prodotto → N varianti/pezzature).
+> - Nuove tabelle template scheda: **`schede_imballaggi`**, **`schede_gas`**.
+> - Nuovo catalogo **`lotti_gas`** (Screen 2, con soft-delete/audit come detergenti).
+> - Cattura produzione: **`produzioni_confezioni`**, **`produzioni_gas`**,
+>   **`produzioni_ciclo`**, **`produzioni_metal_detector`**.
+> - `clienti` +`zona/agente/categoria/banca_appoggio/codice_iva/valuta/aliquota_iva_default`;
+>   `vendite` +`n_colli/peso_totale/data_trasporto/destinatario_diverso`;
+>   `vendite_righe` +`prodotto_variante_id`.
+
 ---
 
 ## 1. Full ERD

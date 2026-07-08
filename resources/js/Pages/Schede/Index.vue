@@ -13,9 +13,23 @@
         <ToggleSwitch v-model="soloAttive" input-id="solo_attive" @change="applyFilters" />
         <label for="solo_attive">Solo attive</label>
       </div>
+      <Button
+        label="Confronta selezionate"
+        icon="pi pi-table"
+        size="small"
+        outlined
+        :disabled="selected.length < 2"
+        @click="confronta"
+      />
+      <span v-if="selected.length" class="text-muted" style="font-size:0.8rem">{{ selected.length }} selezionata/e</span>
     </div>
 
     <DataTable :value="schede.data" class="mt-4" striped-rows size="small">
+      <Column header="" style="width:44px">
+        <template #body="{ data }">
+          <Checkbox v-model="selected" :value="data.id" />
+        </template>
+      </Column>
       <Column field="modello" header="Modello" style="width:120px">
         <template #body="{ data }">
           <span class="mono">{{ data.modello }}.{{ String(data.revisione).padStart(2, '0') }}</span>
@@ -25,7 +39,7 @@
         <template #body="{ data }">
           <Link v-if="isAdmin" :href="`/schede/${data.id}/edit`" class="row-link">{{ data.prodotto?.nome }}</Link>
           <span v-else>{{ data.prodotto?.nome }}</span>
-          <span class="text-muted" style="font-size:0.78rem; margin-left:0.4rem">{{ data.prodotto?.codice_prodotto }}</span>
+          <span class="text-muted" style="font-size:0.78rem; margin-left:0.4rem">{{ (data.prodotto?.varianti || []).map(v => v.codice_prodotto).filter(Boolean).join(', ') }}</span>
         </template>
       </Column>
       <Column header="Data Rev." style="width:110px">
@@ -80,11 +94,17 @@ import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import Tag from 'primevue/tag';
 import ToggleSwitch from 'primevue/toggleswitch';
+import Checkbox from 'primevue/checkbox';
 
 const props = defineProps({ schede: Object, filters: Object });
 const confirm = useConfirm();
 const page = usePage();
 const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
+const selected = ref([]);
+function confronta() {
+  if (selected.value.length < 2) return;
+  router.get('/schede/confronto', { ids: selected.value.join(',') });
+}
 const filters = ref({ search: props.filters?.search ?? '', solo_attive: props.filters?.solo_attive ?? '' });
 const soloAttive = ref(!!props.filters?.solo_attive);
 

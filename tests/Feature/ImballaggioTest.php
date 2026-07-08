@@ -32,7 +32,7 @@ class ImballaggioTest extends TestCase
 
     private function useInProduction(LottoImballaggioPrimario $lotto): Produzione
     {
-        $prodotto = Prodotto::create(['codice_prodotto' => 'P', 'nome' => 'X', 'attivo' => true]);
+        $prodotto = Prodotto::create(['nome' => 'X', 'attivo' => true]);
         $scheda   = SchedaProduzione::create(['prodotto_id' => $prodotto->id, 'modello' => 'M', 'revisione' => 0, 'data_revisione' => '2026-06-01', 'attiva' => true]);
         $prod     = Produzione::create(['scheda_id' => $scheda->id, 'lotto_produzione' => 'LP', 'data_produzione' => '2026-06-02']);
         ProduzioneImballaggioPrimario::create(['produzione_id' => $prod->id, 'lotto_imballaggio_id' => $lotto->id, 'quantita_usata' => 1]);

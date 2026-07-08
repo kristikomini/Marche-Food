@@ -43,4 +43,14 @@ class SchedaProduzione extends Model
     {
         return $this->hasMany(SchedaFlussoProduzione::class, 'scheda_id')->orderBy('ordine');
     }
+
+    public function imballaggi()
+    {
+        return $this->hasMany(SchedaImballaggio::class, 'scheda_id')->orderBy('ordine');
+    }
+
+    public function gas()
+    {
+        return $this->hasMany(SchedaGas::class, 'scheda_id')->orderBy('ordine');
+    }
 }

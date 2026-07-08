@@ -57,34 +57,37 @@ class ClienteController extends Controller
 
         $clienti = $query->orderBy('ragione_sociale')->get();
 
-        $filename = 'clienti_' . now()->format('Ymd_His') . '.csv';
+        $headers = [
+            'Codice Cliente', 'Ragione Sociale', 'Partita IVA', 'Indirizzo',
+            'Email', 'Telefono', 'Zona', 'Agente', 'Categoria', 'Banca',
+            'Cod. IVA', 'Valuta', 'Attivo', 'Note',
+        ];
 
-        $callback = function () use ($clienti) {
-            $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF"); // BOM UTF-8 per Excel
-            fputcsv($handle, [
-                'Codice Cliente', 'Ragione Sociale', 'Partita IVA', 'Indirizzo',
-                'Email', 'Telefono', 'Attivo', 'Note',
-            ], ';');
+        $rows = $clienti->map(fn ($c) => [
+            $c->codice_cliente,
+            $c->ragione_sociale,
+            $c->piva,
+            $c->indirizzo,
+            $c->email,
+            $c->telefono,
+            $c->zona,
+            $c->agente,
+            $c->categoria,
+            $c->banca_appoggio,
+            $c->codice_iva,
+            $c->valuta,
+            $c->attivo ? 'Sì' : 'No',
+            $c->note,
+        ])->all();
 
-            foreach ($clienti as $c) {
-                fputcsv($handle, [
-                    $c->codice_cliente,
-                    $c->ragione_sociale,
-                    $c->piva,
-                    $c->indirizzo,
-                    $c->email,
-                    $c->telefono,
-                    $c->attivo ? 'Sì' : 'No',
-                    $c->note,
-                ], ';');
-            }
-            fclose($handle);
-        };
+        $base = 'clienti_' . now()->format('Ymd_His');
 
-        return response()->streamDownload($callback, $filename, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-        ]);
+        if ($request->input('format') === 'csv') {
+            return $this->downloadCsv("{$base}.csv", $headers, $rows);
+        }
+
+        return \App\Support\SimpleXlsxWriter::make('Clienti')
+            ->headers($headers)->rows($rows)->download("{$base}.xlsx");
     }
 
     /**
@@ -156,6 +159,13 @@ class ClienteController extends Controller
             'telefono'        => ['nullable', 'string', 'max:30'],
             'attivo'          => ['boolean'],
             'note'            => ['nullable', 'string'],
+            'zona'                 => ['nullable', 'string', 'max:50'],
+            'agente'               => ['nullable', 'string', 'max:100'],
+            'categoria'            => ['nullable', 'string', 'max:50'],
+            'banca_appoggio'       => ['nullable', 'string', 'max:150'],
+            'codice_iva'           => ['nullable', 'string', 'max:20'],
+            'valuta'               => ['nullable', 'string', 'max:20'],
+            'aliquota_iva_default' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
     }
 }

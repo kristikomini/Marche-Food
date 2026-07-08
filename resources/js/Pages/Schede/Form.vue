@@ -6,6 +6,9 @@
         <Link v-if="isEdit" :href="`/schede/${props.scheda.id}/print`" target="_blank">
           <Button label="Stampa" icon="pi pi-print" aria-label="Stampa" outlined severity="secondary" />
         </Link>
+        <a v-if="isEdit" :href="`/schede/${props.scheda.id}/pdf`" target="_blank">
+          <Button label="PDF vuoto" icon="pi pi-file-pdf" aria-label="PDF scheda vuota" outlined severity="secondary" />
+        </a>
         <Link href="/schede"><Button label="Annulla" outlined icon="pi pi-arrow-left" aria-label="Indietro" /></Link>
       </div>
     </div>
@@ -161,6 +164,72 @@
         </div>
       </div>
 
+      <!-- IMBALLAGGI PRIMARI (template) -->
+      <div class="form-card mb-4">
+        <div class="righe-header">
+          <h2 class="section-title" style="margin:0">Imballaggi primari</h2>
+          <Button type="button" label="Aggiungi imballaggio" icon="pi pi-plus" size="small" outlined @click="addImballaggio" />
+        </div>
+        <div class="table-wrapper">
+          <table class="righe-table">
+            <thead>
+              <tr>
+                <th>Componente * (es. Vaschetta gr 200)</th>
+                <th style="width:200px">Pezzatura collegata</th>
+                <th style="width:220px">Fornitore</th>
+                <th style="width:44px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(im, i) in form.imballaggi" :key="i">
+                <td><InputText v-model="im.componente" placeholder="es. Film kg 1" fluid size="small" /></td>
+                <td>
+                  <Select v-model="im.prodotto_variante_id" :options="variantiSelezionate" option-label="label" option-value="id" placeholder="—" show-clear fluid size="small" />
+                </td>
+                <td>
+                  <Select v-model="im.fornitore_id" :options="fornitori" option-label="ragione_sociale" option-value="id" placeholder="—" show-clear filter fluid size="small" />
+                </td>
+                <td><Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="form.imballaggi.splice(i, 1)" /></td>
+              </tr>
+              <tr v-if="!form.imballaggi.length">
+                <td colspan="4" style="text-align:center;color:var(--ink-3);padding:1rem">Nessun imballaggio aggiunto.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- GAS (template) -->
+      <div class="form-card mb-4">
+        <div class="righe-header">
+          <h2 class="section-title" style="margin:0">Gas</h2>
+          <Button type="button" label="Aggiungi gas" icon="pi pi-plus" size="small" outlined @click="addGas" />
+        </div>
+        <div class="table-wrapper">
+          <table class="righe-table">
+            <thead>
+              <tr>
+                <th>Nome * (es. TRESARIS NC30 bombola grande)</th>
+                <th style="width:220px">Fornitore</th>
+                <th style="width:44px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(g, i) in form.gas" :key="i">
+                <td><InputText v-model="g.nome" placeholder="es. TRESARIS NC30" fluid size="small" /></td>
+                <td>
+                  <Select v-model="g.fornitore_id" :options="fornitori" option-label="ragione_sociale" option-value="id" placeholder="—" show-clear filter fluid size="small" />
+                </td>
+                <td><Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="form.gas.splice(i, 1)" /></td>
+              </tr>
+              <tr v-if="!form.gas.length">
+                <td colspan="3" style="text-align:center;color:var(--ink-3);padding:1rem">Nessun gas aggiunto.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="form-actions-outer">
         <Button type="submit" :label="isEdit ? 'Salva modifiche' : 'Crea scheda'" icon="pi pi-check" :loading="form.processing" />
       </div>
@@ -179,7 +248,7 @@ import Select from 'primevue/select';
 import DatePicker from 'primevue/datepicker';
 import ToggleSwitch from 'primevue/toggleswitch';
 
-const props = defineProps({ scheda: Object, prodotti: Array, materie: Array, flussi: Array });
+const props = defineProps({ scheda: Object, prodotti: Array, materie: Array, flussi: Array, fornitori: { type: Array, default: () => [] } });
 const isEdit = computed(() => !!props.scheda);
 
 const umOpts = [
@@ -187,9 +256,20 @@ const umOpts = [
   { label: 'ml', value: 'ml' }, { label: 'Lt', value: 'lt' },
 ];
 
+// Varianti del prodotto selezionato, per collegare gli imballaggi alla pezzatura.
+const variantiSelezionate = computed(() => {
+  const p = (props.prodotti || []).find(x => x.id === form.prodotto_id);
+  return (p?.varianti || []).map(v => ({
+    id: v.id,
+    label: `${v.codice_prodotto}${v.pezzatura_label ? ' · ' + v.pezzatura_label : ''}`,
+  }));
+});
+
 function emptyRiga() { return { materia_prima_id: null, percentuale: null, grammi_per_kg: null, um: 'g' }; }
 function emptyMarinatura() { return { materia_prima_id: null, litri_grammi: null, um: 'lt' }; }
 function emptyFlusso() { return { flusso_id: null, valore_controllo: '', tempo_minuti: null }; }
+function emptyImballaggio() { return { componente: '', prodotto_variante_id: null, fornitore_id: null }; }
+function emptyGas() { return { nome: '', fornitore_id: null }; }
 
 const form = useForm({
   prodotto_id:    props.scheda?.prodotto_id    ?? null,
@@ -207,6 +287,12 @@ const form = useForm({
     : [],
   scheda_flussi: props.scheda?.flussi?.length
     ? props.scheda.flussi.map(f => ({ flusso_id: f.flusso_id, valore_controllo: f.valore_controllo ?? '', tempo_minuti: f.tempo_minuti ?? null }))
+    : [],
+  imballaggi: props.scheda?.imballaggi?.length
+    ? props.scheda.imballaggi.map(im => ({ componente: im.componente ?? '', prodotto_variante_id: im.prodotto_variante_id ?? null, fornitore_id: im.fornitore_id ?? null }))
+    : [],
+  gas: props.scheda?.gas?.length
+    ? props.scheda.gas.map(g => ({ nome: g.nome ?? '', fornitore_id: g.fornitore_id ?? null }))
     : [],
 });
 
@@ -227,6 +313,12 @@ watch(() => props.scheda, (s) => {
   form.scheda_flussi = s?.flussi?.length
     ? s.flussi.map(f => ({ flusso_id: f.flusso_id, valore_controllo: f.valore_controllo ?? '', tempo_minuti: f.tempo_minuti ?? null }))
     : [];
+  form.imballaggi = s?.imballaggi?.length
+    ? s.imballaggi.map(im => ({ componente: im.componente ?? '', prodotto_variante_id: im.prodotto_variante_id ?? null, fornitore_id: im.fornitore_id ?? null }))
+    : [];
+  form.gas = s?.gas?.length
+    ? s.gas.map(g => ({ nome: g.nome ?? '', fornitore_id: g.fornitore_id ?? null }))
+    : [];
   form.clearErrors();
 });
 
@@ -235,6 +327,8 @@ function addRiga(key) {
 }
 function removeRiga(key, i) { form[key].splice(i, 1); }
 function addFlusso() { form.scheda_flussi.push(emptyFlusso()); }
+function addImballaggio() { form.imballaggi.push(emptyImballaggio()); }
+function addGas() { form.gas.push(emptyGas()); }
 
 function submit() {
   const payload = {

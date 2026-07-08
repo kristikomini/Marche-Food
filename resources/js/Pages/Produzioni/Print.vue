@@ -109,6 +109,66 @@
         </table>
       </template>
 
+      <!-- Confezioni per variante -->
+      <template v-if="produzione.confezioni?.length">
+        <h2 class="section-title" style="margin-top:1.5rem">N° Confezioni Prodotte</h2>
+        <table class="righe">
+          <thead><tr><th class="left">Codice</th><th class="left">Pezzatura</th><th style="width:140px">N° confezioni</th></tr></thead>
+          <tbody>
+            <tr v-for="c in produzione.confezioni" :key="c.id">
+              <td class="left mono">{{ c.variante?.codice_prodotto ?? '—' }}</td>
+              <td class="left">{{ pezz(c.variante) }}</td>
+              <td class="center">{{ c.n_confezioni ?? '' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </template>
+
+      <!-- Gas -->
+      <template v-if="produzione.gas?.length">
+        <h2 class="section-title" style="margin-top:1.5rem">Gas Utilizzati</h2>
+        <table class="righe">
+          <thead><tr><th class="left">Componente</th><th>Lotto</th><th class="left">Fornitore</th></tr></thead>
+          <tbody>
+            <tr v-for="g in produzione.gas" :key="g.id">
+              <td class="left">{{ g.lotto_gas?.componente ?? '—' }}</td>
+              <td class="center mono">{{ g.lotto_gas?.lotto ?? '—' }}</td>
+              <td class="left">{{ g.lotto_gas?.fornitore?.ragione_sociale ?? '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </template>
+
+      <!-- Ciclo di lavoro compilato -->
+      <template v-if="produzione.ciclo?.length">
+        <h2 class="section-title" style="margin-top:1.5rem">Ciclo di Lavoro — Registrazioni</h2>
+        <table class="righe">
+          <thead><tr><th style="width:50px">N°</th><th class="left">Fase</th><th class="left">Registrazioni</th><th class="left">Registrazioni</th><th style="width:40px">C</th></tr></thead>
+          <tbody>
+            <tr v-for="c in produzione.ciclo" :key="c.id">
+              <td class="center">{{ c.flusso?.numero ?? '' }}</td>
+              <td class="left">{{ c.nome || c.flusso?.nome }}</td>
+              <td class="left">{{ c.registrazione_1 ?? '' }}</td>
+              <td class="left">{{ c.registrazione_2 ?? '' }}</td>
+              <td class="center">{{ c.controllo ? '✓' : '' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </template>
+
+      <!-- Metal detector -->
+      <template v-if="produzione.metal_detector">
+        <h2 class="section-title" style="margin-top:1.5rem">Funzionamento Metal Detector</h2>
+        <div class="info-grid" style="grid-template-columns:repeat(5,1fr)">
+          <div class="info-block"><div class="info-label">Inizio conf.</div><div class="info-val">{{ produzione.metal_detector.inizio_conf ?? '—' }}</div></div>
+          <div class="info-block"><div class="info-label">Fine conf.</div><div class="info-val">{{ produzione.metal_detector.fine_conf ?? '—' }}</div></div>
+          <div class="info-block" v-for="c in campioni" :key="c.n">
+            <div class="info-label">Campione {{ c.n }}</div>
+            <div class="info-val">{{ produzione.metal_detector['campione_' + c.n] ?? '—' }}</div>
+          </div>
+        </div>
+      </template>
+
       <!-- Signatures -->
       <div class="signatures">
         <div class="sig-block">
@@ -137,7 +197,7 @@
 <script setup>
 import { computed } from 'vue';
 
-const props = defineProps({ produzione: Object });
+const props = defineProps({ produzione: Object, campioni: { type: Array, default: () => [] } });
 const window = globalThis;
 
 const today = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -145,6 +205,15 @@ const today = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: '2
 function formatDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function pezz(v) {
+  if (!v) return '—';
+  if (v.pezzatura_label) return v.pezzatura_label;
+  if (v.pezzatura_valore == null || v.pezzatura_valore === '') return v.pezzatura_um || '—';
+  const n = Number(v.pezzatura_valore);
+  const val = Number.isFinite(n) ? n.toLocaleString('it-IT', { maximumFractionDigits: 3 }) : v.pezzatura_valore;
+  return `${v.pezzatura_um ? v.pezzatura_um + ' ' : ''}${val}`.trim();
 }
 
 const schedaCodice = computed(() => {

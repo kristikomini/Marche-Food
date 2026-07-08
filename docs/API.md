@@ -402,3 +402,16 @@ The index and edit form receive the allergen option list / label map from the co
 - **`GET /audit`** (admin) now returns an append-only change log (`log`: every create/update/delete/restore with before→after field values) in addition to the current-state summary.
 - **`POST /acquisti` / `PUT /acquisti/{id}`** accept an optional `righe.*.materia_prima_id` (must exist in `materie_prime`) linking each purchase line to a raw material; the create/edit forms receive a `materie` list.
 - **`GET /acquisti/{id}/etichette`** prints the linked lot's allergens on each label.
+
+### Reform 2026-07-08
+
+- **`GET /schede/{id}/pdf`** → `schede.pdf` — PDF **template vuoto** della scheda (renderizzato dalla scheda: varianti, imballaggi/gas template, ciclo, metal detector, campi da compilare a mano).
+- **`GET /schede/confronto?ids=1,2,3`** → `schede.confronto` — confronto affiancato di 2–4 schede (varianti, ricetta, imballaggi, gas, ciclo; differenze evidenziate).
+- **`GET /produzioni/{id}/scheda`** — PDF **compilato** data-driven (stesso URL, ora popolato da confezioni/gas/ciclo/metal-detector reali).
+- **Catalogo gas (Screen 2):** `GET imballaggi/gas/create`, `POST imballaggi/gas`, `GET imballaggi/gas/{gas}/edit`, `PUT imballaggi/gas/{gas}`, `DELETE imballaggi/gas/{gas}` (admin). L'index imballaggi accetta `search_g`, `page_g`, `tab=gas`.
+- **`GET /fornitori/export`** e **`GET /clienti/export`** producono ora `.xlsx` di default; `?format=csv` per il vecchio CSV.
+- **Prodotti** (`store/update`): payload `nome` + array `varianti[]` (`codice_prodotto`, `pezzatura_valore`, `pezzatura_um`, `um_id?`, `descrizione?`, `attiva`).
+- **Schede** (`store/update`): payload esteso con `imballaggi[]` (`componente`, `prodotto_variante_id?`, `fornitore_id?`) e `gas[]` (`nome`, `fornitore_id?`).
+- **Produzioni** (`store/update`): payload esteso con `confezioni[]` (`prodotto_variante_id`, `n_confezioni`), `gas[]` (`lotto_gas_id`, `quantita_usata?`), `ciclo[]` (`flusso_id?`, `nome?`, `registrazione_1/2?`, `controllo`), `metal_detector{}` (`inizio_conf?`, `fine_conf?`, `campione_1/2/3` ∈ OK|KO, `note?`).
+- **Vendite** (`store/update`): header `n_colli?/peso_totale?/data_trasporto?/destinatario_diverso?`; righe `prodotto_id?/prodotto_variante_id?` per l'auto-fill.
+- **Clienti** (`store/update`): campi fattura `zona/agente/categoria/banca_appoggio/codice_iva/valuta/aliquota_iva_default`.

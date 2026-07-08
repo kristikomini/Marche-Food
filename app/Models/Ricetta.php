@@ -28,4 +28,9 @@ class Ricetta extends Model
     {
         return $this->belongsTo(MateriaPrima::class);
     }
+
+    public function fornitore()
+    {
+        return $this->belongsTo(Fornitore::class);
+    }
 }

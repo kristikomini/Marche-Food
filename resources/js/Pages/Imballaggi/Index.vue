@@ -8,6 +8,7 @@
       <TabList>
         <Tab value="primari">Imb. Primari (MOCA)</Tab>
         <Tab value="detergenti">Detergenti</Tab>
+        <Tab value="gas">Gas</Tab>
       </TabList>
 
       <!-- ── IMBALLAGGI PRIMARI ─────────────────────────────────── -->
@@ -138,6 +139,65 @@
           <Button icon="pi pi-chevron-right" aria-label="Pagina successiva" outlined size="small" :disabled="!detergenti.next_page_url" @click="router.visit(detergenti.next_page_url)" />
         </div>
       </TabPanel>
+
+      <!-- ── GAS ────────────────────────────────────────────────── -->
+      <TabPanel value="gas">
+        <div class="tab-toolbar">
+          <IconField>
+            <InputIcon class="pi pi-search" />
+            <InputText v-model="searchG" placeholder="Cerca componente, lotto, DDT..." @input="debouncedG" style="width: 280px" />
+          </IconField>
+          <Link href="/imballaggi/gas/create">
+            <Button label="Nuovo lotto" icon="pi pi-plus" size="small" />
+          </Link>
+        </div>
+
+        <DataTable :value="gas.data" striped-rows size="small" class="mt-3">
+          <Column header="Data entrata" style="width:110px">
+            <template #body="{ data }">{{ formatDate(data.data_in) }}</template>
+          </Column>
+          <Column header="Fornitore">
+            <template #body="{ data }">{{ data.fornitore?.ragione_sociale }}</template>
+          </Column>
+          <Column field="componente" header="Componente" />
+          <Column field="lotto" header="Lotto" style="width:120px">
+            <template #body="{ data }"><span class="lotto-badge">{{ data.lotto ?? '—' }}</span></template>
+          </Column>
+          <Column header="Q.tà" style="width:90px">
+            <template #body="{ data }">{{ data.quantita ? `${data.quantita} ${data.um ?? ''}` : '—' }}</template>
+          </Column>
+          <Column header="Scadenza" style="width:110px">
+            <template #body="{ data }">
+              <span :class="isScaduto(data.scadenza) ? 'text-danger' : ''">{{ data.scadenza ? formatDate(data.scadenza) : '—' }}</span>
+            </template>
+          </Column>
+          <Column field="numero_ddt" header="N° DDT" style="width:110px">
+            <template #body="{ data }"><span class="text-muted">{{ data.numero_ddt ?? '—' }}</span></template>
+          </Column>
+          <Column header="Data uscita" style="width:110px">
+            <template #body="{ data }">
+              <span :class="data.data_out ? 'text-out' : 'text-muted'">{{ data.data_out ? formatDate(data.data_out) : '—' }}</span>
+            </template>
+          </Column>
+          <Column header="Azioni" style="width:90px">
+            <template #body="{ data }">
+              <div style="display:flex;gap:0.4rem">
+                <Link :href="`/imballaggi/gas/${data.id}/edit`">
+                  <Button icon="pi pi-pencil" aria-label="Modifica" size="small" outlined />
+                </Link>
+                <Button v-if="isAdmin" icon="pi pi-trash" aria-label="Elimina" size="small" outlined severity="danger" @click="confirmDeleteG(data)" />
+              </div>
+            </template>
+          </Column>
+          <template #empty><EmptyState icon="pi pi-cloud" title="Nessun lotto gas" /></template>
+        </DataTable>
+
+        <div v-if="gas.last_page > 1" class="pagination">
+          <Button icon="pi pi-chevron-left" aria-label="Pagina precedente" outlined size="small" :disabled="!gas.prev_page_url" @click="router.visit(gas.prev_page_url)" />
+          <span class="page-info">{{ gas.current_page }} / {{ gas.last_page }} ({{ gas.total }})</span>
+          <Button icon="pi pi-chevron-right" aria-label="Pagina successiva" outlined size="small" :disabled="!gas.next_page_url" @click="router.visit(gas.next_page_url)" />
+        </div>
+      </TabPanel>
     </Tabs>
   </AppLayout>
 </template>
@@ -162,6 +222,7 @@ import InputIcon from 'primevue/inputicon';
 const props = defineProps({
   primari:    Object,
   detergenti: Object,
+  gas:        Object,
   filters:    Object,
 });
 
@@ -171,6 +232,7 @@ const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
 const activeTab = ref(props.filters?.tab ?? 'primari');
 const searchP = ref(props.filters?.search_p ?? '');
 const searchD = ref(props.filters?.search_d ?? '');
+const searchG = ref(props.filters?.search_g ?? '');
 
 function formatDate(d) {
   if (!d) return '—';
@@ -181,14 +243,16 @@ function isScaduto(d) {
   return d && new Date(d) < new Date();
 }
 
-let tP = null, tD = null;
+let tP = null, tD = null, tG = null;
 function debouncedP() { clearTimeout(tP); tP = setTimeout(() => applyFilters(), 400); }
 function debouncedD() { clearTimeout(tD); tD = setTimeout(() => applyFilters(), 400); }
+function debouncedG() { clearTimeout(tG); tG = setTimeout(() => applyFilters(), 400); }
 
 function applyFilters() {
   router.get('/imballaggi', {
     search_p: searchP.value,
     search_d: searchD.value,
+    search_g: searchG.value,
     tab: activeTab.value,
   }, { preserveState: true, replace: true });
 }
@@ -217,6 +281,20 @@ function confirmDeleteD(lotto) {
     acceptClass: 'p-button-danger',
     accept: () => router.delete(`/imballaggi/detergenti/${lotto.id}`, {
       onSuccess: () => router.get('/imballaggi', { tab: 'detergenti' }),
+    }),
+  });
+}
+
+function confirmDeleteG(lotto) {
+  confirm.require({
+    message: `Eliminare il lotto "${lotto.componente}"?`,
+    header: 'Conferma eliminazione',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Elimina',
+    rejectLabel: 'Annulla',
+    acceptClass: 'p-button-danger',
+    accept: () => router.delete(`/imballaggi/gas/${lotto.id}`, {
+      onSuccess: () => router.get('/imballaggi', { tab: 'gas' }),
     }),
   });
 }

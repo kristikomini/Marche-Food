@@ -32,7 +32,7 @@ class ProduzioneHttpTest extends TestCase
         $this->actingAs(User::factory()->admin()->create());
 
         $fornitore = Fornitore::create(['ragione_sociale' => 'Pesca', 'tipo' => 'alimentare']);
-        $prodotto  = Prodotto::create(['codice_prodotto' => 'P1', 'nome' => 'Tonno', 'attivo' => true]);
+        $prodotto  = Prodotto::create(['nome' => 'Tonno', 'attivo' => true]);
         $this->mp  = MateriaPrima::create(['nome' => 'Tonno fresco']);
         $acq = Acquisto::create(['fornitore_id' => $fornitore->id, 'numero_documento' => 'D1', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
         $this->riga = AcquistoRiga::create(['acquisto_id' => $acq->id, 'nome_prodotto' => 'Tonno fresco', 'quantita_kg' => 100, 'lotto' => 'L100', 'data_in' => '2026-06-01']);

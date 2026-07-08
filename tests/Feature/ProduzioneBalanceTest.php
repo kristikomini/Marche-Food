@@ -39,7 +39,7 @@ class ProduzioneBalanceTest extends TestCase
         $this->actingAs(User::factory()->admin()->create());
 
         $fornitore = Fornitore::create(['ragione_sociale' => 'Pesca SRL', 'tipo' => 'alimentare']);
-        $prodotto  = Prodotto::create(['codice_prodotto' => 'P1', 'nome' => 'Tonno', 'attivo' => true]);
+        $prodotto  = Prodotto::create(['nome' => 'Tonno', 'attivo' => true]);
         $this->mp  = MateriaPrima::create(['nome' => 'Tonno fresco']);
 
         $acquisto = Acquisto::create([
