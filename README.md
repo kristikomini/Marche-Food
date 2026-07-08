@@ -161,22 +161,23 @@ Per lo schema SQL completo vedere [schema.sql](schema.sql).
 
 ## Documentazione
 
-| Documento | Contenuto |
-|-----------|-----------|
-| [docs/BLUEPRINT.md](docs/BLUEPRINT.md) | **Panoramica completa del sistema**: cos'è, stack, architettura, pattern, modello dati, tutte le funzionalità |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack, architettura, flussi di richiesta |
-| [docs/DATABASE.md](docs/DATABASE.md) | ERD e descrizione tabelle |
-| [docs/MODULES.md](docs/MODULES.md) | Mappa e descrizione dei moduli |
-| [docs/API.md](docs/API.md) | Mappa rotte e formato richieste |
-| [docs/WORKFLOWS.md](docs/WORKFLOWS.md) | Regole di business: tracciabilità, bilanci lotti, semilavorati, conto terzi, audit |
-| [docs/INDEXING.md](docs/INDEXING.md) | Strategia di indicizzazione |
-| [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) | Integrazioni e import CSV |
-| [docs/DEPLOY.md](docs/DEPLOY.md) | Deploy su Hetzner + Coolify, health check, backup, hardening |
-| [docs/GAPS.md](docs/GAPS.md) | 21 gap storici risolti (giugno 2026) |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Gap analysis deployment/piattaforma e piano a fasi |
-| [docs/CHANGELOG-2026-07-01.md](docs/CHANGELOG-2026-07-01.md) | Modifiche della sessione di hardening (luglio 2026) |
-| [docs/CHANGELOG-2026-07-06.md](docs/CHANGELOG-2026-07-06.md) | Soft-delete/Cestino, etichette QR acquisti/vendite, allergeni, test |
-| [docs/REFORM-PLAN-2026-07-08.md](docs/REFORM-PLAN-2026-07-08.md) | **Piano di riforma** scheda/fattura: stato reale, gap analysis, piano a fasi, avanzamento |
-| [docs/CHANGELOG-2026-07-08.md](docs/CHANGELOG-2026-07-08.md) | **Riforma 2026-07-08**: varianti prodotto, scheda vuota+compilata, catalogo gas, cattura produzione, fattura, export Excel |
-| [docs/DEPLOY-REFORM-2026-07-08.md](docs/DEPLOY-REFORM-2026-07-08.md) | **Checklist di deploy** della riforma (backup DB, migrazione distruttiva, commit, Coolify, smoke test, rollback) |
-| [docs/fornitori.md](docs/fornitori.md) | Approfondimento sul modulo Fornitori |
+La documentazione è consolidata in **10 file** nella cartella [`docs/`](docs/), da
+leggere in ordine per analizzare struttura, strategie e funzionalità del progetto:
+
+| # | Documento | Contenuto |
+|---|-----------|-----------|
+| 01 | [docs/01-OVERVIEW.md](docs/01-OVERVIEW.md) | Panoramica: cos'è, obiettivi, stack, glossario di dominio |
+| 02 | [docs/02-ARCHITECTURE.md](docs/02-ARCHITECTURE.md) | Architettura Inertia, layer, service, build pipeline, convenzioni |
+| 03 | [docs/03-DATA-MODEL.md](docs/03-DATA-MODEL.md) | Modello dati: tabelle, relazioni, vincoli, indici |
+| 04 | [docs/04-ANAGRAFICA.md](docs/04-ANAGRAFICA.md) | Master data: fornitori, clienti, prodotti/varianti, materie prime |
+| 05 | [docs/05-ALIMENTI-ACQUISTI-VENDITE.md](docs/05-ALIMENTI-ACQUISTI-VENDITE.md) | Acquisti, vendite (Fattura/DdT), bolle reso, note credito, imballaggi |
+| 06 | [docs/06-PRODUZIONE.md](docs/06-PRODUZIONE.md) | Schede, produzioni, bilanci, metal detector, kiosk, confronto schede |
+| 07 | [docs/07-TRACCIABILITA-CONFORMITA.md](docs/07-TRACCIABILITA-CONFORMITA.md) | Tracciabilità, recall, allergeni, ricerca, giacenze |
+| 08 | [docs/08-REPORTISTICA-DOCUMENTI.md](docs/08-REPORTISTICA-DOCUMENTI.md) | Report, PDF, etichette QR, export/import CSV, dashboard |
+| 09 | [docs/09-SICUREZZA-DATI-INTEGRITA.md](docs/09-SICUREZZA-DATI-INTEGRITA.md) | Ruoli, 2FA, audit, cestino/soft-delete, locking, notifiche |
+| 10 | [docs/10-SVILUPPO-DEPLOY.md](docs/10-SVILUPPO-DEPLOY.md) | Setup, test, deploy, design system, storia/changelog, gap aperti |
+
+> I precedenti documenti sparsi (BLUEPRINT, ARCHITECTURE, MODULES, API, DATABASE,
+> INDEXING, WORKFLOWS, INTEGRATIONS, DEPLOY, GAPS, ROADMAP, REFORM-PLAN, CHANGELOG-\*,
+> fornitori) sono stati consolidati e riassunti in questi 10 file. Restano consultabili
+> nella cronologia git.
