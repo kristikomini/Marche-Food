@@ -18,15 +18,28 @@
     // N° confezioni per variante (dal run).
     $confPerVariante = $produzione->confezioni->keyBy('prodotto_variante_id');
 
-    // Materie prime realmente utilizzate (lotto + fornitore reali).
-    $materie = $produzione->materiePrime->map(function ($mp) {
-        $lotto = $mp->acquistoRiga?->lotto
-            ?: $mp->acquistoRiga?->lotto_esterno
-            ?: $mp->semilavorato?->lotto;
-        $fornitore = $mp->acquistoRiga?->acquisto?->fornitore?->ragione_sociale
-            ?: ($mp->semilavorato ? 'Semilavorato interno' : null);
-        return ['nome' => $mp->materiaPrima?->nome ?? '—', 'lotto' => $lotto, 'fornitore' => $fornitore];
-    });
+    // Materie prime realmente utilizzate. Una materia prima può essere
+    // prelevata da più lotti nello stesso run: raggruppiamo per ingrediente e
+    // uniamo i lotti (e i fornitori) su un'unica riga, es. "GIO12602 + GIO42632-01".
+    $materie = $produzione->materiePrime
+        ->groupBy(fn ($mp) => $mp->materia_prima_id ?? $mp->materiaPrima?->nome)
+        ->map(function ($gruppo) {
+            $lotti = $gruppo->map(fn ($mp) => $mp->acquistoRiga?->lotto
+                ?: $mp->acquistoRiga?->lotto_esterno
+                ?: $mp->semilavorato?->lotto)
+                ->filter()->unique()->implode(' + ');
+
+            $fornitori = $gruppo->map(fn ($mp) => $mp->acquistoRiga?->acquisto?->fornitore?->ragione_sociale
+                ?: ($mp->semilavorato ? 'Semilavorato interno' : null))
+                ->filter()->unique()->implode(' + ');
+
+            return [
+                'nome'      => $gruppo->first()->materiaPrima?->nome ?? '—',
+                'lotto'     => $lotti,
+                'fornitore' => $fornitori,
+            ];
+        })
+        ->values();
     $materieVuote = max(0, 10 - $materie->count());
 
     // Imballaggi: lotti reali del run; in mancanza, template della scheda.

@@ -89,7 +89,7 @@
         <div class="righe-header">
           <div>
             <h2 class="section-title" style="margin:0">Materie prime utilizzate</h2>
-            <p class="section-sub">Collegare ogni ingrediente al lotto di acquisto (o semilavorato interno) per la tracciabilità HACCP</p>
+            <p class="section-sub">Collegare ogni ingrediente al lotto di acquisto (o semilavorato interno). Con <i class="pi pi-plus" style="font-size:0.7rem"></i> puoi aggiungere più lotti alla stessa materia prima.</p>
           </div>
           <Button type="button" label="Aggiungi riga" icon="pi pi-plus" size="small" outlined @click="addMateriaPrima" />
         </div>
@@ -103,13 +103,14 @@
                 <th style="min-width:300px">Lotto *</th>
                 <th style="width:120px">Q.tà Kg *</th>
                 <th style="width:110px">Disponibile</th>
-                <th style="width:44px"></th>
+                <th style="width:88px"></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(r, i) in form.materie_prime" :key="i">
                 <td>
-                  <Select v-model="r.materia_prima_id" :options="materie" option-label="nome" option-value="id" placeholder="Seleziona..." filter fluid size="small" />
+                  <Select v-if="!isLottoAggiuntivo(i)" v-model="r.materia_prima_id" :options="materie" option-label="nome" option-value="id" placeholder="Seleziona..." filter fluid size="small" />
+                  <span v-else class="lotto-aggiuntivo">↳ {{ nomeMateria(r.materia_prima_id) }} <em>(altro lotto)</em></span>
                 </td>
                 <td>
                   <Select
@@ -134,7 +135,10 @@
                   <span v-else class="balance-empty">—</span>
                 </td>
                 <td>
-                  <Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="removeMateriaPrima(i)" />
+                  <div style="display:flex;gap:0.15rem">
+                    <Button type="button" icon="pi pi-plus" aria-label="Aggiungi lotto per questa materia prima" title="Aggiungi un altro lotto per questa materia prima" size="small" text severity="secondary" :disabled="!r.materia_prima_id" @click="addLottoForMateria(i)" />
+                    <Button type="button" icon="pi pi-trash" aria-label="Elimina" size="small" text severity="danger" @click="removeMateriaPrima(i)" />
+                  </div>
                 </td>
               </tr>
               <tr v-if="!form.materie_prime.length">
@@ -633,6 +637,28 @@ watch(() => props.produzione, (p) => {
 
 function addMateriaPrima()     { form.materie_prime.push(emptyMateriaPrima()); }
 function removeMateriaPrima(i) { form.materie_prime.splice(i, 1); }
+
+// Aggiunge un'altra riga-lotto per la STESSA materia prima, subito sotto: così
+// un ingrediente può essere prelevato da più lotti (es. olio da 2 lotti diversi).
+function addLottoForMateria(i) {
+  const src = form.materie_prime[i];
+  form.materie_prime.splice(i + 1, 0, {
+    materia_prima_id: src.materia_prima_id,
+    lot_id: null,
+    source_type: null,
+    quantita_kg: null,
+  });
+}
+// Riga di "lotto aggiuntivo": stessa materia prima della riga precedente.
+function isLottoAggiuntivo(i) {
+  if (i === 0) return false;
+  const cur = form.materie_prime[i];
+  const prev = form.materie_prime[i - 1];
+  return !!cur.materia_prima_id && cur.materia_prima_id === prev.materia_prima_id;
+}
+function nomeMateria(id) {
+  return (props.materie ?? []).find(m => m.id === id)?.nome ?? '';
+}
 function addImballaggio()      { form.imballaggi.push(emptyImballaggio()); }
 function removeImballaggio(i)  { form.imballaggi.splice(i, 1); }
 function addDetergente()       { form.detergenti.push(emptyDetergente()); }
@@ -737,6 +763,8 @@ function submitSemi() {
 .balance-ok { font-size:0.82rem; font-weight:600; color:var(--ok); font-family:var(--font-mono); }
 .balance-negative { font-size:0.82rem; font-weight:600; color:var(--danger); font-family:var(--font-mono); }
 .balance-empty { font-size:0.82rem; color:var(--ink-3); }
+.lotto-aggiuntivo { font-size:0.82rem; color:var(--ink-3); font-style:normal; }
+.lotto-aggiuntivo em { color:var(--ink-3); font-style:italic; }
 .semi-info { display:flex; flex-direction:column; gap:0.5rem; }
 .semi-info-row { display:flex; gap:1rem; align-items:baseline; }
 .semi-label { font-size:0.82rem; font-weight:600; color:var(--ink-2); min-width:80px; }
