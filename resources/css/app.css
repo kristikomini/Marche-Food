@@ -9,12 +9,13 @@
    Every colour is named ONCE here and consumed via var(--token) everywhere.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* System font stack (matches the original pre-redesign look — Segoe UI on Windows).
+/* Inter (self-hosted variable font, imported in app.js) as the primary UI font,
+   falling back to the system stack (Segoe UI on Windows) if it fails to load.
    Headings intentionally use the same sans (no serif). `@theme static` forces
    emission since the app references `var(--font-*)` directly, not via a utility. */
 @theme static {
-    --font-sans: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-    --font-display: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+    --font-sans: 'Inter Variable', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-display: 'Inter Variable', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
     --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 }
 

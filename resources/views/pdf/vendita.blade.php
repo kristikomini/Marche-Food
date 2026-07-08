@@ -51,6 +51,21 @@
 
     $c = $vendita->cliente;
 
+    // Recipient (SPETT.LE) box — split the single `indirizzo` into name / street /
+    // city lines with the province in the bottom-right corner, matching the paper
+    // Fattura DdT. Parses the common Italian format "VIA … - CAP CITTÀ (PR)" and
+    // falls back to showing whatever is there when it doesn't match.
+    $rName   = $c?->ragione_sociale ?? '';
+    $rawAddr = trim((string) ($c?->indirizzo ?? ''));
+    $rProv   = '';
+    if (preg_match('/\(\s*([A-Za-z]{2})\s*\)\s*$/', $rawAddr, $mProv)) {
+        $rProv   = strtoupper($mProv[1]);
+        $rawAddr = trim(preg_replace('/\(\s*[A-Za-z]{2}\s*\)\s*$/', '', $rawAddr));
+    }
+    $addrParts = preg_split('/\s*[-–,]\s*/', $rawAddr, 2);
+    $rStreet   = $addrParts[0] ?? '';
+    $rCity     = $addrParts[1] ?? '';
+
     // Filler height so the item grid keeps its column rules running down the
     // page like the reference, regardless of how many lines there are.
     $fillPx = max(0, 300 - (count($righe) * 26));
@@ -70,8 +85,8 @@
   /* ---- top header ---- */
   table.top { width: 100%; border-collapse: collapse; }
   table.top > tbody > tr > td { vertical-align: top; padding: 0; }
-  .logo img { width: 122px; height: auto; }
-  .vendor { font-size: 8px; line-height: 1.35; padding: 2px 8px 0 24px; }
+  .logo img { width: 100px; height: auto; }
+  .vendor { font-size: 8px; line-height: 1.4; }
   .vendor b { font-size: 8.5px; }
   .oval {
     width: 46px; height: 32px; border: 1.4px solid #000; border-radius: 50%;
@@ -153,10 +168,10 @@
 {{-- ===== HEADER ===== --}}
 <table class="top">
   <tr>
-    <td class="logo" style="width:126px">
+    <td class="logo" style="width:104px">
       @if($logo)<img src="{{ $logo }}" alt="Marche International Food">@endif
     </td>
-    <td class="vendor">
+    <td class="vendor" style="padding: 32px 0 0 16px;">
       <b>Marche International Food S.r.l.</b><br>Via G. Rossini, 63 - 62029 Tolentino (MC)<br>
       C.F. e P.Iva 01891440438<br>MAIL info@marcheinternationalfood.com<br>PEC mifood@pec.it<br>
       TEL +39 0733 1715820 | CEL +39 340 9927059<br>marcheinternationalfood.com
@@ -167,8 +182,12 @@
     <td style="width:300px; padding-left:10px">
       <div class="recipient">
         <div class="sp">SPETT.LE</div>
-        <div class="r">{{ $c?->ragione_sociale ?? '' }}</div>
-        <div class="r">{{ $c?->indirizzo ?? '' }}</div>
+        <div class="r">{{ $rName }}</div>
+        @if($rStreet)<div class="r">{{ $rStreet }}</div>@endif
+        <table style="width:100%; border-collapse:collapse; margin-top:3px"><tr>
+          <td style="padding:0; font-size:11px; font-weight:bold; line-height:1.5">{{ $rCity }}</td>
+          <td class="prov" style="padding:0; text-align:right; vertical-align:bottom; white-space:nowrap">{{ $rProv }}</td>
+        </tr></table>
       </div>
     </td>
   </tr>

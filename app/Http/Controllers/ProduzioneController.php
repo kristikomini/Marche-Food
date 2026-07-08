@@ -494,7 +494,9 @@ class ProduzioneController extends Controller
         $invalid = array_diff($submittedIngredients, $recipeIngredients);
         if (!empty($invalid)) {
             $names = MateriaPrima::whereIn('id', $invalid)->pluck('nome')->implode(', ');
-            abort(422, "Ingredienti non presenti nella ricetta della scheda: {$names}.");
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'materie_prime' => "Ingredienti non presenti nella ricetta della scheda: {$names}.",
+            ]);
         }
     }
 
