@@ -173,7 +173,7 @@
 
       <div class="info-banner">
         <i class="pi pi-shield" />
-        <span>Sistema di tracciabilità alimentare conforme HACCP — Marche International Food S.r.l.</span>
+        <span>Sistema di tracciabilità alimentare HACCP — Marche International Food S.r.l.</span>
       </div>
     </div>
   </AppLayout>
