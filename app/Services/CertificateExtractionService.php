@@ -44,23 +44,23 @@ TXT;
 
         try {
             $response = Http::withHeaders([
-                'x-api-key'         => config('ai.anthropic.key'),
+                'x-api-key' => config('ai.anthropic.key'),
                 'anthropic-version' => config('ai.anthropic.version', '2023-06-01'),
-                'content-type'      => 'application/json',
-            ])->timeout(90)->post(rtrim((string) config('ai.anthropic.base'), '/') . '/v1/messages', [
-                'model'      => config('ai.anthropic.model'),
+                'content-type' => 'application/json',
+            ])->timeout(90)->post(rtrim((string) config('ai.anthropic.base'), '/').'/v1/messages', [
+                'model' => config('ai.anthropic.model'),
                 'max_tokens' => 300,
-                'messages'   => [[
-                    'role'    => 'user',
+                'messages' => [[
+                    'role' => 'user',
                     'content' => [$mediaBlock, ['type' => 'text', 'text' => self::PROMPT]],
                 ]],
             ]);
         } catch (\Throwable $e) {
-            return ['ok' => false, 'error' => 'Errore di connessione al servizio AI: ' . $e->getMessage()];
+            return ['ok' => false, 'error' => 'Errore di connessione al servizio AI: '.$e->getMessage()];
         }
 
         if (! $response->successful()) {
-            return ['ok' => false, 'error' => 'Il servizio AI ha risposto con un errore (HTTP ' . $response->status() . ').'];
+            return ['ok' => false, 'error' => 'Il servizio AI ha risposto con un errore (HTTP '.$response->status().').'];
         }
 
         $text = data_get($response->json(), 'content.0.text', '');

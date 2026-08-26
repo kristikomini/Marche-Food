@@ -9,6 +9,7 @@ use App\Models\MateriaPrima;
 use App\Models\ProduzioneMateriaPrima;
 use App\Models\VenditaRiga;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class AcquistoController extends Controller
@@ -46,7 +47,7 @@ class AcquistoController extends Controller
         return Inertia::render('Acquisti/Index', [
             'acquisti' => $acquisti,
             'fornitori' => $fornitori,
-            'filters'  => $request->only(['search', 'fornitore_id', 'da', 'a']),
+            'filters' => $request->only(['search', 'fornitore_id', 'da', 'a']),
         ]);
     }
 
@@ -67,12 +68,12 @@ class AcquistoController extends Controller
         $data = $this->validateRequest($request);
 
         $acquisto = Acquisto::create([
-            'fornitore_id'     => $data['fornitore_id'],
+            'fornitore_id' => $data['fornitore_id'],
             'numero_documento' => $data['numero_documento'],
-            'data_documento'   => $data['data_documento'],
-            'tipo_documento'   => $data['tipo_documento'],
-            'note'             => $data['note'] ?? null,
-            'is_conto_terzi'   => $data['is_conto_terzi'] ?? false,
+            'data_documento' => $data['data_documento'],
+            'tipo_documento' => $data['tipo_documento'],
+            'note' => $data['note'] ?? null,
+            'is_conto_terzi' => $data['is_conto_terzi'] ?? false,
         ]);
 
         foreach ($data['righe'] as $riga) {
@@ -110,12 +111,12 @@ class AcquistoController extends Controller
         $data = $this->validateRequest($request);
 
         // Determine which existing righe the user is removing
-        $existingIds   = $acquisto->righe()->pluck('id')->all();
-        $submittedIds  = collect($data['righe'])->pluck('id')->filter()->values()->all();
-        $toDeleteIds   = array_diff($existingIds, $submittedIds);
+        $existingIds = $acquisto->righe()->pluck('id')->all();
+        $submittedIds = collect($data['righe'])->pluck('id')->filter()->values()->all();
+        $toDeleteIds = array_diff($existingIds, $submittedIds);
 
         // GAP-T1: refuse deletion of lines that are already linked to a production run
-        if (!empty($toDeleteIds)) {
+        if (! empty($toDeleteIds)) {
             $linkedCount = $acquisto->righe()
                 ->whereIn('id', $toDeleteIds)
                 ->whereHas('produzioniMateriePrime')
@@ -128,18 +129,18 @@ class AcquistoController extends Controller
             }
         }
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($acquisto, $data, $toDeleteIds) {
+        DB::transaction(function () use ($acquisto, $data, $toDeleteIds) {
             $acquisto->update([
-                'fornitore_id'     => $data['fornitore_id'],
+                'fornitore_id' => $data['fornitore_id'],
                 'numero_documento' => $data['numero_documento'],
-                'data_documento'   => $data['data_documento'],
-                'tipo_documento'   => $data['tipo_documento'],
-                'note'             => $data['note'] ?? null,
-                'is_conto_terzi'   => $data['is_conto_terzi'] ?? false,
+                'data_documento' => $data['data_documento'],
+                'tipo_documento' => $data['tipo_documento'],
+                'note' => $data['note'] ?? null,
+                'is_conto_terzi' => $data['is_conto_terzi'] ?? false,
             ]);
 
             // Delete only rows that were removed and are safe to delete
-            if (!empty($toDeleteIds)) {
+            if (! empty($toDeleteIds)) {
                 $acquisto->righe()->whereIn('id', $toDeleteIds)->delete();
             }
 
@@ -188,25 +189,25 @@ class AcquistoController extends Controller
     private function validateRequest(Request $request): array
     {
         return $request->validate([
-            'fornitore_id'       => ['required', 'exists:fornitori,id'],
-            'numero_documento'   => ['required', 'string', 'max:50'],
-            'data_documento'     => ['required', 'date'],
-            'tipo_documento'     => ['required', 'in:DDT,Fattura,Bolla'],
-            'note'               => ['nullable', 'string'],
-            'is_conto_terzi'     => ['boolean'],
-            'righe'              => ['required', 'array', 'min:1'],
-            'righe.*.id'         => ['nullable', 'integer'],
+            'fornitore_id' => ['required', 'exists:fornitori,id'],
+            'numero_documento' => ['required', 'string', 'max:50'],
+            'data_documento' => ['required', 'date'],
+            'tipo_documento' => ['required', 'in:DDT,Fattura,Bolla'],
+            'note' => ['nullable', 'string'],
+            'is_conto_terzi' => ['boolean'],
+            'righe' => ['required', 'array', 'min:1'],
+            'righe.*.id' => ['nullable', 'integer'],
             'righe.*.materia_prima_id' => ['nullable', 'integer', 'exists:materie_prime,id'],
             'righe.*.nome_prodotto' => ['required', 'string', 'max:200'],
-            'righe.*.um'         => ['nullable', 'string', 'max:10'],
+            'righe.*.um' => ['nullable', 'string', 'max:10'],
             'righe.*.quantita_pz' => ['nullable', 'numeric', 'min:0'],
             'righe.*.quantita_kg' => ['required', 'numeric', 'min:0.001'],
-            'righe.*.lotto'      => ['nullable', 'string', 'max:100'],
+            'righe.*.lotto' => ['nullable', 'string', 'max:100'],
             'righe.*.lotto_esterno' => ['nullable', 'string', 'max:100'],
-            'righe.*.scadenza'          => ['nullable', 'date'],
-            'righe.*.data_in'           => ['required', 'date'],
-            'righe.*.data_out'          => ['nullable', 'date'],
-            'righe.*.nota_credito_ref'  => ['nullable', 'string', 'max:50'],
+            'righe.*.scadenza' => ['nullable', 'date'],
+            'righe.*.data_in' => ['required', 'date'],
+            'righe.*.data_out' => ['nullable', 'date'],
+            'righe.*.nota_credito_ref' => ['nullable', 'string', 'max:50'],
         ]);
     }
 
@@ -220,18 +221,18 @@ class AcquistoController extends Controller
     public function export()
     {
         $righe = AcquistoRiga::with(['acquisto.fornitore'])
-            ->whereHas('acquisto', fn($q) => $q->where('is_conto_terzi', false))
+            ->whereHas('acquisto', fn ($q) => $q->where('is_conto_terzi', false))
             ->orderBy('data_in', 'desc')
             ->get();
 
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="acquisti_' . now()->format('Ymd_His') . '.csv"',
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="acquisti_'.now()->format('Ymd_His').'.csv"',
         ];
 
         $callback = function () use ($righe) {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel
+            fwrite($handle, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel
             fputcsv($handle, ['Data Doc.', 'Fornitore', 'N° Documento', 'Prodotto', 'Lotto', 'Lotto Esterno', 'Q.tà (kg)', 'Scadenza', 'Data In', 'Data Out'], ';');
             foreach ($righe as $r) {
                 fputcsv($handle, [
@@ -250,6 +251,6 @@ class AcquistoController extends Controller
             fclose($handle);
         };
 
-        return response()->streamDownload($callback, 'acquisti_' . now()->format('Ymd_His') . '.csv', $headers);
+        return response()->streamDownload($callback, 'acquisti_'.now()->format('Ymd_His').'.csv', $headers);
     }
 }

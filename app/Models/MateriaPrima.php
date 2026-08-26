@@ -17,7 +17,7 @@ class MateriaPrima extends Model
     ];
 
     protected $casts = [
-        'allergeni'        => 'array',
+        'allergeni' => 'array',
         'allergeni_tracce' => 'array',
     ];
 

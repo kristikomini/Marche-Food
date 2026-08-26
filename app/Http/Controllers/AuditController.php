@@ -15,7 +15,7 @@ class AuditController extends Controller
     public function index(AuditService $audit)
     {
         return Inertia::render('Audit/Index', [
-            'log'      => $audit->changeLog(300),
+            'log' => $audit->changeLog(300),
             'attivita' => $audit->recentActivity(150)->all(),
         ]);
     }

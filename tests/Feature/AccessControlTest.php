@@ -23,8 +23,8 @@ class AccessControlTest extends TestCase
 
         // POST /fornitori is admin-only; operator must be redirected to /
         $this->actingAs($operator)
-             ->post('/fornitori', [])
-             ->assertRedirect('/');
+            ->post('/fornitori', [])
+            ->assertRedirect('/');
     }
 
     public function test_operator_cannot_delete_admin_records(): void
@@ -33,8 +33,8 @@ class AccessControlTest extends TestCase
 
         // DELETE on a non-existent id: middleware check runs before model lookup
         $this->actingAs($operator)
-             ->delete('/fornitori/999')
-             ->assertRedirect('/');
+            ->delete('/fornitori/999')
+            ->assertRedirect('/');
     }
 
     public function test_operator_can_access_shared_read_routes(): void

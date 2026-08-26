@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Schema;
  * run: N° confezioni per variante, lotti gas (catalogo completo Screen 2),
  * ciclo di lavoro (registrazioni + controllo), e test metal detector.
  */
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         // --- Catalogo lotti GAS (Screen 2, come imballaggi/detergenti) ---

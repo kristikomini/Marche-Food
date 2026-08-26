@@ -12,36 +12,34 @@ use Inertia\Inertia;
  */
 class MagazzinoController extends Controller
 {
-    public function __construct(private InventoryService $inventory)
-    {
-    }
+    public function __construct(private InventoryService $inventory) {}
 
     public function index(Request $request)
     {
         $onlyInStock = $request->boolean('solo_giacenza', true);
 
-        $acquisti     = $this->inventory->purchaseLotBalances($onlyInStock);
+        $acquisti = $this->inventory->purchaseLotBalances($onlyInStock);
         $semilavorati = $this->inventory->semilavoratoBalances($onlyInStock);
 
         return Inertia::render('Magazzino/Index', [
-            'acquisti'     => $acquisti,
+            'acquisti' => $acquisti,
             'semilavorati' => $semilavorati,
-            'summary'      => $this->inventory->summary(),
-            'filters'      => ['solo_giacenza' => $onlyInStock],
+            'summary' => $this->inventory->summary(),
+            'filters' => ['solo_giacenza' => $onlyInStock],
         ]);
     }
 
     public function export(Request $request)
     {
         $onlyInStock = $request->boolean('solo_giacenza', true);
-        $acquisti    = $this->inventory->purchaseLotBalances($onlyInStock);
-        $semi        = $this->inventory->semilavoratoBalances($onlyInStock);
+        $acquisti = $this->inventory->purchaseLotBalances($onlyInStock);
+        $semi = $this->inventory->semilavoratoBalances($onlyInStock);
 
-        $filename = 'giacenze_' . now()->format('Ymd_His') . '.csv';
+        $filename = 'giacenze_'.now()->format('Ymd_His').'.csv';
 
         $callback = function () use ($acquisti, $semi) {
             $h = fopen('php://output', 'w');
-            fputs($h, "\xEF\xBB\xBF");
+            fwrite($h, "\xEF\xBB\xBF");
             fputcsv($h, ['Tipo', 'Prodotto', 'Fornitore', 'Lotto', 'Ricevuto (kg)', 'Consumato (kg)', 'Venduto (kg)', 'Giacenza (kg)', 'Scadenza', 'Conto terzi'], ';');
             foreach ($acquisti as $r) {
                 fputcsv($h, [

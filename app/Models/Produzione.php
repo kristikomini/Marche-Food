@@ -22,7 +22,7 @@ class Produzione extends Model
     ];
 
     protected $casts = [
-        'data_produzione'     => 'date',
+        'data_produzione' => 'date',
         'quantita_prodotta_kg' => 'decimal:3',
     ];
 

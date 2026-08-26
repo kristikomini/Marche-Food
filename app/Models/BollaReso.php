@@ -17,7 +17,7 @@ class BollaReso extends Model
     ];
 
     protected $casts = [
-        'data_reso'   => 'date',
+        'data_reso' => 'date',
         'quantita_kg' => 'decimal:3',
         'quantita_pz' => 'decimal:3',
     ];

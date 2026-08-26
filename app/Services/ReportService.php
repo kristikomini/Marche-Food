@@ -17,7 +17,7 @@ class ReportService
      */
     public function normalizeRange(?string $da, ?string $a): array
     {
-        $to   = $a ? Carbon::parse($a) : Carbon::now();
+        $to = $a ? Carbon::parse($a) : Carbon::now();
         $from = $da ? Carbon::parse($da) : (clone $to)->subMonths(1)->startOfMonth();
 
         return ['da' => $from->toDateString(), 'a' => $to->toDateString()];
@@ -38,29 +38,29 @@ class ReportService
             ->where('acquisti.is_conto_terzi', false)
             ->sum('acquisti_righe.quantita_kg');
 
-        $vendite   = DB::table('vendite')->whereNull('deleted_at')->whereBetween('data_documento', [$da, $a]);
+        $vendite = DB::table('vendite')->whereNull('deleted_at')->whereBetween('data_documento', [$da, $a]);
         $venditeKg = DB::table('vendite_righe')
             ->join('vendite', 'vendite.id', '=', 'vendite_righe.vendita_id')
             ->whereNull('vendite.deleted_at')
             ->whereBetween('vendite.data_documento', [$da, $a])
             ->sum('vendite_righe.quantita_kg');
 
-        $produzioni   = DB::table('produzioni')->whereNull('deleted_at')->whereBetween('data_produzione', [$da, $a]);
+        $produzioni = DB::table('produzioni')->whereNull('deleted_at')->whereBetween('data_produzione', [$da, $a]);
         $produzioniKg = (clone $produzioni)->sum('quantita_prodotta_kg');
 
         return [
-            'da'    => $da,
-            'a'     => $a,
+            'da' => $da,
+            'a' => $a,
             'totali' => [
-                'acquisti_docs'  => (clone $acquisti)->count(),
-                'acquisti_kg'    => round((float) $acquistiKg, 3),
-                'vendite_docs'   => (clone $vendite)->count(),
-                'vendite_kg'     => round((float) $venditeKg, 3),
-                'produzioni'     => (clone $produzioni)->count(),
-                'produzioni_kg'  => round((float) $produzioniKg, 3),
+                'acquisti_docs' => (clone $acquisti)->count(),
+                'acquisti_kg' => round((float) $acquistiKg, 3),
+                'vendite_docs' => (clone $vendite)->count(),
+                'vendite_kg' => round((float) $venditeKg, 3),
+                'produzioni' => (clone $produzioni)->count(),
+                'produzioni_kg' => round((float) $produzioniKg, 3),
             ],
             'per_fornitore' => $this->perFornitore($da, $a),
-            'per_cliente'   => $this->perCliente($da, $a),
+            'per_cliente' => $this->perCliente($da, $a),
         ];
     }
 
@@ -105,7 +105,7 @@ class ReportService
      */
     public function scadenzeReport(int $entroGiorni = 30): array
     {
-        $oggi   = Carbon::now()->toDateString();
+        $oggi = Carbon::now()->toDateString();
         $limite = Carbon::now()->addDays($entroGiorni)->toDateString();
 
         $rows = DB::table('acquisti_righe')
@@ -127,6 +127,7 @@ class ReportService
 
         return $rows->map(function ($r) use ($oggi) {
             $r->stato = $r->scadenza < $oggi ? 'scaduto' : 'in_scadenza';
+
             return (array) $r;
         })->toArray();
     }

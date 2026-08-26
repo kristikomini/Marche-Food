@@ -13,13 +13,14 @@ class AcquistiTest extends TestCase
     use RefreshDatabase;
 
     private User $operator;
+
     private User $admin;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->operator = User::factory()->operator()->create();
-        $this->admin    = User::factory()->admin()->create();
+        $this->admin = User::factory()->admin()->create();
     }
 
     public function test_acquisti_index_is_accessible_to_operator(): void
@@ -44,21 +45,21 @@ class AcquistiTest extends TestCase
     {
         $fornitore = Fornitore::create([
             'ragione_sociale' => 'Test Fornitore',
-            'codice'          => 'F001',
-            'tipo'            => 'alimentare',
-            'attivo'          => true,
+            'codice' => 'F001',
+            'tipo' => 'alimentare',
+            'attivo' => true,
         ]);
 
         $acquisto = Acquisto::create([
-            'fornitore_id'     => $fornitore->id,
+            'fornitore_id' => $fornitore->id,
             'numero_documento' => 'DDT-001',
-            'data_documento'   => now()->toDateString(),
-            'tipo_documento'   => 'DDT',
+            'data_documento' => now()->toDateString(),
+            'tipo_documento' => 'DDT',
         ]);
 
         $this->actingAs($this->operator)
-             ->delete("/acquisti/{$acquisto->id}")
-             ->assertRedirect('/');
+            ->delete("/acquisti/{$acquisto->id}")
+            ->assertRedirect('/');
 
         $this->assertDatabaseHas('acquisti', ['id' => $acquisto->id]);
     }
@@ -67,21 +68,21 @@ class AcquistiTest extends TestCase
     {
         $fornitore = Fornitore::create([
             'ragione_sociale' => 'Test Fornitore',
-            'codice'          => 'F002',
-            'tipo'            => 'alimentare',
-            'attivo'          => true,
+            'codice' => 'F002',
+            'tipo' => 'alimentare',
+            'attivo' => true,
         ]);
 
         $acquisto = Acquisto::create([
-            'fornitore_id'     => $fornitore->id,
+            'fornitore_id' => $fornitore->id,
             'numero_documento' => 'DDT-002',
-            'data_documento'   => now()->toDateString(),
-            'tipo_documento'   => 'DDT',
+            'data_documento' => now()->toDateString(),
+            'tipo_documento' => 'DDT',
         ]);
 
         $this->actingAs($this->admin)
-             ->delete("/acquisti/{$acquisto->id}")
-             ->assertRedirect('/acquisti');
+            ->delete("/acquisti/{$acquisto->id}")
+            ->assertRedirect('/acquisti');
 
         $this->assertSoftDeleted('acquisti', ['id' => $acquisto->id]);
     }

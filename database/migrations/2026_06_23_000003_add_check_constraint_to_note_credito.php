@@ -3,7 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         // SQLite does not support ALTER TABLE ... ADD CONSTRAINT; only enforce on PostgreSQL

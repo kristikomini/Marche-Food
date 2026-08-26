@@ -27,7 +27,7 @@ class LottoDetergente extends Model
     ];
 
     protected $casts = [
-        'data_in'  => 'date',
+        'data_in' => 'date',
         'data_out' => 'date',
         'scadenza' => 'date',
         'quantita' => 'decimal:3',

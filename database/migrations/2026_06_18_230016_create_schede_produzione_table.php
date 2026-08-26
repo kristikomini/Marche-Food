@@ -1,10 +1,13 @@
-﻿<?php
+<?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         Schema::create('schede_produzione', function (Blueprint $table) {
             $table->id();
             $table->foreignId('prodotto_id')->constrained('prodotti');
@@ -18,5 +21,9 @@ return new class extends Migration {
             $table->unique(['prodotto_id', 'revisione']);
         });
     }
-    public function down(): void { Schema::dropIfExists('schede_produzione'); }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('schede_produzione');
+    }
 };

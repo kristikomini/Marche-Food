@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Vendita;
-use App\Models\Cliente;
 use App\Models\AcquistoRiga;
+use App\Models\Cliente;
 use App\Models\Prodotto;
+use App\Models\Vendita;
+use App\Models\VenditaRiga;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class VenditaController extends Controller
@@ -45,19 +47,19 @@ class VenditaController extends Controller
             ->get(['id', 'ragione_sociale', 'codice_cliente']);
 
         return Inertia::render('Vendite/Index', [
-            'vendite'  => $vendite,
-            'clienti'  => $clienti,
-            'filters'  => $request->only(['search', 'cliente_id', 'da', 'a', 'tipo_documento']),
+            'vendite' => $vendite,
+            'clienti' => $clienti,
+            'filters' => $request->only(['search', 'cliente_id', 'da', 'a', 'tipo_documento']),
         ]);
     }
 
     public function create()
     {
         return Inertia::render('Vendite/Form', [
-            'vendita'        => null,
-            'clienti'        => Cliente::where('attivo', true)->orderBy('ragione_sociale')->get(),
+            'vendita' => null,
+            'clienti' => Cliente::where('attivo', true)->orderBy('ragione_sociale')->get(),
             'acquisti_righe' => $this->acquistiRigheForVendita(),
-            'prodotti'       => $this->prodottiForVendita(),
+            'prodotti' => $this->prodottiForVendita(),
         ]);
     }
 
@@ -80,10 +82,10 @@ class VenditaController extends Controller
         $vendita->load('righe');
 
         return Inertia::render('Vendite/Form', [
-            'vendita'        => $vendita,
-            'clienti'        => Cliente::where('attivo', true)->orderBy('ragione_sociale')->get(),
+            'vendita' => $vendita,
+            'clienti' => Cliente::where('attivo', true)->orderBy('ragione_sociale')->get(),
             'acquisti_righe' => $this->acquistiRigheForVendita(),
-            'prodotti'       => $this->prodottiForVendita(),
+            'prodotti' => $this->prodottiForVendita(),
         ]);
     }
 
@@ -95,13 +97,13 @@ class VenditaController extends Controller
     {
         return Prodotto::with('varianti')->where('attivo', true)->orderBy('nome')->get(['id', 'nome'])
             ->flatMap(fn ($p) => $p->varianti->map(fn ($v) => [
-                'variante_id'      => $v->id,
-                'prodotto_id'      => $p->id,
-                'codice_prodotto'  => $v->codice_prodotto,
-                'nome'             => $p->nome,
+                'variante_id' => $v->id,
+                'prodotto_id' => $p->id,
+                'codice_prodotto' => $v->codice_prodotto,
+                'nome' => $p->nome,
                 'pezzatura_valore' => $v->pezzatura_valore,
-                'pezzatura_um'     => $v->pezzatura_um,
-                'pezzatura_label'  => $v->pezzatura_label,
+                'pezzatura_um' => $v->pezzatura_um,
+                'pezzatura_label' => $v->pezzatura_label,
             ]))
             ->values()->all();
     }
@@ -123,12 +125,12 @@ class VenditaController extends Controller
 
         $data = $this->validateRequest($request);
 
-        $existingIds  = $vendita->righe()->pluck('id')->all();
+        $existingIds = $vendita->righe()->pluck('id')->all();
         $submittedIds = collect($data['righe'])->pluck('id')->filter()->values()->all();
-        $toDeleteIds  = array_diff($existingIds, $submittedIds);
+        $toDeleteIds = array_diff($existingIds, $submittedIds);
 
         // GAP-T1: refuse deletion of lines that have bolle di reso linked to them
-        if (!empty($toDeleteIds)) {
+        if (! empty($toDeleteIds)) {
             $linkedCount = $vendita->righe()
                 ->whereIn('id', $toDeleteIds)
                 ->whereHas('bolleReso')
@@ -141,10 +143,10 @@ class VenditaController extends Controller
             }
         }
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($vendita, $data, $toDeleteIds) {
+        DB::transaction(function () use ($vendita, $data, $toDeleteIds) {
             $vendita->update($this->venditaAttributes($data));
 
-            if (!empty($toDeleteIds)) {
+            if (! empty($toDeleteIds)) {
                 $vendita->righe()->whereIn('id', $toDeleteIds)->delete();
             }
 
@@ -154,7 +156,7 @@ class VenditaController extends Controller
                 unset($rigaData['id']);
 
                 if ($id) {
-                    $riga = \App\Models\VenditaRiga::where('id', $id)->where('vendita_id', $vendita->id)->first();
+                    $riga = VenditaRiga::where('id', $id)->where('vendita_id', $vendita->id)->first();
                     if ($riga) {
                         $riga->update($rigaData);
                     }
@@ -184,18 +186,18 @@ class VenditaController extends Controller
 
     public function export()
     {
-        $righe = \App\Models\VenditaRiga::with(['vendita.cliente'])
+        $righe = VenditaRiga::with(['vendita.cliente'])
             ->orderByDesc('created_at')
             ->get();
 
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="vendite_' . now()->format('Ymd_His') . '.csv"',
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="vendite_'.now()->format('Ymd_His').'.csv"',
         ];
 
         $callback = function () use ($righe) {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF");
+            fwrite($handle, "\xEF\xBB\xBF");
             fputcsv($handle, ['Data Doc.', 'Cliente', 'N° Documento', 'Tipo', 'Cod. Art.', 'Prodotto', 'Lotto', 'Lotto Esterno', 'U.M.', 'Q.tà (kg)', 'Q.tà (pz)', 'Prezzo Unit.', 'SC.1%', 'SC.2%', 'IVA %', 'Importo Netto', 'Scadenza'], ';');
             foreach ($righe as $r) {
                 fputcsv($handle, [
@@ -221,22 +223,22 @@ class VenditaController extends Controller
             fclose($handle);
         };
 
-        return response()->streamDownload($callback, 'vendite_' . now()->format('Ymd_His') . '.csv', $headers);
+        return response()->streamDownload($callback, 'vendite_'.now()->format('Ymd_His').'.csv', $headers);
     }
 
     private function venditaAttributes(array $data): array
     {
         return [
-            'cliente_id'           => $data['cliente_id'],
-            'numero_documento'     => $data['numero_documento'],
-            'data_documento'       => $data['data_documento'],
-            'tipo_documento'       => $data['tipo_documento'],
+            'cliente_id' => $data['cliente_id'],
+            'numero_documento' => $data['numero_documento'],
+            'data_documento' => $data['data_documento'],
+            'tipo_documento' => $data['tipo_documento'],
             'condizioni_pagamento' => $data['condizioni_pagamento'] ?? null,
-            'causale_trasporto'    => $data['causale_trasporto'] ?? null,
-            'note'                 => $data['note'] ?? null,
-            'n_colli'              => $data['n_colli'] ?? null,
-            'peso_totale'          => $data['peso_totale'] ?? null,
-            'data_trasporto'       => $data['data_trasporto'] ?? null,
+            'causale_trasporto' => $data['causale_trasporto'] ?? null,
+            'note' => $data['note'] ?? null,
+            'n_colli' => $data['n_colli'] ?? null,
+            'peso_totale' => $data['peso_totale'] ?? null,
+            'data_trasporto' => $data['data_trasporto'] ?? null,
             'destinatario_diverso' => $data['destinatario_diverso'] ?? null,
         ];
     }
@@ -244,34 +246,34 @@ class VenditaController extends Controller
     private function validateRequest(Request $request): array
     {
         $data = $request->validate([
-            'cliente_id'           => ['required', 'exists:clienti,id'],
-            'numero_documento'     => ['required', 'string', 'max:50'],
-            'data_documento'       => ['required', 'date'],
-            'tipo_documento'       => ['required', 'in:DDT,FI,NC'],
+            'cliente_id' => ['required', 'exists:clienti,id'],
+            'numero_documento' => ['required', 'string', 'max:50'],
+            'data_documento' => ['required', 'date'],
+            'tipo_documento' => ['required', 'in:DDT,FI,NC'],
             'condizioni_pagamento' => ['nullable', 'string', 'max:200'],
-            'causale_trasporto'    => ['nullable', 'string', 'max:100'],
-            'note'                 => ['nullable', 'string'],
-            'n_colli'              => ['nullable', 'integer', 'min:0'],
-            'peso_totale'          => ['nullable', 'numeric', 'min:0'],
-            'data_trasporto'       => ['nullable', 'date'],
+            'causale_trasporto' => ['nullable', 'string', 'max:100'],
+            'note' => ['nullable', 'string'],
+            'n_colli' => ['nullable', 'integer', 'min:0'],
+            'peso_totale' => ['nullable', 'numeric', 'min:0'],
+            'data_trasporto' => ['nullable', 'date'],
             'destinatario_diverso' => ['nullable', 'string'],
-            'righe'              => ['required', 'array', 'min:1'],
-            'righe.*.id'         => ['nullable', 'integer'],
-            'righe.*.prodotto_id'          => ['nullable', 'integer', 'exists:prodotti,id'],
+            'righe' => ['required', 'array', 'min:1'],
+            'righe.*.id' => ['nullable', 'integer'],
+            'righe.*.prodotto_id' => ['nullable', 'integer', 'exists:prodotti,id'],
             'righe.*.prodotto_variante_id' => ['nullable', 'integer', 'exists:prodotto_varianti,id'],
             'righe.*.codice_articolo' => ['nullable', 'string', 'max:50'],
             'righe.*.nome_prodotto' => ['required', 'string', 'max:200'],
-            'righe.*.pezzatura_gr'  => ['nullable', 'numeric', 'min:0'],
-            'righe.*.um'         => ['nullable', 'string', 'max:10'],
+            'righe.*.pezzatura_gr' => ['nullable', 'numeric', 'min:0'],
+            'righe.*.um' => ['nullable', 'string', 'max:10'],
             'righe.*.quantita_pz' => ['nullable', 'numeric', 'min:0'],
             'righe.*.quantita_kg' => ['required', 'numeric', 'min:0.001'],
             'righe.*.prezzo_unitario' => ['nullable', 'numeric', 'min:0'],
-            'righe.*.sconto_1'        => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'righe.*.sconto_2'        => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'righe.*.aliquota_iva'    => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'righe.*.lotto'           => ['nullable', 'string', 'max:100'],
-            'righe.*.lotto_esterno'   => ['nullable', 'string', 'max:100'],
-            'righe.*.scadenza'        => ['nullable', 'date'],
+            'righe.*.sconto_1' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'righe.*.sconto_2' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'righe.*.aliquota_iva' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'righe.*.lotto' => ['nullable', 'string', 'max:100'],
+            'righe.*.lotto_esterno' => ['nullable', 'string', 'max:100'],
+            'righe.*.scadenza' => ['nullable', 'date'],
             'righe.*.acquisto_riga_id' => ['nullable', 'integer', 'exists:acquisti_righe,id'],
         ]);
 
@@ -291,10 +293,11 @@ class VenditaController extends Controller
 
         if ($prezzo === null || $prezzo === '') {
             $riga['importo_netto'] = null;
+
             return $riga;
         }
 
-        $qta = (!empty($riga['quantita_pz']) && (float) $riga['quantita_pz'] > 0)
+        $qta = (! empty($riga['quantita_pz']) && (float) $riga['quantita_pz'] > 0)
             ? (float) $riga['quantita_pz']
             : (float) ($riga['quantita_kg'] ?? 0);
 

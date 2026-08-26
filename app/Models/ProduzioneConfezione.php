@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProduzioneConfezione extends Model
 {
     protected $table = 'produzioni_confezioni';
+
     public $timestamps = false;
 
     protected $fillable = [

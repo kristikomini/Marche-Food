@@ -22,9 +22,9 @@ class SecurityHeaders
     {
         return [
             'X-Content-Type-Options' => 'nosniff',
-            'X-Frame-Options'        => 'SAMEORIGIN',
-            'Referrer-Policy'        => 'strict-origin-when-cross-origin',
-            'X-XSS-Protection'       => '0', // modern browsers: disable legacy auditor
+            'X-Frame-Options' => 'SAMEORIGIN',
+            'Referrer-Policy' => 'strict-origin-when-cross-origin',
+            'X-XSS-Protection' => '0', // modern browsers: disable legacy auditor
         ];
     }
 

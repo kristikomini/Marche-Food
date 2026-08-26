@@ -21,8 +21,8 @@ class InventoryService
      * Balance per purchase lot.
      * balance = received − consumed in productions − sold directly.
      *
-     * @return Collection<int,\App\Models\AcquistoRiga> each row gains
-     *         consumato_kg, venduto_kg, balance_kg, is_conto_terzi.
+     * @return Collection<int,AcquistoRiga> each row gains
+     *                                      consumato_kg, venduto_kg, balance_kg, is_conto_terzi.
      */
     public function purchaseLotBalances(bool $onlyInStock = false): Collection
     {
@@ -48,10 +48,11 @@ class InventoryService
                 'lotto', 'lotto_esterno', 'scadenza', 'data_in', 'data_out',
             ])
             ->map(function ($r) use ($consumed, $sold) {
-                $r->consumato_kg   = round((float) ($consumed[$r->id] ?? 0), 3);
-                $r->venduto_kg     = round((float) ($sold[$r->id] ?? 0), 3);
-                $r->balance_kg     = round((float) $r->quantita_kg - $r->consumato_kg - $r->venduto_kg, 3);
+                $r->consumato_kg = round((float) ($consumed[$r->id] ?? 0), 3);
+                $r->venduto_kg = round((float) ($sold[$r->id] ?? 0), 3);
+                $r->balance_kg = round((float) $r->quantita_kg - $r->consumato_kg - $r->venduto_kg, 3);
                 $r->is_conto_terzi = (bool) ($r->acquisto->is_conto_terzi ?? false);
+
                 return $r;
             });
 
@@ -66,7 +67,7 @@ class InventoryService
      * Balance per semi-finished (internal) lot.
      * balance = produced − consumed in downstream productions.
      *
-     * @return Collection<int,\App\Models\LottoSemilavorato>
+     * @return Collection<int,LottoSemilavorato>
      */
     public function semilavoratoBalances(bool $onlyInStock = false): Collection
     {
@@ -83,7 +84,8 @@ class InventoryService
             ->get(['id', 'produzione_id', 'lotto', 'nome_prodotto', 'quantita_kg', 'data_produzione'])
             ->map(function ($r) use ($consumed) {
                 $r->consumato_kg = round((float) ($consumed[$r->id] ?? 0), 3);
-                $r->balance_kg   = round((float) $r->quantita_kg - $r->consumato_kg, 3);
+                $r->balance_kg = round((float) $r->quantita_kg - $r->consumato_kg, 3);
+
                 return $r;
             });
 
@@ -105,9 +107,9 @@ class InventoryService
         $sem = $this->semilavoratoBalances(true);
 
         return [
-            'lotti_acquisto'           => $pur->count(),
-            'kg_giacenza_acquisto'     => round((float) $pur->sum('balance_kg'), 3),
-            'lotti_semilavorato'       => $sem->count(),
+            'lotti_acquisto' => $pur->count(),
+            'kg_giacenza_acquisto' => round((float) $pur->sum('balance_kg'), 3),
+            'lotti_semilavorato' => $sem->count(),
             'kg_giacenza_semilavorato' => round((float) $sem->sum('balance_kg'), 3),
         ];
     }

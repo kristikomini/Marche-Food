@@ -24,9 +24,13 @@ class CestinoTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Acquisto $acquisto;
+
     private AcquistoRiga $riga;
+
     private SchedaProduzione $scheda;
+
     private MateriaPrima $mp;
 
     protected function setUp(): void
@@ -35,8 +39,8 @@ class CestinoTest extends TestCase
         $this->admin = User::factory()->admin()->create();
 
         $fornitore = Fornitore::create(['ragione_sociale' => 'Pesca', 'tipo' => 'alimentare']);
-        $prodotto  = Prodotto::create(['nome' => 'Tonno', 'attivo' => true]);
-        $this->mp  = MateriaPrima::create(['nome' => 'Tonno fresco']);
+        $prodotto = Prodotto::create(['nome' => 'Tonno', 'attivo' => true]);
+        $this->mp = MateriaPrima::create(['nome' => 'Tonno fresco']);
         $this->acquisto = Acquisto::create(['fornitore_id' => $fornitore->id, 'numero_documento' => 'D1', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
         $this->riga = AcquistoRiga::create(['acquisto_id' => $this->acquisto->id, 'nome_prodotto' => 'Tonno fresco', 'quantita_kg' => 100, 'lotto' => 'L100', 'data_in' => '2026-06-01']);
         $this->scheda = SchedaProduzione::create(['prodotto_id' => $prodotto->id, 'modello' => 'M1', 'revisione' => 0, 'data_revisione' => '2026-06-01', 'attiva' => true]);
@@ -46,14 +50,14 @@ class CestinoTest extends TestCase
     private function produci(string $lotto, float $qty): Produzione
     {
         $this->actingAs($this->admin)->post('/produzioni', [
-            'scheda_id'        => $this->scheda->id,
+            'scheda_id' => $this->scheda->id,
             'lotto_produzione' => $lotto,
-            'data_produzione'  => '2026-06-10',
-            'materie_prime'    => [[
+            'data_produzione' => '2026-06-10',
+            'materie_prime' => [[
                 'materia_prima_id' => $this->mp->id,
-                'source_type'      => 'acquisto',
+                'source_type' => 'acquisto',
                 'acquisto_riga_id' => $this->riga->id,
-                'quantita_kg'      => $qty,
+                'quantita_kg' => $qty,
             ]],
         ])->assertRedirect('/produzioni');
 

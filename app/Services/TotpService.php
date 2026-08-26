@@ -33,6 +33,7 @@ class TotpService
     public function codeAt(string $base32Secret, int $timestamp, int $digits = 6, int $period = 30): string
     {
         $counter = intdiv($timestamp, $period);
+
         return $this->hotp($this->base32Decode($base32Secret), $counter, $digits);
     }
 
@@ -42,7 +43,7 @@ class TotpService
     public function verify(string $base32Secret, string $code, int $window = 1, ?int $timestamp = null, int $digits = 6, int $period = 30): bool
     {
         $code = preg_replace('/\s+/', '', $code);
-        if (! preg_match('/^\d{' . $digits . '}$/', (string) $code)) {
+        if (! preg_match('/^\d{'.$digits.'}$/', (string) $code)) {
             return false;
         }
         $timestamp ??= time();
@@ -53,13 +54,14 @@ class TotpService
                 return true;
             }
         }
+
         return false;
     }
 
     /** HOTP for a binary key + counter. */
     public function hotp(string $binaryKey, int $counter, int $digits = 6): string
     {
-        $binCounter = pack('N*', 0) . pack('N*', $counter); // 8-byte big-endian
+        $binCounter = pack('N*', 0).pack('N*', $counter); // 8-byte big-endian
         $hash = hash_hmac('sha1', $binCounter, $binaryKey, true);
 
         $offset = ord($hash[strlen($hash) - 1]) & 0x0F;
@@ -69,6 +71,7 @@ class TotpService
             | (ord($hash[$offset + 3]) & 0xFF);
 
         $modulo = 10 ** $digits;
+
         return str_pad((string) ($value % $modulo), $digits, '0', STR_PAD_LEFT);
     }
 
@@ -85,6 +88,7 @@ class TotpService
         foreach (str_split($binary, 5) as $chunk) {
             $out .= self::BASE32[bindec(str_pad($chunk, 5, '0', STR_PAD_RIGHT))];
         }
+
         return $out;
     }
 
@@ -108,6 +112,7 @@ class TotpService
                 $out .= chr(bindec($byte));
             }
         }
+
         return $out;
     }
 }

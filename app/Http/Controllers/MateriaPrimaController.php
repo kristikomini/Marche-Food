@@ -20,23 +20,23 @@ class MateriaPrimaController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('nome', 'ilike', "%{$search}%")
-                  ->orWhere('codice', 'like', "%{$search}%");
+                    ->orWhere('codice', 'like', "%{$search}%");
             });
         }
 
         $materie = $query->orderBy('nome')->paginate(25)->withQueryString();
 
         return Inertia::render('MateriePrime/Index', [
-            'materie'          => $materie,
-            'filters'          => $request->only(['search']),
-            'allergeniLabels'  => AllergenService::EU_ALLERGENS,
+            'materie' => $materie,
+            'filters' => $request->only(['search']),
+            'allergeniLabels' => AllergenService::EU_ALLERGENS,
         ]);
     }
 
     public function create()
     {
         return Inertia::render('MateriePrime/Form', [
-            'materia'          => null,
+            'materia' => null,
             'allergeniOptions' => AllergenService::options(),
         ]);
     }
@@ -64,13 +64,13 @@ class MateriaPrimaController extends Controller
             ->orderByDesc('id')
             ->get()
             ->map(fn ($p) => [
-                'id'                   => $p->id,
-                'lotto_produzione'     => $p->lotto_produzione,
-                'data_produzione'      => optional($p->data_produzione)->toDateString(),
-                'prodotto'             => $p->scheda?->prodotto?->nome,
-                'codice_prodotto'      => $p->scheda?->prodotto?->varianti->pluck('codice_prodotto')->filter()->implode(', '),
+                'id' => $p->id,
+                'lotto_produzione' => $p->lotto_produzione,
+                'data_produzione' => optional($p->data_produzione)->toDateString(),
+                'prodotto' => $p->scheda?->prodotto?->nome,
+                'codice_prodotto' => $p->scheda?->prodotto?->varianti->pluck('codice_prodotto')->filter()->implode(', '),
                 'quantita_prodotta_kg' => $p->quantita_prodotta_kg,
-                'qta_materia_kg'       => $p->qta_materia_kg,
+                'qta_materia_kg' => $p->qta_materia_kg,
             ]);
 
         // 2) Prodotti che utilizzano questa materia prima (ricette + destinazione).
@@ -79,31 +79,31 @@ class MateriaPrimaController extends Controller
         $prodotti = Prodotto::query()
             ->where(function ($q) use ($id, $daDestinazione) {
                 $q->whereHas('schede.ricette', fn ($r) => $r->where('materia_prima_id', $id))
-                  ->orWhereIn('id', $daDestinazione);
+                    ->orWhereIn('id', $daDestinazione);
             })
             ->with('varianti')
             ->orderBy('nome')
             ->get(['id', 'nome', 'attivo'])
             ->map(fn ($p) => [
-                'id'              => $p->id,
+                'id' => $p->id,
                 'codice_prodotto' => $p->varianti->pluck('codice_prodotto')->filter()->implode(', '),
-                'nome'            => $p->nome,
-                'attivo'          => (bool) $p->attivo,
-                'in_ricetta'      => $p->schede()->whereHas('ricette', fn ($r) => $r->where('materia_prima_id', $id))->exists(),
+                'nome' => $p->nome,
+                'attivo' => (bool) $p->attivo,
+                'in_ricetta' => $p->schede()->whereHas('ricette', fn ($r) => $r->where('materia_prima_id', $id))->exists(),
                 'in_destinazione' => $daDestinazione->contains($p->id),
             ]);
 
         return Inertia::render('MateriePrime/Show', [
             'materia' => [
-                'id'        => $materiePrime->id,
-                'codice'    => $materiePrime->codice,
-                'nome'      => $materiePrime->nome,
+                'id' => $materiePrime->id,
+                'codice' => $materiePrime->codice,
+                'nome' => $materiePrime->nome,
                 'allergeni' => $materiePrime->allergeni ?? [],
                 'allergeni_tracce' => $materiePrime->allergeni_tracce ?? [],
             ],
             'allergeniLabels' => AllergenService::EU_ALLERGENS,
             'lottiProduzione' => $lottiProduzione,
-            'prodotti'        => $prodotti,
+            'prodotti' => $prodotti,
         ]);
     }
 
@@ -117,7 +117,7 @@ class MateriaPrimaController extends Controller
     public function edit(MateriaPrima $materiePrime)
     {
         return Inertia::render('MateriePrime/Form', [
-            'materia'          => $materiePrime,
+            'materia' => $materiePrime,
             'allergeniOptions' => AllergenService::options(),
         ]);
     }
@@ -141,10 +141,10 @@ class MateriaPrimaController extends Controller
         return $request->validate([
             'codice' => ['nullable', 'integer',
                 Rule::unique('materie_prime', 'codice')->ignore($ignoreId)],
-            'nome'   => ['required', 'string', 'max:200'],
-            'allergeni'          => ['nullable', 'array'],
-            'allergeni.*'        => ['string', Rule::in(array_keys(AllergenService::EU_ALLERGENS))],
-            'allergeni_tracce'   => ['nullable', 'array'],
+            'nome' => ['required', 'string', 'max:200'],
+            'allergeni' => ['nullable', 'array'],
+            'allergeni.*' => ['string', Rule::in(array_keys(AllergenService::EU_ALLERGENS))],
+            'allergeni_tracce' => ['nullable', 'array'],
             'allergeni_tracce.*' => ['string', Rule::in(array_keys(AllergenService::EU_ALLERGENS))],
         ]);
     }

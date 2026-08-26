@@ -26,7 +26,7 @@ class LottoImballaggioPrimario extends Model
     ];
 
     protected $casts = [
-        'data_in'  => 'date',
+        'data_in' => 'date',
         'data_out' => 'date',
         'quantita' => 'decimal:3',
     ];

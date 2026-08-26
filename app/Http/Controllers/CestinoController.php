@@ -23,14 +23,14 @@ class CestinoController extends Controller
      * @var array<string,array{model:class-string,label:string,titolo:string}>
      */
     private array $tipi = [
-        'acquisti'     => ['model' => Acquisto::class,                 'label' => 'numero_documento', 'titolo' => 'Acquisto'],
-        'vendite'      => ['model' => Vendita::class,                  'label' => 'numero_documento', 'titolo' => 'Vendita'],
-        'produzioni'   => ['model' => Produzione::class,               'label' => 'lotto_produzione', 'titolo' => 'Produzione'],
-        'bolle-reso'   => ['model' => BollaReso::class,                'label' => 'numero_bolla',     'titolo' => 'Bolla di Reso'],
+        'acquisti' => ['model' => Acquisto::class,                 'label' => 'numero_documento', 'titolo' => 'Acquisto'],
+        'vendite' => ['model' => Vendita::class,                  'label' => 'numero_documento', 'titolo' => 'Vendita'],
+        'produzioni' => ['model' => Produzione::class,               'label' => 'lotto_produzione', 'titolo' => 'Produzione'],
+        'bolle-reso' => ['model' => BollaReso::class,                'label' => 'numero_bolla',     'titolo' => 'Bolla di Reso'],
         'note-credito' => ['model' => NotaCredito::class,              'label' => 'numero_documento', 'titolo' => 'Nota di Credito'],
-        'imballaggi'   => ['model' => LottoImballaggioPrimario::class, 'label' => 'componente',       'titolo' => 'Lotto Imballaggio'],
-        'detergenti'   => ['model' => LottoDetergente::class,          'label' => 'componente',       'titolo' => 'Lotto Detergente'],
-        'gas'          => ['model' => LottoGas::class,                 'label' => 'componente',       'titolo' => 'Lotto Gas'],
+        'imballaggi' => ['model' => LottoImballaggioPrimario::class, 'label' => 'componente',       'titolo' => 'Lotto Imballaggio'],
+        'detergenti' => ['model' => LottoDetergente::class,          'label' => 'componente',       'titolo' => 'Lotto Detergente'],
+        'gas' => ['model' => LottoGas::class,                 'label' => 'componente',       'titolo' => 'Lotto Gas'],
     ];
 
     public function index()
@@ -47,10 +47,10 @@ class CestinoController extends Controller
 
             foreach ($rows as $r) {
                 $items->push([
-                    'tipo'       => $tipo,
-                    'titolo'     => $meta['titolo'],
-                    'id'         => $r->id,
-                    'etichetta'  => $r->{$meta['label']},
+                    'tipo' => $tipo,
+                    'titolo' => $meta['titolo'],
+                    'id' => $r->id,
+                    'etichetta' => $r->{$meta['label']},
                     'deleted_at' => $r->deleted_at,
                 ]);
             }
@@ -63,17 +63,17 @@ class CestinoController extends Controller
 
     public function restore(string $tipo, int $id)
     {
-        $meta  = $this->resolve($tipo);
+        $meta = $this->resolve($tipo);
         $model = $meta['model'];
 
         $model::onlyTrashed()->findOrFail($id)->restore();
 
-        return back()->with('success', $meta['titolo'] . ' ripristinato dal cestino.');
+        return back()->with('success', $meta['titolo'].' ripristinato dal cestino.');
     }
 
     public function forceDelete(string $tipo, int $id)
     {
-        $meta  = $this->resolve($tipo);
+        $meta = $this->resolve($tipo);
         $model = $meta['model'];
 
         $record = $model::onlyTrashed()->findOrFail($id);
@@ -84,7 +84,7 @@ class CestinoController extends Controller
             return back()->with('error', 'Impossibile eliminare definitivamente: il record è ancora collegato ad altri dati. Elimina prima i documenti collegati.');
         }
 
-        return back()->with('success', $meta['titolo'] . ' eliminato definitivamente.');
+        return back()->with('success', $meta['titolo'].' eliminato definitivamente.');
     }
 
     /**

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class SchedaImballaggio extends Model
 {
     protected $table = 'schede_imballaggi';
+
     public $timestamps = false;
 
     protected $fillable = [

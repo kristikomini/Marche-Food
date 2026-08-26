@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class SchedaGas extends Model
 {
     protected $table = 'schede_gas';
+
     public $timestamps = false;
 
     protected $fillable = [

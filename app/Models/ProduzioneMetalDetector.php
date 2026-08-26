@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProduzioneMetalDetector extends Model
 {
     protected $table = 'produzioni_metal_detector';
+
     public $timestamps = false;
 
     protected $fillable = [

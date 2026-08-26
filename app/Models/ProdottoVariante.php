@@ -21,8 +21,8 @@ class ProdottoVariante extends Model
 
     protected $casts = [
         'pezzatura_valore' => 'decimal:3',
-        'attiva'           => 'boolean',
-        'ordine'           => 'integer',
+        'attiva' => 'boolean',
+        'ordine' => 'integer',
     ];
 
     public function prodotto()
@@ -43,6 +43,6 @@ class ProdottoVariante extends Model
         }
         $val = rtrim(rtrim(number_format((float) $this->pezzatura_valore, 3, ',', '.'), '0'), ',');
 
-        return trim(($this->pezzatura_um ? $this->pezzatura_um . ' ' : '') . $val);
+        return trim(($this->pezzatura_um ? $this->pezzatura_um.' ' : '').$val);
     }
 }
