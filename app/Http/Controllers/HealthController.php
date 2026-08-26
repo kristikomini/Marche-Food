@@ -31,7 +31,7 @@ class HealthController extends Controller
         return response()->json([
             'status' => $healthy ? 'ok' : 'degraded',
             'checks' => $checks,
-            'time'   => now()->toIso8601String(),
+            'time' => now()->toIso8601String(),
         ], $healthy ? 200 : 503);
     }
 }

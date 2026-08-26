@@ -6,7 +6,6 @@ use App\Models\Acquisto;
 use App\Models\AcquistoRiga;
 use App\Models\Cliente;
 use App\Models\Fornitore;
-use App\Models\MateriaPrima;
 use App\Models\Prodotto;
 use App\Models\Produzione;
 use App\Models\SchedaProduzione;
@@ -35,7 +34,7 @@ class TracciabilitaHttpTest extends TestCase
     {
         $forn = Fornitore::create(['ragione_sociale' => 'Pesca', 'tipo' => 'alimentare']);
         $prod = Prodotto::create(['nome' => 'Tonno', 'attivo' => true]);
-        $acq  = Acquisto::create(['fornitore_id' => $forn->id, 'numero_documento' => 'D1', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
+        $acq = Acquisto::create(['fornitore_id' => $forn->id, 'numero_documento' => 'D1', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
         AcquistoRiga::create(['acquisto_id' => $acq->id, 'nome_prodotto' => 'Tonno', 'quantita_kg' => 50, 'lotto' => 'TRACE-1', 'data_in' => '2026-06-01']);
 
         $scheda = SchedaProduzione::create(['prodotto_id' => $prod->id, 'modello' => 'M1', 'revisione' => 0, 'data_revisione' => '2026-06-01', 'attiva' => true]);

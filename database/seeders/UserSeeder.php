@@ -13,18 +13,18 @@ class UserSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'admin@marche.it'],
             [
-                'name'     => 'Amministratore',
+                'name' => 'Amministratore',
                 'password' => Hash::make('Marche2024!'),
-                'role'     => 'admin',
+                'role' => 'admin',
             ]
         );
 
         User::firstOrCreate(
             ['email' => 'operatore@marche.it'],
             [
-                'name'     => 'Operatore',
+                'name' => 'Operatore',
                 'password' => Hash::make('Marche2024!'),
-                'role'     => 'operator',
+                'role' => 'operator',
             ]
         );
     }

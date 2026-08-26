@@ -30,13 +30,13 @@ class InventoryServiceTest extends TestCase
 
         $forn = Fornitore::create(['ragione_sociale' => 'F', 'tipo' => 'alimentare']);
         $prod = Prodotto::create(['nome' => 'Tonno', 'attivo' => true]);
-        $mp   = MateriaPrima::create(['nome' => 'Tonno']);
-        $acq  = Acquisto::create(['fornitore_id' => $forn->id, 'numero_documento' => 'D1', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
+        $mp = MateriaPrima::create(['nome' => 'Tonno']);
+        $acq = Acquisto::create(['fornitore_id' => $forn->id, 'numero_documento' => 'D1', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
         $riga = AcquistoRiga::create(['acquisto_id' => $acq->id, 'nome_prodotto' => 'Tonno', 'quantita_kg' => 100, 'lotto' => 'L1', 'data_in' => '2026-06-01']);
         $scheda = SchedaProduzione::create(['prodotto_id' => $prod->id, 'modello' => 'M1', 'revisione' => 0, 'data_revisione' => '2026-06-01', 'attiva' => true]);
         $scheda->ricette()->create(['materia_prima_id' => $mp->id, 'ordine' => 1]);
 
-        (new ProduzioneController())->store(Request::create('/produzioni', 'POST', [
+        (new ProduzioneController)->store(Request::create('/produzioni', 'POST', [
             'scheda_id' => $scheda->id, 'lotto_produzione' => 'LP1', 'data_produzione' => '2026-06-10',
             'materie_prime' => [['materia_prima_id' => $mp->id, 'source_type' => 'acquisto', 'acquisto_riga_id' => $riga->id, 'quantita_kg' => 60]],
         ]));
@@ -45,7 +45,7 @@ class InventoryServiceTest extends TestCase
         $vend = Vendita::create(['cliente_id' => $cli->id, 'numero_documento' => 'V1', 'data_documento' => '2026-06-12', 'tipo_documento' => 'DDT']);
         VenditaRiga::create(['vendita_id' => $vend->id, 'nome_prodotto' => 'Tonno', 'quantita_kg' => 10, 'lotto' => 'L1', 'acquisto_riga_id' => $riga->id]);
 
-        $inv = new InventoryService();
+        $inv = new InventoryService;
         $bal = $inv->purchaseLotBalances(false)->firstWhere('id', $riga->id);
 
         $this->assertEqualsWithDelta(60, $bal->consumato_kg, 0.001);
@@ -59,12 +59,12 @@ class InventoryServiceTest extends TestCase
 
         $forn = Fornitore::create(['ragione_sociale' => 'F', 'tipo' => 'alimentare']);
         $prod = Prodotto::create(['nome' => 'Tonno', 'attivo' => true]);
-        $mp   = MateriaPrima::create(['nome' => 'Tonno']);
-        $acq  = Acquisto::create(['fornitore_id' => $forn->id, 'numero_documento' => 'D1', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
+        $mp = MateriaPrima::create(['nome' => 'Tonno']);
+        $acq = Acquisto::create(['fornitore_id' => $forn->id, 'numero_documento' => 'D1', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
         $riga = AcquistoRiga::create(['acquisto_id' => $acq->id, 'nome_prodotto' => 'Tonno', 'quantita_kg' => 100, 'lotto' => 'L1', 'data_in' => '2026-06-01']);
         $scheda = SchedaProduzione::create(['prodotto_id' => $prod->id, 'modello' => 'M1', 'revisione' => 0, 'data_revisione' => '2026-06-01', 'attiva' => true]);
         $scheda->ricette()->create(['materia_prima_id' => $mp->id, 'ordine' => 1]);
-        $ctrl = new ProduzioneController();
+        $ctrl = new ProduzioneController;
 
         $ctrl->store(Request::create('/produzioni', 'POST', [
             'scheda_id' => $scheda->id, 'lotto_produzione' => 'LP1', 'data_produzione' => '2026-06-10',
@@ -78,7 +78,7 @@ class InventoryServiceTest extends TestCase
             'materie_prime' => [['materia_prima_id' => $mp->id, 'source_type' => 'interno', 'semilavorato_id' => $semi->id, 'quantita_kg' => 20]],
         ]));
 
-        $inv  = new InventoryService();
+        $inv = new InventoryService;
         $sbal = $inv->semilavoratoBalances(false)->firstWhere('id', $semi->id);
         $this->assertEqualsWithDelta(10, $sbal->balance_kg, 0.001);
 

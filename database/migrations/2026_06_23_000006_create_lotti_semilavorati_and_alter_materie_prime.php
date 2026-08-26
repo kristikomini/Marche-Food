@@ -5,7 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         // 1. Create target table first (FK source must reference existing table)
@@ -32,9 +33,9 @@ return new class extends Migration {
         // 3. Add the semilavorato FK column
         Schema::table('produzioni_materie_prime', function (Blueprint $table) {
             $table->foreignId('semilavorato_id')
-                  ->nullable()
-                  ->constrained('lotti_semilavorati')
-                  ->nullOnDelete();
+                ->nullable()
+                ->constrained('lotti_semilavorati')
+                ->nullOnDelete();
         });
 
         // 4. XOR constraint: exactly one of the two sources must be present (PostgreSQL only)

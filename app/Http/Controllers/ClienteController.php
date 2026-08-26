@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Support\SimpleXlsxWriter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class ClienteController extends Controller
@@ -16,7 +18,7 @@ class ClienteController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('ragione_sociale', 'ilike', "%{$search}%")
-                  ->orWhere('codice_cliente', 'ilike', "%{$search}%");
+                    ->orWhere('codice_cliente', 'ilike', "%{$search}%");
             });
         }
 
@@ -48,7 +50,7 @@ class ClienteController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('ragione_sociale', 'ilike', "%{$search}%")
-                  ->orWhere('codice_cliente', 'ilike', "%{$search}%");
+                    ->orWhere('codice_cliente', 'ilike', "%{$search}%");
             });
         }
         if ($request->input('solo_attivi')) {
@@ -80,13 +82,13 @@ class ClienteController extends Controller
             $c->note,
         ])->all();
 
-        $base = 'clienti_' . now()->format('Ymd_His');
+        $base = 'clienti_'.now()->format('Ymd_His');
 
         if ($request->input('format') === 'csv') {
             return $this->downloadCsv("{$base}.csv", $headers, $rows);
         }
 
-        return \App\Support\SimpleXlsxWriter::make('Clienti')
+        return SimpleXlsxWriter::make('Clienti')
             ->headers($headers)->rows($rows)->download("{$base}.xlsx");
     }
 
@@ -104,19 +106,19 @@ class ClienteController extends Controller
             ->get();
 
         $riepilogo = [
-            'n_documenti'  => $vendite->count(),
-            'totale_kg'    => (float) $vendite->sum('righe_sum_quantita_kg'),
-            'ultima'       => $vendite->first()?->data_documento,
-            'per_tipo'     => $vendite->groupBy('tipo_documento')->map->count(),
+            'n_documenti' => $vendite->count(),
+            'totale_kg' => (float) $vendite->sum('righe_sum_quantita_kg'),
+            'ultima' => $vendite->first()?->data_documento,
+            'per_tipo' => $vendite->groupBy('tipo_documento')->map->count(),
         ];
 
         $pdf = Pdf::loadView('pdf.cliente', [
-            'cliente'   => $cliente,
-            'vendite'   => $vendite->take(15),
+            'cliente' => $cliente,
+            'vendite' => $vendite->take(15),
             'riepilogo' => $riepilogo,
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream('cliente_' . str_replace([' ', '/'], '_', $cliente->codice_cliente) . '.pdf');
+        return $pdf->stream('cliente_'.str_replace([' ', '/'], '_', $cliente->codice_cliente).'.pdf');
     }
 
     public function store(Request $request)
@@ -150,21 +152,21 @@ class ClienteController extends Controller
     private function validated(Request $request, ?int $ignoreId = null): array
     {
         return $request->validate([
-            'codice_cliente'  => ['required', 'string', 'max:20',
-                \Illuminate\Validation\Rule::unique('clienti', 'codice_cliente')->ignore($ignoreId)],
+            'codice_cliente' => ['required', 'string', 'max:20',
+                Rule::unique('clienti', 'codice_cliente')->ignore($ignoreId)],
             'ragione_sociale' => ['required', 'string', 'max:200'],
-            'piva'            => ['nullable', 'string', 'max:20'],
-            'indirizzo'       => ['nullable', 'string'],
-            'email'           => ['nullable', 'email', 'max:100'],
-            'telefono'        => ['nullable', 'string', 'max:30'],
-            'attivo'          => ['boolean'],
-            'note'            => ['nullable', 'string'],
-            'zona'                 => ['nullable', 'string', 'max:50'],
-            'agente'               => ['nullable', 'string', 'max:100'],
-            'categoria'            => ['nullable', 'string', 'max:50'],
-            'banca_appoggio'       => ['nullable', 'string', 'max:150'],
-            'codice_iva'           => ['nullable', 'string', 'max:20'],
-            'valuta'               => ['nullable', 'string', 'max:20'],
+            'piva' => ['nullable', 'string', 'max:20'],
+            'indirizzo' => ['nullable', 'string'],
+            'email' => ['nullable', 'email', 'max:100'],
+            'telefono' => ['nullable', 'string', 'max:30'],
+            'attivo' => ['boolean'],
+            'note' => ['nullable', 'string'],
+            'zona' => ['nullable', 'string', 'max:50'],
+            'agente' => ['nullable', 'string', 'max:100'],
+            'categoria' => ['nullable', 'string', 'max:50'],
+            'banca_appoggio' => ['nullable', 'string', 'max:150'],
+            'codice_iva' => ['nullable', 'string', 'max:20'],
+            'valuta' => ['nullable', 'string', 'max:20'],
             'aliquota_iva_default' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
     }

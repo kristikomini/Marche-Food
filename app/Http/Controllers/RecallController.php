@@ -17,7 +17,7 @@ class RecallController extends Controller
     {
         $query = trim($request->input('q', ''));
 
-        $produzioni   = collect();
+        $produzioni = collect();
         $venditeRighe = collect();
 
         if ($query !== '') {
@@ -32,10 +32,10 @@ class RecallController extends Controller
             $venditeRighe = VenditaRiga::with(['vendita.cliente'])
                 ->where(function ($q) use ($lottiProduzione, $query) {
                     $q->whereIn('lotto', $lottiProduzione)
-                      ->orWhereIn('lotto_esterno', $lottiProduzione);
-                    if (!empty($query)) {
+                        ->orWhereIn('lotto_esterno', $lottiProduzione);
+                    if (! empty($query)) {
                         $q->orWhere('lotto', 'ilike', "%{$query}%")
-                          ->orWhere('lotto_esterno', 'ilike', "%{$query}%");
+                            ->orWhere('lotto_esterno', 'ilike', "%{$query}%");
                     }
                 })
                 ->orderByDesc('created_at')
@@ -44,19 +44,19 @@ class RecallController extends Controller
         }
 
         $recalls = Recall::withCount([
-                'notifiche',
-                'notifiche as notificate_count' => fn ($q) => $q->where('notificato', true),
-            ])
+            'notifiche',
+            'notifiche as notificate_count' => fn ($q) => $q->where('notificato', true),
+        ])
             ->orderByRaw("CASE stato WHEN 'aperto' THEN 0 WHEN 'in_corso' THEN 1 ELSE 2 END")
             ->orderByDesc('data_apertura')
             ->limit(50)
             ->get();
 
         return Inertia::render('Recall/Index', [
-            'q'            => $query,
-            'produzioni'   => $produzioni,
+            'q' => $query,
+            'produzioni' => $produzioni,
             'venditeRighe' => $venditeRighe,
-            'recalls'      => $recalls,
+            'recalls' => $recalls,
         ]);
     }
 
@@ -64,17 +64,17 @@ class RecallController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'lotto'    => ['required', 'string', 'max:100'],
+            'lotto' => ['required', 'string', 'max:100'],
             'prodotto' => ['nullable', 'string', 'max:200'],
-            'motivo'   => ['required', 'string'],
+            'motivo' => ['required', 'string'],
         ]);
 
         $recall = DB::transaction(function () use ($data) {
             $recall = Recall::create([
-                'lotto'         => $data['lotto'],
-                'prodotto'      => $data['prodotto'] ?? null,
-                'motivo'        => $data['motivo'],
-                'stato'         => 'aperto',
+                'lotto' => $data['lotto'],
+                'prodotto' => $data['prodotto'] ?? null,
+                'motivo' => $data['motivo'],
+                'stato' => 'aperto',
                 'data_apertura' => now()->toDateString(),
             ]);
 
@@ -86,11 +86,11 @@ class RecallController extends Controller
 
             foreach ($righe as $r) {
                 $recall->notifiche()->create([
-                    'cliente_id'      => $r->vendita?->cliente_id,
+                    'cliente_id' => $r->vendita?->cliente_id,
                     'vendita_riga_id' => $r->id,
-                    'documento'       => $r->vendita?->numero_documento,
-                    'quantita_kg'     => $r->quantita_kg,
-                    'notificato'      => false,
+                    'documento' => $r->vendita?->numero_documento,
+                    'quantita_kg' => $r->quantita_kg,
+                    'notificato' => false,
                 ]);
             }
 
@@ -98,7 +98,7 @@ class RecallController extends Controller
         });
 
         return redirect()->route('recall.show', $recall)
-            ->with('success', 'Recall aperto. ' . $recall->notifiche()->count() . ' cliente/i da notificare.');
+            ->with('success', 'Recall aperto. '.$recall->notifiche()->count().' cliente/i da notificare.');
     }
 
     public function show(Recall $recall)
@@ -106,7 +106,7 @@ class RecallController extends Controller
         $recall->load(['notifiche.cliente']);
 
         return Inertia::render('Recall/Show', [
-            'recall'   => $recall,
+            'recall' => $recall,
             'notifiche' => $recall->notifiche()->with('cliente')->orderBy('notificato')->get(),
         ]);
     }
@@ -118,7 +118,7 @@ class RecallController extends Controller
 
         $notificato = $request->boolean('notificato', true);
         $notifica->update([
-            'notificato'    => $notificato,
+            'notificato' => $notificato,
             'notificato_at' => $notificato ? now() : null,
         ]);
 
@@ -137,7 +137,7 @@ class RecallController extends Controller
         ]);
 
         $recall->update([
-            'stato'         => $data['stato'],
+            'stato' => $data['stato'],
             'data_chiusura' => $data['stato'] === 'chiuso' ? now()->toDateString() : null,
         ]);
 

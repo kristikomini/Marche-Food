@@ -16,13 +16,13 @@ class AuditService
      * @var array<string,array{label:string,titolo:string}>
      */
     private array $tables = [
-        'acquisti'                 => ['label' => 'numero_documento', 'titolo' => 'Acquisto'],
-        'vendite'                  => ['label' => 'numero_documento', 'titolo' => 'Vendita'],
-        'produzioni'               => ['label' => 'lotto_produzione', 'titolo' => 'Produzione'],
-        'bolle_reso'               => ['label' => 'numero_bolla',     'titolo' => 'Bolla Reso'],
-        'note_credito'             => ['label' => 'numero_documento', 'titolo' => 'Nota Credito'],
+        'acquisti' => ['label' => 'numero_documento', 'titolo' => 'Acquisto'],
+        'vendite' => ['label' => 'numero_documento', 'titolo' => 'Vendita'],
+        'produzioni' => ['label' => 'lotto_produzione', 'titolo' => 'Produzione'],
+        'bolle_reso' => ['label' => 'numero_bolla',     'titolo' => 'Bolla Reso'],
+        'note_credito' => ['label' => 'numero_documento', 'titolo' => 'Nota Credito'],
         'lotti_imballaggi_primari' => ['label' => 'componente',       'titolo' => 'Imballaggio'],
-        'lotti_detergenti'         => ['label' => 'componente',       'titolo' => 'Detergente'],
+        'lotti_detergenti' => ['label' => 'componente',       'titolo' => 'Detergente'],
     ];
 
     /**
@@ -52,14 +52,14 @@ class AuditService
 
             foreach ($rows as $r) {
                 $merged->push([
-                    'tipo'          => $meta['titolo'],
-                    'tabella'       => $table,
-                    'id'            => $r->id,
-                    'etichetta'     => $r->etichetta,
-                    'creato_da'     => $r->creato_da,
+                    'tipo' => $meta['titolo'],
+                    'tabella' => $table,
+                    'id' => $r->id,
+                    'etichetta' => $r->etichetta,
+                    'creato_da' => $r->creato_da,
                     'modificato_da' => $r->modificato_da,
-                    'created_at'    => $r->created_at,
-                    'updated_at'    => $r->updated_at,
+                    'created_at' => $r->created_at,
+                    'updated_at' => $r->updated_at,
                 ]);
             }
         }
@@ -84,13 +84,13 @@ class AuditService
             ->limit($limit)
             ->get(['a.id', 'a.auditable_type', 'a.auditable_id', 'a.event', 'a.changes', 'a.etichetta', 'a.created_at', 'u.name as utente'])
             ->map(fn ($r) => [
-                'id'         => $r->id,
-                'tipo'       => $this->typeLabel($r->auditable_type),
-                'record_id'  => $r->auditable_id,
-                'etichetta'  => $r->etichetta,
-                'evento'     => $r->event,
-                'modifiche'  => $r->changes ? json_decode($r->changes, true) : null,
-                'utente'     => $r->utente,
+                'id' => $r->id,
+                'tipo' => $this->typeLabel($r->auditable_type),
+                'record_id' => $r->auditable_id,
+                'etichetta' => $r->etichetta,
+                'evento' => $r->event,
+                'modifiche' => $r->changes ? json_decode($r->changes, true) : null,
+                'utente' => $r->utente,
                 'created_at' => $r->created_at,
             ])
             ->all();
@@ -99,14 +99,14 @@ class AuditService
     private function typeLabel(string $class): string
     {
         return [
-            'App\\Models\\Acquisto'                 => 'Acquisto',
-            'App\\Models\\Vendita'                  => 'Vendita',
-            'App\\Models\\Produzione'               => 'Produzione',
-            'App\\Models\\BollaReso'                => 'Bolla di Reso',
-            'App\\Models\\NotaCredito'              => 'Nota di Credito',
+            'App\\Models\\Acquisto' => 'Acquisto',
+            'App\\Models\\Vendita' => 'Vendita',
+            'App\\Models\\Produzione' => 'Produzione',
+            'App\\Models\\BollaReso' => 'Bolla di Reso',
+            'App\\Models\\NotaCredito' => 'Nota di Credito',
             'App\\Models\\LottoImballaggioPrimario' => 'Imballaggio',
-            'App\\Models\\LottoDetergente'          => 'Detergente',
-            'App\\Models\\Recall'                   => 'Recall',
+            'App\\Models\\LottoDetergente' => 'Detergente',
+            'App\\Models\\Recall' => 'Recall',
         ][$class] ?? class_basename($class);
     }
 }

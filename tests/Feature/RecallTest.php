@@ -39,7 +39,7 @@ class RecallTest extends TestCase
         $recall = Recall::where('lotto', 'LOT-1')->firstOrFail();
         $this->assertEquals('aperto', $recall->stato);
         $this->assertDatabaseHas('recall_notifiche', [
-            'recall_id'  => $recall->id,
+            'recall_id' => $recall->id,
             'cliente_id' => $cliente->id,
             'notificato' => false,
         ]);

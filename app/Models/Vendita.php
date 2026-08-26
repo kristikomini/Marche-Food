@@ -29,8 +29,8 @@ class Vendita extends Model
     protected $casts = [
         'data_documento' => 'date',
         'data_trasporto' => 'date',
-        'peso_totale'    => 'decimal:3',
-        'n_colli'        => 'integer',
+        'peso_totale' => 'decimal:3',
+        'n_colli' => 'integer',
     ];
 
     public function cliente()

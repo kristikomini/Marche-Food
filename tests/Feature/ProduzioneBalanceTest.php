@@ -27,41 +27,44 @@ class ProduzioneBalanceTest extends TestCase
     use RefreshDatabase;
 
     private ProduzioneController $controller;
+
     private MateriaPrima $mp;
+
     private SchedaProduzione $scheda;
+
     private AcquistoRiga $riga;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->controller = new ProduzioneController();
+        $this->controller = new ProduzioneController;
 
         $this->actingAs(User::factory()->admin()->create());
 
         $fornitore = Fornitore::create(['ragione_sociale' => 'Pesca SRL', 'tipo' => 'alimentare']);
-        $prodotto  = Prodotto::create(['nome' => 'Tonno', 'attivo' => true]);
-        $this->mp  = MateriaPrima::create(['nome' => 'Tonno fresco']);
+        $prodotto = Prodotto::create(['nome' => 'Tonno', 'attivo' => true]);
+        $this->mp = MateriaPrima::create(['nome' => 'Tonno fresco']);
 
         $acquisto = Acquisto::create([
-            'fornitore_id'     => $fornitore->id,
+            'fornitore_id' => $fornitore->id,
             'numero_documento' => 'DDT1',
-            'data_documento'   => '2026-06-01',
-            'tipo_documento'   => 'DDT',
+            'data_documento' => '2026-06-01',
+            'tipo_documento' => 'DDT',
         ]);
         $this->riga = AcquistoRiga::create([
-            'acquisto_id'   => $acquisto->id,
+            'acquisto_id' => $acquisto->id,
             'nome_prodotto' => 'Tonno fresco',
-            'quantita_kg'   => 100,
-            'lotto'         => 'L100',
-            'data_in'       => '2026-06-01',
+            'quantita_kg' => 100,
+            'lotto' => 'L100',
+            'data_in' => '2026-06-01',
         ]);
 
         $this->scheda = SchedaProduzione::create([
-            'prodotto_id'    => $prodotto->id,
-            'modello'        => 'M1',
-            'revisione'      => 0,
+            'prodotto_id' => $prodotto->id,
+            'modello' => 'M1',
+            'revisione' => 0,
             'data_revisione' => '2026-06-01',
-            'attiva'         => true,
+            'attiva' => true,
         ]);
         $this->scheda->ricette()->create(['materia_prima_id' => $this->mp->id, 'ordine' => 1]);
     }
@@ -69,14 +72,14 @@ class ProduzioneBalanceTest extends TestCase
     private function purchasePayload(string $lotto, float $qty): Request
     {
         return Request::create('/produzioni', 'POST', [
-            'scheda_id'        => $this->scheda->id,
+            'scheda_id' => $this->scheda->id,
             'lotto_produzione' => $lotto,
-            'data_produzione'  => '2026-06-10',
-            'materie_prime'    => [[
+            'data_produzione' => '2026-06-10',
+            'materie_prime' => [[
                 'materia_prima_id' => $this->mp->id,
-                'source_type'      => 'acquisto',
+                'source_type' => 'acquisto',
                 'acquisto_riga_id' => $this->riga->id,
-                'quantita_kg'      => $qty,
+                'quantita_kg' => $qty,
             ]],
         ]);
     }
@@ -121,14 +124,14 @@ class ProduzioneBalanceTest extends TestCase
         $semi = LottoSemilavorato::where('lotto', 'SEMI1')->firstOrFail();
 
         $internalPayload = fn (string $lotto, float $qty) => Request::create('/produzioni', 'POST', [
-            'scheda_id'        => $this->scheda->id,
+            'scheda_id' => $this->scheda->id,
             'lotto_produzione' => $lotto,
-            'data_produzione'  => '2026-06-11',
-            'materie_prime'    => [[
+            'data_produzione' => '2026-06-11',
+            'materie_prime' => [[
                 'materia_prima_id' => $this->mp->id,
-                'source_type'      => 'interno',
-                'semilavorato_id'  => $semi->id,
-                'quantita_kg'      => $qty,
+                'source_type' => 'interno',
+                'semilavorato_id' => $semi->id,
+                'quantita_kg' => $qty,
             ]],
         ]);
 

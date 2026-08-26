@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Mail;
 
 class InviaAlertScadenze extends Command
 {
-    protected $signature   = 'haccp:alert-scadenze';
+    protected $signature = 'haccp:alert-scadenze';
+
     protected $description = 'Invia email alert agli admin per lotti in scadenza e certificati HACCP';
 
     /**
@@ -31,11 +32,11 @@ class InviaAlertScadenze extends Command
     public function handle(): void
     {
         $giorniLotti = (int) config('haccp.alert_giorni_lotti', 30);
-        $giorniCert  = (int) config('haccp.alert_giorni_certificati', 60);
+        $giorniCert = (int) config('haccp.alert_giorni_certificati', 60);
 
-        $today   = now()->toDateString();
+        $today = now()->toDateString();
         $inLotti = now()->addDays($giorniLotti)->toDateString();
-        $inCert  = now()->addDays($giorniCert)->toDateString();
+        $inCert = now()->addDays($giorniCert)->toDateString();
 
         $inScadenza = AcquistoRiga::with(['acquisto.fornitore:id,ragione_sociale'])
             ->whereNull('data_out')
@@ -63,11 +64,12 @@ class InviaAlertScadenze extends Command
 
         if (empty($inScadenza) && empty($scaduti) && empty($certificatiInScadenza)) {
             $this->info('Nessuna scadenza da segnalare.');
+
             return;
         }
 
         $adminEmails = User::where('role', 'admin')->pluck('email')->all();
-        $recipients  = self::recipients($adminEmails);
+        $recipients = self::recipients($adminEmails);
 
         foreach ($recipients as $email) {
             Mail::to($email)->send(new AlertScadenzeMail(
@@ -77,6 +79,6 @@ class InviaAlertScadenze extends Command
             ));
         }
 
-        $this->info('Alert scadenze inviato a ' . count($recipients) . ' destinatari.');
+        $this->info('Alert scadenze inviato a '.count($recipients).' destinatari.');
     }
 }

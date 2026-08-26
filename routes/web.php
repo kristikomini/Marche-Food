@@ -1,56 +1,55 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\FornitoreController;
-use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\AcquistoController;
-use App\Http\Controllers\VenditaController;
-use App\Http\Controllers\ImballaggioController;
-use App\Http\Controllers\ProdottoController;
-use App\Http\Controllers\MateriaPrimaController;
-use App\Http\Controllers\SchedaProduzioneController;
-use App\Http\Controllers\ProduzioneController;
-use App\Http\Controllers\BollaResoController;
-use App\Http\Controllers\NotaCreditoController;
-use App\Http\Controllers\DestinazioneIngredientiController;
-use App\Http\Controllers\FlussoProduzioneController;
-use App\Http\Controllers\ImportController;
-use App\Http\Controllers\UtenteController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\TracciabilitaController;
+use App\Http\Controllers\AuditController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\TwoFactorController;
-use App\Http\Controllers\RecallController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\HealthController;
-use App\Http\Controllers\MagazzinoController;
-use App\Http\Controllers\AuditController;
-use App\Http\Controllers\SearchController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\KioskController;
+use App\Http\Controllers\BollaResoController;
 use App\Http\Controllers\CertificatoController;
 use App\Http\Controllers\CestinoController;
+use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DestinazioneIngredientiController;
+use App\Http\Controllers\FlussoProduzioneController;
+use App\Http\Controllers\FornitoreController;
+use App\Http\Controllers\HealthController;
+use App\Http\Controllers\ImballaggioController;
+use App\Http\Controllers\ImportController;
+use App\Http\Controllers\KioskController;
+use App\Http\Controllers\MagazzinoController;
+use App\Http\Controllers\MateriaPrimaController;
+use App\Http\Controllers\NotaCreditoController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ProdottoController;
+use App\Http\Controllers\ProduzioneController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RecallController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SchedaProduzioneController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\TracciabilitaController;
+use App\Http\Controllers\UtenteController;
+use App\Http\Controllers\VenditaController;
+use Illuminate\Support\Facades\Route;
 
 // ─── Health / readiness probe (public, no auth) ─────────────────────────────────
 Route::get('/health', [HealthController::class, 'show'])->name('health');
 
 // ─── Auth (guest only) ───────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
-    Route::get('/login',  [LoginController::class, 'showLogin'])->name('login');
+    Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:10,1');
 
     // Password reset
-    Route::get('/forgot-password',  [ForgotPasswordController::class, 'show'])->name('password.request');
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'show'])->name('password.request');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'send'])->name('password.email')->middleware('throttle:5,1');
     Route::get('/reset-password/{token}', [ResetPasswordController::class, 'show'])->name('password.reset');
-    Route::post('/reset-password',        [ResetPasswordController::class, 'reset'])->name('password.update');
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
 
     // Two-factor login challenge (mid-login, before session is authenticated)
-    Route::get('/2fa/challenge',  [TwoFactorController::class, 'showChallenge'])->name('2fa.challenge');
+    Route::get('/2fa/challenge', [TwoFactorController::class, 'showChallenge'])->name('2fa.challenge');
     Route::post('/2fa/challenge', [TwoFactorController::class, 'verifyChallenge'])->name('2fa.verify')->middleware('throttle:10,1');
 });
 
@@ -103,11 +102,11 @@ Route::middleware('auth')->group(function () {
     Route::get('produzioni/kiosk/lookup', [KioskController::class, 'lookup'])->name('produzioni.kiosk.lookup');
 
     // CSV exports
-    Route::get('acquisti/export',   [AcquistoController::class,   'export'])->name('acquisti.export');
-    Route::get('vendite/export',    [VenditaController::class,    'export'])->name('vendite.export');
+    Route::get('acquisti/export', [AcquistoController::class,   'export'])->name('acquisti.export');
+    Route::get('vendite/export', [VenditaController::class,    'export'])->name('vendite.export');
     Route::get('produzioni/export', [ProduzioneController::class, 'export'])->name('produzioni.export');
-    Route::get('fornitori/export',  [FornitoreController::class,  'export'])->name('fornitori.export');
-    Route::get('clienti/export',    [ClienteController::class,    'export'])->name('clienti.export');
+    Route::get('fornitori/export', [FornitoreController::class,  'export'])->name('fornitori.export');
+    Route::get('clienti/export', [ClienteController::class,    'export'])->name('clienti.export');
 
     // Schede di produzione — maschera cliente (PDF)
     Route::get('clienti/{cliente}/scheda', [ClienteController::class, 'scheda'])->name('clienti.scheda');
@@ -117,16 +116,16 @@ Route::middleware('auth')->group(function () {
     Route::put('profilo/password', [ProfileController::class, 'updatePassword'])->name('profilo.password');
     // 2FA enrollment: admins only (Epic 4)
     Route::middleware('admin')->group(function () {
-        Route::post('profilo/2fa/enable',  [TwoFactorController::class, 'enable'])->name('profilo.2fa.enable');
+        Route::post('profilo/2fa/enable', [TwoFactorController::class, 'enable'])->name('profilo.2fa.enable');
         Route::post('profilo/2fa/confirm', [TwoFactorController::class, 'confirm'])->name('profilo.2fa.confirm');
-        Route::delete('profilo/2fa',       [TwoFactorController::class, 'disable'])->name('profilo.2fa.disable');
+        Route::delete('profilo/2fa', [TwoFactorController::class, 'disable'])->name('profilo.2fa.disable');
     });
 
     // ── ANAGRAFICA: index for all, CRUD for admin only ──────────────────────
 
     Route::get('fornitori', [FornitoreController::class, 'index'])->name('fornitori.index');
-    Route::get('clienti',   [ClienteController::class, 'index'])->name('clienti.index');
-    Route::get('prodotti',  [ProdottoController::class, 'index'])->name('prodotti.index');
+    Route::get('clienti', [ClienteController::class, 'index'])->name('clienti.index');
+    Route::get('prodotti', [ProdottoController::class, 'index'])->name('prodotti.index');
     Route::get('materie-prime', [MateriaPrimaController::class, 'index'])->name('materie-prime.index');
     Route::get('destinazione-ingredienti', [DestinazioneIngredientiController::class, 'index'])->name('destinazione-ingredienti.index');
 
@@ -175,18 +174,18 @@ Route::middleware('auth')->group(function () {
     // ── SCREEN 2 — IMBALLAGGI ───────────────────────────────────────────────
 
     Route::get('imballaggi', [ImballaggioController::class, 'index'])->name('imballaggi.index');
-    Route::get('imballaggi/primari/create',           [ImballaggioController::class, 'createPrimario'])->name('imballaggi.primari.create');
-    Route::post('imballaggi/primari',                 [ImballaggioController::class, 'storePrimario'])->name('imballaggi.primari.store');
-    Route::get('imballaggi/primari/{primario}/edit',  [ImballaggioController::class, 'editPrimario'])->name('imballaggi.primari.edit');
-    Route::put('imballaggi/primari/{primario}',       [ImballaggioController::class, 'updatePrimario'])->name('imballaggi.primari.update');
-    Route::get('imballaggi/detergenti/create',            [ImballaggioController::class, 'createDetergente'])->name('imballaggi.detergenti.create');
-    Route::post('imballaggi/detergenti',                  [ImballaggioController::class, 'storeDetergente'])->name('imballaggi.detergenti.store');
+    Route::get('imballaggi/primari/create', [ImballaggioController::class, 'createPrimario'])->name('imballaggi.primari.create');
+    Route::post('imballaggi/primari', [ImballaggioController::class, 'storePrimario'])->name('imballaggi.primari.store');
+    Route::get('imballaggi/primari/{primario}/edit', [ImballaggioController::class, 'editPrimario'])->name('imballaggi.primari.edit');
+    Route::put('imballaggi/primari/{primario}', [ImballaggioController::class, 'updatePrimario'])->name('imballaggi.primari.update');
+    Route::get('imballaggi/detergenti/create', [ImballaggioController::class, 'createDetergente'])->name('imballaggi.detergenti.create');
+    Route::post('imballaggi/detergenti', [ImballaggioController::class, 'storeDetergente'])->name('imballaggi.detergenti.store');
     Route::get('imballaggi/detergenti/{detergente}/edit', [ImballaggioController::class, 'editDetergente'])->name('imballaggi.detergenti.edit');
-    Route::put('imballaggi/detergenti/{detergente}',      [ImballaggioController::class, 'updateDetergente'])->name('imballaggi.detergenti.update');
-    Route::get('imballaggi/gas/create',       [ImballaggioController::class, 'createGas'])->name('imballaggi.gas.create');
-    Route::post('imballaggi/gas',             [ImballaggioController::class, 'storeGas'])->name('imballaggi.gas.store');
-    Route::get('imballaggi/gas/{gas}/edit',   [ImballaggioController::class, 'editGas'])->name('imballaggi.gas.edit');
-    Route::put('imballaggi/gas/{gas}',        [ImballaggioController::class, 'updateGas'])->name('imballaggi.gas.update');
+    Route::put('imballaggi/detergenti/{detergente}', [ImballaggioController::class, 'updateDetergente'])->name('imballaggi.detergenti.update');
+    Route::get('imballaggi/gas/create', [ImballaggioController::class, 'createGas'])->name('imballaggi.gas.create');
+    Route::post('imballaggi/gas', [ImballaggioController::class, 'storeGas'])->name('imballaggi.gas.store');
+    Route::get('imballaggi/gas/{gas}/edit', [ImballaggioController::class, 'editGas'])->name('imballaggi.gas.edit');
+    Route::put('imballaggi/gas/{gas}', [ImballaggioController::class, 'updateGas'])->name('imballaggi.gas.update');
 
     // ── SCREEN 3 — PRODUZIONE ───────────────────────────────────────────────
     // Schede: index for all, CRUD admin only. Produzioni: operator + admin.
@@ -207,14 +206,14 @@ Route::middleware('auth')->group(function () {
     Route::middleware('admin')->group(function () {
 
         // Delete operational records
-        Route::delete('acquisti/{acquisto}',       [AcquistoController::class, 'destroy'])->name('acquisti.destroy');
-        Route::delete('vendite/{vendita}',         [VenditaController::class, 'destroy'])->name('vendite.destroy');
-        Route::delete('bolle-reso/{bolleReso}',    [BollaResoController::class, 'destroy'])->name('bolle-reso.destroy');
-        Route::delete('note-credito/{noteCredito}',[NotaCreditoController::class, 'destroy'])->name('note-credito.destroy');
-        Route::delete('imballaggi/primari/{primario}',    [ImballaggioController::class, 'destroyPrimario'])->name('imballaggi.primari.destroy');
+        Route::delete('acquisti/{acquisto}', [AcquistoController::class, 'destroy'])->name('acquisti.destroy');
+        Route::delete('vendite/{vendita}', [VenditaController::class, 'destroy'])->name('vendite.destroy');
+        Route::delete('bolle-reso/{bolleReso}', [BollaResoController::class, 'destroy'])->name('bolle-reso.destroy');
+        Route::delete('note-credito/{noteCredito}', [NotaCreditoController::class, 'destroy'])->name('note-credito.destroy');
+        Route::delete('imballaggi/primari/{primario}', [ImballaggioController::class, 'destroyPrimario'])->name('imballaggi.primari.destroy');
         Route::delete('imballaggi/detergenti/{detergente}', [ImballaggioController::class, 'destroyDetergente'])->name('imballaggi.detergenti.destroy');
-        Route::delete('imballaggi/gas/{gas}',               [ImballaggioController::class, 'destroyGas'])->name('imballaggi.gas.destroy');
-        Route::delete('produzioni/{produzione}',   [ProduzioneController::class, 'destroy'])->name('produzioni.destroy');
+        Route::delete('imballaggi/gas/{gas}', [ImballaggioController::class, 'destroyGas'])->name('imballaggi.gas.destroy');
+        Route::delete('produzioni/{produzione}', [ProduzioneController::class, 'destroy'])->name('produzioni.destroy');
 
         // Schede CRUD
         Route::resource('schede', SchedaProduzioneController::class)
@@ -229,9 +228,9 @@ Route::middleware('auth')->group(function () {
         // Import dati storici
         Route::get('import', [ImportController::class, 'index'])->name('import.index');
         Route::post('import/acquisti', [ImportController::class, 'importAcquisti'])->name('import.acquisti');
-        Route::post('import/vendite',  [ImportController::class, 'importVendite'])->name('import.vendite');
+        Route::post('import/vendite', [ImportController::class, 'importVendite'])->name('import.vendite');
         Route::get('import/template-acquisti', [ImportController::class, 'downloadTemplateAcquisti'])->name('import.template-acquisti');
-        Route::get('import/template-vendite',  [ImportController::class, 'downloadTemplateVendite'])->name('import.template-vendite');
+        Route::get('import/template-vendite', [ImportController::class, 'downloadTemplateVendite'])->name('import.template-vendite');
 
         // Audit log (chi ha fatto cosa)
         Route::get('audit', [AuditController::class, 'index'])->name('audit.index');

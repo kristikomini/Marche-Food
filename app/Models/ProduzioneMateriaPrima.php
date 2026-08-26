@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProduzioneMateriaPrima extends Model
 {
     protected $table = 'produzioni_materie_prime';
+
     public $timestamps = false;
 
     protected $fillable = [

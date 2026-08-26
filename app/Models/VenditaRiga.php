@@ -17,15 +17,15 @@ class VenditaRiga extends Model
     ];
 
     protected $casts = [
-        'scadenza'        => 'date',
-        'quantita_kg'     => 'decimal:3',
-        'quantita_pz'     => 'decimal:3',
-        'pezzatura_gr'    => 'decimal:3',
+        'scadenza' => 'date',
+        'quantita_kg' => 'decimal:3',
+        'quantita_pz' => 'decimal:3',
+        'pezzatura_gr' => 'decimal:3',
         'prezzo_unitario' => 'decimal:4',
-        'sconto_1'        => 'decimal:2',
-        'sconto_2'        => 'decimal:2',
-        'aliquota_iva'    => 'decimal:2',
-        'importo_netto'   => 'decimal:2',
+        'sconto_1' => 'decimal:2',
+        'sconto_2' => 'decimal:2',
+        'aliquota_iva' => 'decimal:2',
+        'importo_netto' => 'decimal:2',
     ];
 
     public function vendita()

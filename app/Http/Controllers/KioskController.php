@@ -24,8 +24,8 @@ class KioskController extends Controller
             ->orderBy('modello')
             ->get()
             ->map(fn ($s) => [
-                'id'       => $s->id,
-                'modello'  => $s->modello,
+                'id' => $s->id,
+                'modello' => $s->modello,
                 'revisione' => $s->revisione,
                 'prodotto' => $s->prodotto?->nome,
                 'ingredienti' => $s->ricette->map(fn ($r) => [
@@ -38,8 +38,8 @@ class KioskController extends Controller
             ]);
 
         return Inertia::render('Produzioni/Kiosk', [
-            'schede'   => $schede,
-            'materie'  => MateriaPrima::orderBy('nome')->get(['id', 'nome']),
+            'schede' => $schede,
+            'materie' => MateriaPrima::orderBy('nome')->get(['id', 'nome']),
             'campioni' => config('haccp.metal_detector_campioni', []),
         ]);
     }
@@ -70,14 +70,14 @@ class KioskController extends Controller
 
         return response()->json([
             'found' => true,
-            'riga'  => [
-                'id'            => $riga->id,
+            'riga' => [
+                'id' => $riga->id,
                 'nome_prodotto' => $riga->nome_prodotto,
-                'lotto'         => $riga->lotto ?: $riga->lotto_esterno,
-                'fornitore'     => $riga->acquisto?->fornitore?->ragione_sociale,
-                'balance_kg'    => $balance?->balance_kg ?? (float) $riga->quantita_kg,
+                'lotto' => $riga->lotto ?: $riga->lotto_esterno,
+                'fornitore' => $riga->acquisto?->fornitore?->ragione_sociale,
+                'balance_kg' => $balance?->balance_kg ?? (float) $riga->quantita_kg,
             ],
-            'materia_prima_id'   => $mp?->id,
+            'materia_prima_id' => $mp?->id,
             'materia_prima_nome' => $mp?->nome,
         ]);
     }

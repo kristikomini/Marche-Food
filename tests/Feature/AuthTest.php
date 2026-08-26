@@ -31,7 +31,7 @@ class AuthTest extends TestCase
         User::factory()->operator()->create(['email' => 'test@example.com']);
 
         $this->post('/login', [
-            'email'    => 'test@example.com',
+            'email' => 'test@example.com',
             'password' => 'wrong-password',
         ])->assertSessionHasErrors('email');
     }
@@ -39,12 +39,12 @@ class AuthTest extends TestCase
     public function test_login_succeeds_with_correct_credentials(): void
     {
         User::factory()->operator()->create([
-            'email'    => 'op@example.com',
+            'email' => 'op@example.com',
             'password' => bcrypt('secret123'),
         ]);
 
         $this->post('/login', [
-            'email'    => 'op@example.com',
+            'email' => 'op@example.com',
             'password' => 'secret123',
         ])->assertRedirect('/');
 
@@ -56,8 +56,8 @@ class AuthTest extends TestCase
         $user = User::factory()->operator()->create();
 
         $this->actingAs($user)
-             ->post('/logout')
-             ->assertRedirect('/login');
+            ->post('/logout')
+            ->assertRedirect('/login');
 
         $this->assertGuest();
     }

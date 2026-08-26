@@ -16,7 +16,8 @@ use Illuminate\Support\Facades\Schema;
  * internal-source production path is exercisable in tests and any SQLite-backed
  * environment. On PostgreSQL it is a no-op (already nullable).
  */
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         if (DB::getDriverName() === 'pgsql') {

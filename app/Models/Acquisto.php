@@ -22,8 +22,8 @@ class Acquisto extends Model
     ];
 
     protected $casts = [
-        'data_documento'  => 'date',
-        'is_conto_terzi'  => 'boolean',
+        'data_documento' => 'date',
+        'is_conto_terzi' => 'boolean',
     ];
 
     public function fornitore()
