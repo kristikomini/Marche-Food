@@ -14,6 +14,7 @@ class EnsureAdmin
             if ($request->wantsJson() && ! $request->header('X-Inertia')) {
                 abort(403, 'Accesso riservato agli amministratori.');
             }
+
             return redirect('/')->with('error', 'Accesso riservato agli amministratori.');
         }
 

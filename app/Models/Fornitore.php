@@ -17,8 +17,8 @@ class Fornitore extends Model
 
     protected $casts = [
         'haccp_certificato' => 'boolean',
-        'haccp_scadenza'    => 'date',
-        'moca_certificato'  => 'boolean',
-        'attivo'            => 'boolean',
+        'haccp_scadenza' => 'date',
+        'moca_certificato' => 'boolean',
+        'attivo' => 'boolean',
     ];
 }

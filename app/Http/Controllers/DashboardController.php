@@ -14,22 +14,22 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $now   = Carbon::now();
-        $mese  = $now->month;
-        $anno  = $now->year;
+        $now = Carbon::now();
+        $mese = $now->month;
+        $anno = $now->year;
 
         $stats = Cache::remember("dashboard_stats_{$anno}_{$mese}", 300, function () use ($anno, $mese) {
             return [
-                'acquisti_totali'   => Acquisto::where('is_conto_terzi', false)->count(),
-                'acquisti_mese'     => Acquisto::where('is_conto_terzi', false)
-                                               ->whereYear('data_documento', $anno)
-                                               ->whereMonth('data_documento', $mese)->count(),
-                'vendite_totali'    => Vendita::count(),
-                'vendite_mese'      => Vendita::whereYear('data_documento', $anno)
-                                              ->whereMonth('data_documento', $mese)->count(),
+                'acquisti_totali' => Acquisto::where('is_conto_terzi', false)->count(),
+                'acquisti_mese' => Acquisto::where('is_conto_terzi', false)
+                    ->whereYear('data_documento', $anno)
+                    ->whereMonth('data_documento', $mese)->count(),
+                'vendite_totali' => Vendita::count(),
+                'vendite_mese' => Vendita::whereYear('data_documento', $anno)
+                    ->whereMonth('data_documento', $mese)->count(),
                 'produzioni_totali' => Produzione::count(),
-                'produzioni_mese'   => Produzione::whereYear('data_produzione', $anno)
-                                                 ->whereMonth('data_produzione', $mese)->count(),
+                'produzioni_mese' => Produzione::whereYear('data_produzione', $anno)
+                    ->whereMonth('data_produzione', $mese)->count(),
             ];
         });
 
@@ -37,13 +37,13 @@ class DashboardController extends Controller
         $expiryCounts = Cache::remember('dashboard_expiry', 60, function () use ($now) {
             return [
                 'lotti_in_scadenza' => AcquistoRiga::whereNotNull('scadenza')
-                                                    ->whereNull('data_out')
-                                                    ->whereBetween('scadenza', [$now, $now->copy()->addDays(30)])
-                                                    ->count(),
-                'lotti_scaduti'     => AcquistoRiga::whereNotNull('scadenza')
-                                                    ->whereNull('data_out')
-                                                    ->where('scadenza', '<', $now)
-                                                    ->count(),
+                    ->whereNull('data_out')
+                    ->whereBetween('scadenza', [$now, $now->copy()->addDays(30)])
+                    ->count(),
+                'lotti_scaduti' => AcquistoRiga::whereNotNull('scadenza')
+                    ->whereNull('data_out')
+                    ->where('scadenza', '<', $now)
+                    ->count(),
             ];
         });
 
@@ -71,9 +71,9 @@ class DashboardController extends Controller
             ->get(['id', 'acquisto_id', 'nome_prodotto', 'lotto', 'lotto_esterno', 'scadenza', 'quantita_kg']);
 
         return Inertia::render('Dashboard', [
-            'stats'                  => $stats,
-            'ultimiAcquisti'         => $ultimiAcquisti,
-            'ultimiProduzioni'       => $ultimiProduzioni,
+            'stats' => $stats,
+            'ultimiAcquisti' => $ultimiAcquisti,
+            'ultimiProduzioni' => $ultimiProduzioni,
             'lottiInScadenzaDettaglio' => $lottiInScadenzaDettaglio,
         ]);
     }

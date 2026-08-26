@@ -14,16 +14,16 @@ return new class extends Migration
 
         Schema::table('vendite_righe', function (Blueprint $table) {
             $table->foreignId('produzione_id')
-                  ->nullable()
-                  ->constrained('produzioni')
-                  ->nullOnDelete();
+                ->nullable()
+                ->constrained('produzioni')
+                ->nullOnDelete();
             $table->index('produzione_id', 'idx_vendite_righe_produzione');
         });
     }
 
     public function down(): void
     {
-        if (!Schema::hasColumn('vendite_righe', 'produzione_id')) {
+        if (! Schema::hasColumn('vendite_righe', 'produzione_id')) {
             return;
         }
 

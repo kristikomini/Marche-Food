@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\UnitaMisura;
 use App\Models\MateriaPrima;
 use App\Models\Prodotto;
+use App\Models\UnitaMisura;
 use Illuminate\Database\Seeder;
 
 class Screen3Seeder extends Seeder

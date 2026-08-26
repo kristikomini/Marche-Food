@@ -28,8 +28,8 @@ class AllergenTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)->post('/materie-prime', [
-            'nome'             => 'Gamberi',
-            'allergeni'        => ['crostacei'],
+            'nome' => 'Gamberi',
+            'allergeni' => ['crostacei'],
             'allergeni_tracce' => ['pesce'],
         ])->assertRedirect('/materie-prime');
 
@@ -43,22 +43,22 @@ class AllergenTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)->post('/materie-prime', [
-            'nome'      => 'X',
+            'nome' => 'X',
             'allergeni' => ['not_a_real_allergen'],
         ])->assertSessionHasErrors('allergeni.0');
     }
 
     public function test_production_lot_derives_allergens_recursively_through_semilavorato(): void
     {
-        $tonno   = MateriaPrima::create(['nome' => 'Tonno', 'allergeni' => ['pesce'], 'allergeni_tracce' => ['crostacei']]);
+        $tonno = MateriaPrima::create(['nome' => 'Tonno', 'allergeni' => ['pesce'], 'allergeni_tracce' => ['crostacei']]);
         $glutine = MateriaPrima::create(['nome' => 'Pangrattato', 'allergeni' => ['cereali_glutine']]);
-        $sale    = MateriaPrima::create(['nome' => 'Sale']); // no allergens
+        $sale = MateriaPrima::create(['nome' => 'Sale']); // no allergens
 
         $fornitore = Fornitore::create(['ragione_sociale' => 'F', 'tipo' => 'alimentare']);
-        $prodotto  = Prodotto::create(['nome' => 'Polpetta', 'attivo' => true]);
-        $scheda    = SchedaProduzione::create(['prodotto_id' => $prodotto->id, 'modello' => 'M', 'revisione' => 0, 'data_revisione' => '2026-06-01', 'attiva' => true]);
-        $acq       = Acquisto::create(['fornitore_id' => $fornitore->id, 'numero_documento' => 'D', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
-        $riga      = AcquistoRiga::create(['acquisto_id' => $acq->id, 'nome_prodotto' => 'Tonno', 'quantita_kg' => 100, 'lotto' => 'L1', 'data_in' => '2026-06-01']);
+        $prodotto = Prodotto::create(['nome' => 'Polpetta', 'attivo' => true]);
+        $scheda = SchedaProduzione::create(['prodotto_id' => $prodotto->id, 'modello' => 'M', 'revisione' => 0, 'data_revisione' => '2026-06-01', 'attiva' => true]);
+        $acq = Acquisto::create(['fornitore_id' => $fornitore->id, 'numero_documento' => 'D', 'data_documento' => '2026-06-01', 'tipo_documento' => 'DDT']);
+        $riga = AcquistoRiga::create(['acquisto_id' => $acq->id, 'nome_prodotto' => 'Tonno', 'quantita_kg' => 100, 'lotto' => 'L1', 'data_in' => '2026-06-01']);
 
         // Base production uses tonno → produces a semilavorato
         $base = Produzione::create(['scheda_id' => $scheda->id, 'lotto_produzione' => 'BASE', 'data_produzione' => '2026-06-02']);
@@ -84,8 +84,8 @@ class AllergenTest extends TestCase
         $mp = MateriaPrima::create(['nome' => 'Misto', 'allergeni' => ['latte'], 'allergeni_tracce' => ['latte', 'soia']]);
 
         $prodotto = Prodotto::create(['nome' => 'Crema', 'attivo' => true]);
-        $scheda   = SchedaProduzione::create(['prodotto_id' => $prodotto->id, 'modello' => 'M2', 'revisione' => 0, 'data_revisione' => '2026-06-01', 'attiva' => true]);
-        $prod     = Produzione::create(['scheda_id' => $scheda->id, 'lotto_produzione' => 'C1', 'data_produzione' => '2026-06-04']);
+        $scheda = SchedaProduzione::create(['prodotto_id' => $prodotto->id, 'modello' => 'M2', 'revisione' => 0, 'data_revisione' => '2026-06-01', 'attiva' => true]);
+        $prod = Produzione::create(['scheda_id' => $scheda->id, 'lotto_produzione' => 'C1', 'data_produzione' => '2026-06-04']);
         $prod->materiePrime()->create(['materia_prima_id' => $mp->id, 'quantita_kg' => 5]);
 
         $result = app(AllergenService::class)->forProduzione($prod->fresh());

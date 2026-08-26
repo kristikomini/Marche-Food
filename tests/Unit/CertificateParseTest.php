@@ -9,7 +9,7 @@ class CertificateParseTest extends TestCase
 {
     private function svc(): CertificateExtractionService
     {
-        return new CertificateExtractionService();
+        return new CertificateExtractionService;
     }
 
     public function test_parses_clean_json(): void

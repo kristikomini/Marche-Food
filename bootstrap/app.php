@@ -1,9 +1,14 @@
 <?php
 
+use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,20 +20,20 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trust Traefik reverse proxy so X-Forwarded-Proto: https is respected
         $middleware->trustProxies(at: '*');
         $middleware->web(prepend: [
-            \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+            ConvertEmptyStringsToNull::class,
         ]);
         $middleware->web(append: [
-            \App\Http\Middleware\SecurityHeaders::class,
-            \App\Http\Middleware\HandleInertiaRequests::class,
+            SecurityHeaders::class,
+            HandleInertiaRequests::class,
         ]);
         $middleware->alias([
-            'admin' => \App\Http\Middleware\EnsureAdmin::class,
+            'admin' => EnsureAdmin::class,
         ]);
         // Run the admin role check BEFORE route-model binding, so an unauthorized
         // operator is cleanly redirected instead of leaking a 404 for a missing id.
         $middleware->prependToPriorityList(
-            before: \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            prepend: \App\Http\Middleware\EnsureAdmin::class,
+            before: SubstituteBindings::class,
+            prepend: EnsureAdmin::class,
         );
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/');

@@ -13,7 +13,7 @@ class SearchController extends Controller
         $result = $search->search((string) $request->input('q', ''));
 
         return Inertia::render('Ricerca/Index', [
-            'q'      => $result['q'],
+            'q' => $result['q'],
             'gruppi' => $result['gruppi'],
         ]);
     }

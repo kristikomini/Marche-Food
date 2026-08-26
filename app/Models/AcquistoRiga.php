@@ -25,11 +25,11 @@ class AcquistoRiga extends Model
     ];
 
     protected $casts = [
-        'scadenza'     => 'date',
-        'data_in'      => 'date',
-        'data_out'     => 'date',
-        'quantita_kg'  => 'decimal:3',
-        'quantita_pz'  => 'decimal:3',
+        'scadenza' => 'date',
+        'data_in' => 'date',
+        'data_out' => 'date',
+        'quantita_kg' => 'decimal:3',
+        'quantita_pz' => 'decimal:3',
     ];
 
     public function acquisto()

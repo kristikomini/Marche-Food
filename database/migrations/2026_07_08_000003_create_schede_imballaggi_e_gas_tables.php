@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\Schema;
  * Le modelliamo come righe-template della scheda; il lotto reale viene poi
  * registrato per-produzione in Fase 3.
  */
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('schede_imballaggi', function (Blueprint $table) {

@@ -20,8 +20,8 @@ class SchedaProduzione extends Model
 
     protected $casts = [
         'data_revisione' => 'date',
-        'ha_marinatura'  => 'boolean',
-        'attiva'         => 'boolean',
+        'ha_marinatura' => 'boolean',
+        'attiva' => 'boolean',
     ];
 
     public function prodotto()

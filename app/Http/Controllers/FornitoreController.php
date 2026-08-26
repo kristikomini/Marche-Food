@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Fornitore;
+use App\Support\SimpleXlsxWriter;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -13,16 +14,16 @@ class FornitoreController extends Controller
     public function index(Request $request): Response
     {
         $fornitori = Fornitore::query()
-            ->when($request->search, fn($q, $s) => $q->where('ragione_sociale', 'ilike', "%{$s}%")
+            ->when($request->search, fn ($q, $s) => $q->where('ragione_sociale', 'ilike', "%{$s}%")
                 ->orWhere('codice', 'ilike', "%{$s}%"))
-            ->when($request->tipo, fn($q, $t) => $q->where('tipo', $t))
+            ->when($request->tipo, fn ($q, $t) => $q->where('tipo', $t))
             ->orderBy('ragione_sociale')
             ->paginate(25)
             ->withQueryString();
 
         return Inertia::render('Fornitori/Index', [
             'fornitori' => $fornitori,
-            'filters'   => $request->only(['search', 'tipo']),
+            'filters' => $request->only(['search', 'tipo']),
         ]);
     }
 
@@ -40,17 +41,17 @@ class FornitoreController extends Controller
     public function export(Request $request)
     {
         $fornitori = Fornitore::query()
-            ->when($request->search, fn($q, $s) => $q->where('ragione_sociale', 'ilike', "%{$s}%")
+            ->when($request->search, fn ($q, $s) => $q->where('ragione_sociale', 'ilike', "%{$s}%")
                 ->orWhere('codice', 'ilike', "%{$s}%"))
-            ->when($request->tipo, fn($q, $t) => $q->where('tipo', $t))
+            ->when($request->tipo, fn ($q, $t) => $q->where('tipo', $t))
             ->orderBy('ragione_sociale')
             ->get();
 
         $tipoLabel = [
-            'alimentare'            => 'Alimentare',
-            'imballaggio_primario'  => 'Imballaggio Primario',
+            'alimentare' => 'Alimentare',
+            'imballaggio_primario' => 'Imballaggio Primario',
             'detergente_secondario' => 'Detergente',
-            'conto_terzi'           => 'Conto Terzi',
+            'conto_terzi' => 'Conto Terzi',
         ];
 
         $headers = [
@@ -75,13 +76,13 @@ class FornitoreController extends Controller
             $f->note,
         ])->all();
 
-        $base = 'fornitori_' . now()->format('Ymd_His');
+        $base = 'fornitori_'.now()->format('Ymd_His');
 
         if ($request->input('format') === 'csv') {
             return $this->downloadCsv("{$base}.csv", $headers, $rows);
         }
 
-        return \App\Support\SimpleXlsxWriter::make('Fornitori')
+        return SimpleXlsxWriter::make('Fornitori')
             ->headers($headers)->rows($rows)->download("{$base}.xlsx");
     }
 
@@ -98,21 +99,21 @@ class FornitoreController extends Controller
     {
         return Inertia::render('Fornitori/Form', [
             'fornitore' => [
-                'id'                  => $fornitore->id,
-                'codice'              => $fornitore->codice,
-                'ragione_sociale'     => $fornitore->ragione_sociale,
-                'tipo'                => $fornitore->tipo,
-                'piva'                => $fornitore->piva,
-                'indirizzo'           => $fornitore->indirizzo,
-                'email'               => $fornitore->email,
-                'telefono'            => $fornitore->telefono,
-                'haccp_certificato'   => (bool) $fornitore->haccp_certificato,
-                'haccp_scadenza'      => $fornitore->haccp_scadenza?->toDateString(),
+                'id' => $fornitore->id,
+                'codice' => $fornitore->codice,
+                'ragione_sociale' => $fornitore->ragione_sociale,
+                'tipo' => $fornitore->tipo,
+                'piva' => $fornitore->piva,
+                'indirizzo' => $fornitore->indirizzo,
+                'email' => $fornitore->email,
+                'telefono' => $fornitore->telefono,
+                'haccp_certificato' => (bool) $fornitore->haccp_certificato,
+                'haccp_scadenza' => $fornitore->haccp_scadenza?->toDateString(),
                 'certificazioni_note' => $fornitore->certificazioni_note,
-                'moca_certificato'    => (bool) $fornitore->moca_certificato,
-                'moca_numero'         => $fornitore->moca_numero,
-                'attivo'              => (bool) $fornitore->attivo,
-                'note'                => $fornitore->note,
+                'moca_certificato' => (bool) $fornitore->moca_certificato,
+                'moca_numero' => $fornitore->moca_numero,
+                'attivo' => (bool) $fornitore->attivo,
+                'note' => $fornitore->note,
             ],
         ]);
     }
@@ -137,20 +138,20 @@ class FornitoreController extends Controller
     private function validated(Request $request, ?int $ignoreId = null): array
     {
         return $request->validate([
-            'codice'               => ['nullable', 'string', 'max:20', Rule::unique('fornitori', 'codice')->ignore($ignoreId)],
-            'ragione_sociale'      => 'required|string|max:200',
-            'tipo'                 => 'required|in:alimentare,imballaggio_primario,detergente_secondario,conto_terzi',
-            'piva'                 => 'nullable|string|max:20',
-            'indirizzo'            => 'nullable|string',
-            'email'                => 'nullable|email|max:100',
-            'telefono'             => 'nullable|string|max:30',
-            'haccp_certificato'    => 'boolean',
-            'haccp_scadenza'       => 'nullable|date',
-            'certificazioni_note'  => 'nullable|string',
-            'moca_certificato'     => 'boolean',
-            'moca_numero'          => 'nullable|string|max:50',
-            'attivo'               => 'boolean',
-            'note'                 => 'nullable|string',
+            'codice' => ['nullable', 'string', 'max:20', Rule::unique('fornitori', 'codice')->ignore($ignoreId)],
+            'ragione_sociale' => 'required|string|max:200',
+            'tipo' => 'required|in:alimentare,imballaggio_primario,detergente_secondario,conto_terzi',
+            'piva' => 'nullable|string|max:20',
+            'indirizzo' => 'nullable|string',
+            'email' => 'nullable|email|max:100',
+            'telefono' => 'nullable|string|max:30',
+            'haccp_certificato' => 'boolean',
+            'haccp_scadenza' => 'nullable|date',
+            'certificazioni_note' => 'nullable|string',
+            'moca_certificato' => 'boolean',
+            'moca_numero' => 'nullable|string|max:50',
+            'attivo' => 'boolean',
+            'note' => 'nullable|string',
         ]);
     }
 }

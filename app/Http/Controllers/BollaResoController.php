@@ -21,7 +21,7 @@ class BollaResoController extends Controller
             ->paginate(25)->withQueryString();
 
         return Inertia::render('BolleReso/Index', [
-            'bolle'   => $bolle,
+            'bolle' => $bolle,
             'filters' => $request->only(['search']),
         ]);
     }
@@ -29,7 +29,7 @@ class BollaResoController extends Controller
     public function create()
     {
         return Inertia::render('BolleReso/Form', [
-            'bolla'   => null,
+            'bolla' => null,
             'vendite' => $this->venditeConRighe(),
         ]);
     }
@@ -46,7 +46,7 @@ class BollaResoController extends Controller
         $bolleReso->load('venditaRiga.vendita');
 
         return Inertia::render('BolleReso/Form', [
-            'bolla'   => $bolleReso,
+            'bolla' => $bolleReso,
             'vendite' => $this->venditeConRighe(),
         ]);
     }
@@ -80,11 +80,11 @@ class BollaResoController extends Controller
     {
         return $request->validate([
             'vendita_riga_id' => ['required', 'exists:vendite_righe,id'],
-            'numero_bolla'    => ['nullable', 'string', 'max:50'],
-            'quantita_pz'     => ['nullable', 'numeric', 'min:0'],
-            'quantita_kg'     => ['required', 'numeric', 'min:0.001'],
-            'data_reso'       => ['required', 'date'],
-            'note'            => ['nullable', 'string'],
+            'numero_bolla' => ['nullable', 'string', 'max:50'],
+            'quantita_pz' => ['nullable', 'numeric', 'min:0'],
+            'quantita_kg' => ['required', 'numeric', 'min:0.001'],
+            'data_reso' => ['required', 'date'],
+            'note' => ['nullable', 'string'],
         ]);
     }
 }

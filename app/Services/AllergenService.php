@@ -15,19 +15,19 @@ class AllergenService
     /** @var array<string,string> code => Italian label */
     public const EU_ALLERGENS = [
         'cereali_glutine' => 'Cereali contenenti glutine',
-        'crostacei'       => 'Crostacei',
-        'uova'            => 'Uova',
-        'pesce'           => 'Pesce',
-        'arachidi'        => 'Arachidi',
-        'soia'            => 'Soia',
-        'latte'           => 'Latte e lattosio',
-        'frutta_guscio'   => 'Frutta a guscio',
-        'sedano'          => 'Sedano',
-        'senape'          => 'Senape',
-        'sesamo'          => 'Semi di sesamo',
-        'solfiti'         => 'Anidride solforosa e solfiti',
-        'lupini'          => 'Lupini',
-        'molluschi'       => 'Molluschi',
+        'crostacei' => 'Crostacei',
+        'uova' => 'Uova',
+        'pesce' => 'Pesce',
+        'arachidi' => 'Arachidi',
+        'soia' => 'Soia',
+        'latte' => 'Latte e lattosio',
+        'frutta_guscio' => 'Frutta a guscio',
+        'sedano' => 'Sedano',
+        'senape' => 'Senape',
+        'sesamo' => 'Semi di sesamo',
+        'solfiti' => 'Anidride solforosa e solfiti',
+        'lupini' => 'Lupini',
+        'molluschi' => 'Molluschi',
     ];
 
     /**
@@ -82,18 +82,18 @@ class AllergenService
         ]);
 
         $contiene = [];
-        $tracce   = [];
+        $tracce = [];
 
         foreach ($produzione->materiePrime as $mp) {
             if ($mp->materiaPrima) {
                 $contiene = array_merge($contiene, $mp->materiaPrima->allergeni ?? []);
-                $tracce   = array_merge($tracce, $mp->materiaPrima->allergeni_tracce ?? []);
+                $tracce = array_merge($tracce, $mp->materiaPrima->allergeni_tracce ?? []);
             }
 
             if ($mp->semilavorato && $mp->semilavorato->produzione) {
                 $sub = $this->forProduzione($mp->semilavorato->produzione, $visited);
                 $contiene = array_merge($contiene, $sub['contiene']);
-                $tracce   = array_merge($tracce, $sub['tracce']);
+                $tracce = array_merge($tracce, $sub['tracce']);
             }
         }
 
@@ -118,7 +118,7 @@ class AllergenService
 
         return [
             'contiene' => $this->labels($codes['contiene']),
-            'tracce'   => $this->labels($codes['tracce']),
+            'tracce' => $this->labels($codes['tracce']),
         ];
     }
 }

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BollaReso;
 use App\Models\NotaCredito;
 use App\Models\Vendita;
-use App\Models\BollaReso;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -22,7 +22,7 @@ class NotaCreditoController extends Controller
             ->paginate(25)->withQueryString();
 
         return Inertia::render('NoteCredito/Index', [
-            'note'    => $note,
+            'note' => $note,
             'filters' => $request->only(['search']),
         ]);
     }
@@ -30,8 +30,8 @@ class NotaCreditoController extends Controller
     public function create()
     {
         return Inertia::render('NoteCredito/Form', [
-            'nota'      => null,
-            'vendite'   => $this->venditeList(),
+            'nota' => null,
+            'vendite' => $this->venditeList(),
             'bolleReso' => BollaReso::orderByDesc('data_reso')->get(['id', 'vendita_riga_id', 'numero_bolla', 'data_reso']),
         ]);
     }
@@ -46,8 +46,8 @@ class NotaCreditoController extends Controller
     public function edit(NotaCredito $noteCredito)
     {
         return Inertia::render('NoteCredito/Form', [
-            'nota'      => $noteCredito,
-            'vendite'   => $this->venditeList(),
+            'nota' => $noteCredito,
+            'vendite' => $this->venditeList(),
             'bolleReso' => BollaReso::orderByDesc('data_reso')->get(['id', 'vendita_riga_id', 'numero_bolla', 'data_reso']),
         ]);
     }
@@ -76,12 +76,12 @@ class NotaCreditoController extends Controller
     private function validated(Request $request): array
     {
         return $request->validate([
-            'vendita_id'       => ['nullable', 'exists:vendite,id'],
-            'bolla_reso_id'    => ['nullable', 'exists:bolle_reso,id'],
+            'vendita_id' => ['nullable', 'exists:vendite,id'],
+            'bolla_reso_id' => ['nullable', 'exists:bolle_reso,id'],
             'numero_documento' => ['required', 'string', 'max:50'],
-            'data_documento'   => ['required', 'date'],
-            'importo'          => ['nullable', 'numeric', 'min:0'],
-            'note'             => ['nullable', 'string'],
+            'data_documento' => ['required', 'date'],
+            'importo' => ['nullable', 'numeric', 'min:0'],
+            'note' => ['nullable', 'string'],
         ]);
     }
 }

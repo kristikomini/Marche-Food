@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 abstract class Controller
@@ -20,7 +21,7 @@ abstract class Controller
             return;
         }
 
-        $submittedTs = \Illuminate\Support\Carbon::parse($submitted)->timestamp;
+        $submittedTs = Carbon::parse($submitted)->timestamp;
         if ($submittedTs !== $model->updated_at->timestamp) {
             throw ValidationException::withMessages([
                 'updated_at' => 'Questo documento è stato modificato da un altro utente nel frattempo. Ricarica la pagina e riprova.',
@@ -36,7 +37,7 @@ abstract class Controller
     {
         $callback = function () use ($headers, $rows) {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF");
+            fwrite($handle, "\xEF\xBB\xBF");
             fputcsv($handle, $headers, ';');
             foreach ($rows as $row) {
                 fputcsv($handle, array_values((array) $row), ';');

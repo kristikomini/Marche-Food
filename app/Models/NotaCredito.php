@@ -18,7 +18,7 @@ class NotaCredito extends Model
 
     protected $casts = [
         'data_documento' => 'date',
-        'importo'        => 'decimal:2',
+        'importo' => 'decimal:2',
     ];
 
     public function vendita()

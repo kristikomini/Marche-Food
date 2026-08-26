@@ -24,11 +24,11 @@ class NotificationService
     public function desired(): array
     {
         $giorniLotti = (int) config('haccp.alert_giorni_lotti', 30);
-        $giorniCert  = (int) config('haccp.alert_giorni_certificati', 60);
+        $giorniCert = (int) config('haccp.alert_giorni_certificati', 60);
 
-        $today   = now()->toDateString();
+        $today = now()->toDateString();
         $inLotti = now()->addDays($giorniLotti)->toDateString();
-        $inCert  = now()->addDays($giorniCert)->toDateString();
+        $inCert = now()->addDays($giorniCert)->toDateString();
 
         $desired = [];
 

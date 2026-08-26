@@ -7,16 +7,13 @@ use App\Models\User;
 use App\Services\TotpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class TwoFactorController extends Controller
 {
-    public function __construct(private TotpService $totp)
-    {
-    }
+    public function __construct(private TotpService $totp) {}
 
     // ── Enrollment (authenticated) ──────────────────────────────────────────
 
@@ -46,7 +43,7 @@ class TwoFactorController extends Controller
             throw ValidationException::withMessages(['code' => 'Codice non valido. Riprova.']);
         }
 
-        $codes = collect(range(1, 8))->map(fn () => Str::upper(Str::random(5) . '-' . Str::random(5)))->all();
+        $codes = collect(range(1, 8))->map(fn () => Str::upper(Str::random(5).'-'.Str::random(5)))->all();
 
         $user->two_factor_confirmed_at = now();
         $user->two_factor_recovery_codes = $codes;
@@ -87,6 +84,7 @@ class TwoFactorController extends Controller
         $user = User::find($userId);
         if (! $user || ! $user->hasTwoFactorEnabled()) {
             $request->session()->forget(['2fa.user', '2fa.remember']);
+
             return redirect('/login');
         }
 

@@ -10,7 +10,7 @@ class TotpServiceTest extends TestCase
 {
     private function svc(): TotpService
     {
-        return new TotpService();
+        return new TotpService;
     }
 
     public function test_base32_roundtrips(): void

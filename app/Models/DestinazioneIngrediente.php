@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class DestinazioneIngrediente extends Model
 {
     protected $table = 'destinazione_ingredienti';
+
     public $timestamps = false;
 
     protected $fillable = ['prodotto_id', 'materia_prima_id'];

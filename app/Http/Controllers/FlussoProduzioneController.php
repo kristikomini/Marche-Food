@@ -18,10 +18,10 @@ class FlussoProduzioneController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'numero'    => ['required', 'integer', 'min:1'],
-            'nome'      => ['required', 'string', 'max:100'],
+            'numero' => ['required', 'integer', 'min:1'],
+            'nome' => ['required', 'string', 'max:100'],
             'controllo' => ['nullable', 'string', 'max:100'],
-            'misura'    => ['nullable', 'string', 'max:50'],
+            'misura' => ['nullable', 'string', 'max:50'],
         ]);
 
         FlussoProduzione::create($data);
@@ -32,10 +32,10 @@ class FlussoProduzioneController extends Controller
     public function update(Request $request, FlussoProduzione $flussi)
     {
         $data = $request->validate([
-            'numero'    => ['required', 'integer', 'min:1'],
-            'nome'      => ['required', 'string', 'max:100'],
+            'numero' => ['required', 'integer', 'min:1'],
+            'nome' => ['required', 'string', 'max:100'],
             'controllo' => ['nullable', 'string', 'max:100'],
-            'misura'    => ['nullable', 'string', 'max:50'],
+            'misura' => ['nullable', 'string', 'max:50'],
         ]);
 
         $flussi->update($data);

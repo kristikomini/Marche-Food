@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Ricetta extends Model
 {
     protected $table = 'ricette';
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -20,7 +21,7 @@ class Ricetta extends Model
     ];
 
     protected $casts = [
-        'percentuale'  => 'decimal:3',
+        'percentuale' => 'decimal:3',
         'grammi_per_kg' => 'decimal:3',
     ];
 

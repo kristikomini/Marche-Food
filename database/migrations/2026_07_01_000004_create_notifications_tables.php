@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Schema;
  * from domain conditions (expiry, recalls) and deduplicated by `chiave`.
  * Per-user dismissals are tracked in `notification_reads`.
  */
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('app_notifications', function (Blueprint $table) {

@@ -67,11 +67,11 @@ trait Auditable
 
         AuditLog::create([
             'auditable_type' => $model->getMorphClass(),
-            'auditable_id'   => $model->getKey(),
-            'event'          => $event,
-            'user_id'        => Auth::id(),
-            'changes'        => $changes,
-            'etichetta'      => static::auditLabel($model),
+            'auditable_id' => $model->getKey(),
+            'event' => $event,
+            'user_id' => Auth::id(),
+            'changes' => $changes,
+            'etichetta' => static::auditLabel($model),
         ]);
     }
 

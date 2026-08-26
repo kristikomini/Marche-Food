@@ -21,9 +21,9 @@ class LottoSemilavorato extends Model
     ];
 
     protected $casts = [
-        'quantita_kg'     => 'decimal:3',
+        'quantita_kg' => 'decimal:3',
         'data_produzione' => 'date',
-        'data_out'        => 'date',
+        'data_out' => 'date',
     ];
 
     public function produzione(): BelongsTo

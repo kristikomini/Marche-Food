@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Schema;
  * - vendite_righe: collegamento opzionale alla variante prodotto per l'auto-fill
  *   di codice articolo / descrizione / pezzatura.
  */
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::table('clienti', function (Blueprint $table) {

@@ -19,17 +19,17 @@ class UtenteController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'     => ['required', 'string', 'max:100'],
-            'email'    => ['required', 'email', 'unique:users,email'],
+            'name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role'     => ['required', 'in:admin,operator'],
+            'role' => ['required', 'in:admin,operator'],
         ]);
 
         User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
+            'name' => $data['name'],
+            'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role'     => $data['role'],
+            'role' => $data['role'],
         ]);
 
         return redirect()->route('utenti.index')
@@ -39,9 +39,9 @@ class UtenteController extends Controller
     public function update(Request $request, User $utente)
     {
         $data = $request->validate([
-            'name'  => ['required', 'string', 'max:100'],
-            'email' => ['required', 'email', 'unique:users,email,' . $utente->id],
-            'role'  => ['required', 'in:admin,operator'],
+            'name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'unique:users,email,'.$utente->id],
+            'role' => ['required', 'in:admin,operator'],
         ]);
 
         $utente->update(['name' => $data['name'], 'email' => $data['email'], 'role' => $data['role']]);

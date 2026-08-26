@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProduzioneCiclo extends Model
 {
     protected $table = 'produzioni_ciclo';
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -21,7 +22,7 @@ class ProduzioneCiclo extends Model
 
     protected $casts = [
         'controllo' => 'boolean',
-        'ordine'    => 'integer',
+        'ordine' => 'integer',
     ];
 
     public function flusso()

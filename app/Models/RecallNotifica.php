@@ -15,9 +15,9 @@ class RecallNotifica extends Model
     ];
 
     protected $casts = [
-        'notificato'    => 'boolean',
+        'notificato' => 'boolean',
         'notificato_at' => 'datetime',
-        'quantita_kg'   => 'decimal:3',
+        'quantita_kg' => 'decimal:3',
     ];
 
     public function recall(): BelongsTo

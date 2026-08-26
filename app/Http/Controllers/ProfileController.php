@@ -25,7 +25,7 @@ class ProfileController extends Controller
             // Setup in progress: secret set but not yet confirmed.
             'pending' => (bool) $user->two_factor_secret && ! $user->hasTwoFactorEnabled(),
             'otpauthUri' => null,
-            'secret'   => null,
+            'secret' => null,
             'recoveryCodes' => null,
         ];
 
@@ -51,7 +51,7 @@ class ProfileController extends Controller
     {
         $request->validate([
             'current_password' => ['required', 'string'],
-            'password'         => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         $user = $request->user();

@@ -1,10 +1,13 @@
-﻿<?php
+<?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         Schema::create('ricette_marinature', function (Blueprint $table) {
             $table->id();
             $table->foreignId('scheda_id')->constrained('schede_produzione')->cascadeOnDelete();
@@ -15,5 +18,9 @@ return new class extends Migration {
             $table->integer('ordine')->nullable();
         });
     }
-    public function down(): void { Schema::dropIfExists('ricette_marinature'); }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('ricette_marinature');
+    }
 };

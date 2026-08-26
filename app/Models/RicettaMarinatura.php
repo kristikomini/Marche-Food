@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class RicettaMarinatura extends Model
 {
     protected $table = 'ricette_marinature';
+
     public $timestamps = false;
 
     protected $fillable = [

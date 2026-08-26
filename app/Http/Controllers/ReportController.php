@@ -8,6 +8,7 @@ use App\Models\Vendita;
 use App\Services\AllergenService;
 use App\Services\ReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -16,30 +17,29 @@ class ReportController extends Controller
     public function __construct(
         private ReportService $reports,
         private AllergenService $allergeni,
-    ) {
-    }
+    ) {}
 
     // ── Management / compliance report ──────────────────────────────────────
     public function index(Request $request)
     {
-        $summary  = $this->reports->managementSummary($request->input('da'), $request->input('a'));
+        $summary = $this->reports->managementSummary($request->input('da'), $request->input('a'));
         $scadenze = $this->reports->scadenzeReport(30);
 
         return Inertia::render('Report/Index', [
-            'summary'  => $summary,
+            'summary' => $summary,
             'scadenze' => $scadenze,
-            'filters'  => ['da' => $summary['da'], 'a' => $summary['a']],
+            'filters' => ['da' => $summary['da'], 'a' => $summary['a']],
         ]);
     }
 
     public function pdf(Request $request)
     {
-        $summary  = $this->reports->managementSummary($request->input('da'), $request->input('a'));
+        $summary = $this->reports->managementSummary($request->input('da'), $request->input('a'));
         $scadenze = $this->reports->scadenzeReport(30);
 
         $pdf = Pdf::loadView('pdf.report', compact('summary', 'scadenze'))->setPaper('a4', 'portrait');
 
-        return $pdf->download('report_gestionale_' . $summary['da'] . '_' . $summary['a'] . '.pdf');
+        return $pdf->download('report_gestionale_'.$summary['da'].'_'.$summary['a'].'.pdf');
     }
 
     public function csv(Request $request)
@@ -48,8 +48,8 @@ class ReportController extends Controller
 
         $callback = function () use ($summary) {
             $h = fopen('php://output', 'w');
-            fputs($h, "\xEF\xBB\xBF");
-            fputcsv($h, ['Report gestionale', $summary['da'] . ' → ' . $summary['a']], ';');
+            fwrite($h, "\xEF\xBB\xBF");
+            fputcsv($h, ['Report gestionale', $summary['da'].' → '.$summary['a']], ';');
             fputcsv($h, [], ';');
             fputcsv($h, ['Metrica', 'Documenti', 'Kg'], ';');
             fputcsv($h, ['Acquisti', $summary['totali']['acquisti_docs'], $summary['totali']['acquisti_kg']], ';');
@@ -70,7 +70,7 @@ class ReportController extends Controller
             fclose($h);
         };
 
-        return response()->streamDownload($callback, 'report_gestionale_' . $summary['da'] . '_' . $summary['a'] . '.csv', [
+        return response()->streamDownload($callback, 'report_gestionale_'.$summary['da'].'_'.$summary['a'].'.csv', [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
@@ -89,7 +89,7 @@ class ReportController extends Controller
         $allergeni = $this->allergeni->forProduzioneLabels($produzione);
 
         $pdf = Pdf::loadView('pdf.produzione', compact('produzione', 'allergeni'))->setPaper('a4', 'portrait');
-        $filename = 'lavorazione_' . str_replace(['/', ' '], '_', $produzione->lotto_produzione) . '.pdf';
+        $filename = 'lavorazione_'.str_replace(['/', ' '], '_', $produzione->lotto_produzione).'.pdf';
 
         return $pdf->download($filename);
     }
@@ -119,7 +119,7 @@ class ReportController extends Controller
         $campioni = config('haccp.metal_detector_campioni', []);
 
         $pdf = Pdf::loadView('pdf.scheda-produzione', compact('produzione', 'campioni'))->setPaper('a4', 'portrait');
-        $filename = 'scheda_produzione_' . str_replace(['/', ' '], '_', $produzione->lotto_produzione) . '.pdf';
+        $filename = 'scheda_produzione_'.str_replace(['/', ' '], '_', $produzione->lotto_produzione).'.pdf';
 
         return $pdf->stream($filename);
     }
@@ -129,22 +129,22 @@ class ReportController extends Controller
         $acquisto->load(['fornitore', 'righe']);
         $pdf = Pdf::loadView('pdf.acquisto', compact('acquisto'))->setPaper('a4', 'portrait');
 
-        return $pdf->download('acquisto_' . str_replace(['/', ' '], '_', $acquisto->numero_documento) . '.pdf');
+        return $pdf->download('acquisto_'.str_replace(['/', ' '], '_', $acquisto->numero_documento).'.pdf');
     }
 
-    public function produzioneEtichetta(\Illuminate\Http\Request $request, Produzione $produzione)
+    public function produzioneEtichetta(Request $request, Produzione $produzione)
     {
         $produzione->load('scheda.prodotto');
         $copie = max(1, min(60, (int) $request->input('copie', 1)));
 
         return view('labels.produzione', [
-            'lotto'          => $produzione->lotto_produzione,
-            'prodotto'       => $produzione->scheda?->prodotto?->nome,
-            'dataProduzione' => \Carbon\Carbon::parse($produzione->data_produzione)->format('d/m/Y'),
-            'quantita'       => $produzione->quantita_prodotta_kg,
-            'traceUrl'       => url('/tracciabilita?q=' . urlencode($produzione->lotto_produzione)),
-            'allergeni'      => $this->allergeni->forProduzioneLabels($produzione),
-            'copie'          => $copie,
+            'lotto' => $produzione->lotto_produzione,
+            'prodotto' => $produzione->scheda?->prodotto?->nome,
+            'dataProduzione' => Carbon::parse($produzione->data_produzione)->format('d/m/Y'),
+            'quantita' => $produzione->quantita_prodotta_kg,
+            'traceUrl' => url('/tracciabilita?q='.urlencode($produzione->lotto_produzione)),
+            'allergeni' => $this->allergeni->forProduzioneLabels($produzione),
+            'copie' => $copie,
         ]);
     }
 
@@ -153,7 +153,7 @@ class ReportController extends Controller
         $vendita->load(['cliente', 'righe']);
         $pdf = Pdf::loadView('pdf.vendita', compact('vendita'))->setPaper('a4', 'portrait');
 
-        return $pdf->download('vendita_' . str_replace(['/', ' '], '_', $vendita->numero_documento) . '.pdf');
+        return $pdf->download('vendita_'.str_replace(['/', ' '], '_', $vendita->numero_documento).'.pdf');
     }
 
     // ── Lot QR labels for purchases / sales ─────────────────────────────────
@@ -165,7 +165,7 @@ class ReportController extends Controller
         $labels = $this->lottoLabels($acquisto->righe, $acquisto->fornitore?->ragione_sociale, $copie);
 
         return view('labels.lotti', [
-            'titolo' => 'Etichette acquisto ' . $acquisto->numero_documento,
+            'titolo' => 'Etichette acquisto '.$acquisto->numero_documento,
             'labels' => $labels,
         ]);
     }
@@ -178,7 +178,7 @@ class ReportController extends Controller
         $labels = $this->lottoLabels($vendita->righe, $vendita->cliente?->ragione_sociale, $copie);
 
         return view('labels.lotti', [
-            'titolo' => 'Etichette vendita ' . $vendita->numero_documento,
+            'titolo' => 'Etichette vendita '.$vendita->numero_documento,
             'labels' => $labels,
         ]);
     }
@@ -203,10 +203,10 @@ class ReportController extends Controller
                 $meta[] = $controparte;
             }
             if ($r->quantita_kg) {
-                $meta[] = number_format((float) $r->quantita_kg, 3, ',', '.') . ' kg';
+                $meta[] = number_format((float) $r->quantita_kg, 3, ',', '.').' kg';
             }
             if ($r->scadenza) {
-                $meta[] = 'Scad.: ' . \Carbon\Carbon::parse($r->scadenza)->format('d/m/Y');
+                $meta[] = 'Scad.: '.Carbon::parse($r->scadenza)->format('d/m/Y');
             }
 
             // Allergens flow onto the label when the lot is linked to a raw
@@ -214,13 +214,13 @@ class ReportController extends Controller
             $mp = $r->materiaPrima ?? null;
 
             return [
-                'prodotto'  => $r->nome_prodotto,
-                'lotto'     => $lotto,
-                'meta'      => implode(' · ', $meta),
-                'traceUrl'  => url('/tracciabilita?q=' . urlencode($lotto)),
+                'prodotto' => $r->nome_prodotto,
+                'lotto' => $lotto,
+                'meta' => implode(' · ', $meta),
+                'traceUrl' => url('/tracciabilita?q='.urlencode($lotto)),
                 'allergeni' => $mp ? $this->allergeni->labels($mp->allergeni ?? []) : [],
-                'tracce'    => $mp ? $this->allergeni->labels($mp->allergeni_tracce ?? []) : [],
-                'copie'     => $copie,
+                'tracce' => $mp ? $this->allergeni->labels($mp->allergeni_tracce ?? []) : [],
+                'copie' => $copie,
             ];
         })->filter()->values()->all();
     }

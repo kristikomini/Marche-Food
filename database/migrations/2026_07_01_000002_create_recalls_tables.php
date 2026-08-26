@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Schema;
  * Stateful recall workflow (P-B6): a recall targets a production/lot, moves
  * through aperto → in_corso → chiuso, and tracks per-customer notifications.
  */
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('recalls', function (Blueprint $table) {

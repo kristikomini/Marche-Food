@@ -18,7 +18,7 @@ class ProdottoController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('nome', 'ilike', "%{$search}%")
-                  ->orWhereHas('varianti', fn ($v) => $v->where('codice_prodotto', 'ilike', "%{$search}%"));
+                    ->orWhereHas('varianti', fn ($v) => $v->where('codice_prodotto', 'ilike', "%{$search}%"));
             });
         }
 
@@ -26,14 +26,14 @@ class ProdottoController extends Controller
 
         return Inertia::render('Prodotti/Index', [
             'prodotti' => $prodotti,
-            'filters'  => $request->only(['search']),
+            'filters' => $request->only(['search']),
         ]);
     }
 
     public function create()
     {
         return Inertia::render('Prodotti/Form', [
-            'prodotto'  => null,
+            'prodotto' => null,
             'umOptions' => $this->umOptions(),
         ]);
     }
@@ -44,9 +44,9 @@ class ProdottoController extends Controller
         $this->assertCodiciUnivoci($data['varianti']);
 
         $prodotto = Prodotto::create([
-            'nome'   => $data['nome'],
+            'nome' => $data['nome'],
             'attivo' => $data['attivo'] ?? true,
-            'note'   => $data['note'] ?? null,
+            'note' => $data['note'] ?? null,
         ]);
 
         $this->syncVarianti($prodotto, $data['varianti']);
@@ -59,7 +59,7 @@ class ProdottoController extends Controller
         $prodotto->load('varianti');
 
         return Inertia::render('Prodotti/Form', [
-            'prodotto'  => $prodotto,
+            'prodotto' => $prodotto,
             'umOptions' => $this->umOptions(),
         ]);
     }
@@ -70,9 +70,9 @@ class ProdottoController extends Controller
         $this->assertCodiciUnivoci($data['varianti']);
 
         $prodotto->update([
-            'nome'   => $data['nome'],
+            'nome' => $data['nome'],
             'attivo' => $data['attivo'] ?? true,
-            'note'   => $data['note'] ?? null,
+            'note' => $data['note'] ?? null,
         ]);
 
         $this->syncVarianti($prodotto, $data['varianti']);
@@ -93,13 +93,13 @@ class ProdottoController extends Controller
         $prodotto->varianti()->delete();
         foreach (array_values($varianti) as $i => $v) {
             $prodotto->varianti()->create([
-                'codice_prodotto'  => $v['codice_prodotto'],
+                'codice_prodotto' => $v['codice_prodotto'],
                 'pezzatura_valore' => $v['pezzatura_valore'] ?? null,
-                'pezzatura_um'     => $v['pezzatura_um'] ?? null,
-                'um_id'            => $v['um_id'] ?? null,
-                'descrizione'      => $v['descrizione'] ?? null,
-                'ordine'           => $i,
-                'attiva'           => $v['attiva'] ?? true,
+                'pezzatura_um' => $v['pezzatura_um'] ?? null,
+                'um_id' => $v['um_id'] ?? null,
+                'descrizione' => $v['descrizione'] ?? null,
+                'ordine' => $i,
+                'attiva' => $v['attiva'] ?? true,
             ]);
         }
     }
@@ -123,11 +123,11 @@ class ProdottoController extends Controller
     private function validated(Request $request, ?int $ignoreId = null): array
     {
         return $request->validate([
-            'nome'   => ['required', 'string', 'max:200'],
+            'nome' => ['required', 'string', 'max:200'],
             'attivo' => ['boolean'],
-            'note'   => ['nullable', 'string'],
-            'varianti'                    => ['required', 'array', 'min:1'],
-            'varianti.*.codice_prodotto'  => [
+            'note' => ['nullable', 'string'],
+            'varianti' => ['required', 'array', 'min:1'],
+            'varianti.*.codice_prodotto' => [
                 'required', 'string', 'max:20',
                 // codice univoco fra prodotti diversi (le varianti del prodotto stesso
                 // vengono riscritte al salvataggio e sono escluse dal controllo).
@@ -137,10 +137,10 @@ class ProdottoController extends Controller
                     )),
             ],
             'varianti.*.pezzatura_valore' => ['nullable', 'numeric', 'min:0'],
-            'varianti.*.pezzatura_um'     => ['nullable', 'string', 'max:10'],
-            'varianti.*.um_id'            => ['nullable', 'exists:unita_misura,id'],
-            'varianti.*.descrizione'      => ['nullable', 'string', 'max:200'],
-            'varianti.*.attiva'           => ['boolean'],
+            'varianti.*.pezzatura_um' => ['nullable', 'string', 'max:10'],
+            'varianti.*.um_id' => ['nullable', 'exists:unita_misura,id'],
+            'varianti.*.descrizione' => ['nullable', 'string', 'max:200'],
+            'varianti.*.attiva' => ['boolean'],
         ]);
     }
 }

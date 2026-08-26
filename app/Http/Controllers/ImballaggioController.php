@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LottoImballaggioPrimario;
+use App\Models\Fornitore;
 use App\Models\LottoDetergente;
 use App\Models\LottoGas;
-use App\Models\Fornitore;
-use App\Models\ProduzioneImballaggioPrimario;
+use App\Models\LottoImballaggioPrimario;
 use App\Models\ProduzioneDetergente;
 use App\Models\ProduzioneGas;
+use App\Models\ProduzioneImballaggioPrimario;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -22,38 +22,38 @@ class ImballaggioController extends Controller
         $searchD = $request->input('search_d');
 
         $primari = LottoImballaggioPrimario::with('fornitore')
-            ->when($searchP, fn($q) => $q->where(function ($q) use ($searchP) {
+            ->when($searchP, fn ($q) => $q->where(function ($q) use ($searchP) {
                 $q->where('componente', 'ilike', "%{$searchP}%")
-                  ->orWhere('lotto', 'ilike', "%{$searchP}%")
-                  ->orWhere('numero_ddt', 'ilike', "%{$searchP}%");
+                    ->orWhere('lotto', 'ilike', "%{$searchP}%")
+                    ->orWhere('numero_ddt', 'ilike', "%{$searchP}%");
             }))
             ->orderByDesc('data_in')->orderByDesc('id')
             ->paginate(20, ['*'], 'page_p')->withQueryString();
 
         $detergenti = LottoDetergente::with('fornitore')
-            ->when($searchD, fn($q) => $q->where(function ($q) use ($searchD) {
+            ->when($searchD, fn ($q) => $q->where(function ($q) use ($searchD) {
                 $q->where('componente', 'ilike', "%{$searchD}%")
-                  ->orWhere('lotto', 'ilike', "%{$searchD}%")
-                  ->orWhere('numero_ddt', 'ilike', "%{$searchD}%");
+                    ->orWhere('lotto', 'ilike', "%{$searchD}%")
+                    ->orWhere('numero_ddt', 'ilike', "%{$searchD}%");
             }))
             ->orderByDesc('data_in')->orderByDesc('id')
             ->paginate(20, ['*'], 'page_d')->withQueryString();
 
         $searchG = $request->input('search_g');
         $gas = LottoGas::with('fornitore')
-            ->when($searchG, fn($q) => $q->where(function ($q) use ($searchG) {
+            ->when($searchG, fn ($q) => $q->where(function ($q) use ($searchG) {
                 $q->where('componente', 'ilike', "%{$searchG}%")
-                  ->orWhere('lotto', 'ilike', "%{$searchG}%")
-                  ->orWhere('numero_ddt', 'ilike', "%{$searchG}%");
+                    ->orWhere('lotto', 'ilike', "%{$searchG}%")
+                    ->orWhere('numero_ddt', 'ilike', "%{$searchG}%");
             }))
             ->orderByDesc('data_in')->orderByDesc('id')
             ->paginate(20, ['*'], 'page_g')->withQueryString();
 
         return Inertia::render('Imballaggi/Index', [
-            'primari'    => $primari,
+            'primari' => $primari,
             'detergenti' => $detergenti,
-            'gas'        => $gas,
-            'filters'    => $request->only(['search_p', 'search_d', 'search_g', 'tab']),
+            'gas' => $gas,
+            'filters' => $request->only(['search_p', 'search_d', 'search_g', 'tab']),
         ]);
     }
 
@@ -62,7 +62,7 @@ class ImballaggioController extends Controller
     public function createPrimario()
     {
         return Inertia::render('Imballaggi/FormPrimario', [
-            'lotto'     => null,
+            'lotto' => null,
             'fornitori' => $this->fornitoriPrimari(),
         ]);
     }
@@ -78,7 +78,7 @@ class ImballaggioController extends Controller
     public function editPrimario(LottoImballaggioPrimario $primario)
     {
         return Inertia::render('Imballaggi/FormPrimario', [
-            'lotto'     => $primario,
+            'lotto' => $primario,
             'fornitori' => $this->fornitoriPrimari(),
         ]);
     }
@@ -109,7 +109,7 @@ class ImballaggioController extends Controller
     public function createDetergente()
     {
         return Inertia::render('Imballaggi/FormDetergente', [
-            'lotto'     => null,
+            'lotto' => null,
             'fornitori' => $this->fornitoriDetergenti(),
         ]);
     }
@@ -125,7 +125,7 @@ class ImballaggioController extends Controller
     public function editDetergente(LottoDetergente $detergente)
     {
         return Inertia::render('Imballaggi/FormDetergente', [
-            'lotto'     => $detergente,
+            'lotto' => $detergente,
             'fornitori' => $this->fornitoriDetergenti(),
         ]);
     }
@@ -156,7 +156,7 @@ class ImballaggioController extends Controller
     public function createGas()
     {
         return Inertia::render('Imballaggi/FormGas', [
-            'lotto'     => null,
+            'lotto' => null,
             'fornitori' => $this->fornitoriGas(),
         ]);
     }
@@ -172,7 +172,7 @@ class ImballaggioController extends Controller
     public function editGas(LottoGas $gas)
     {
         return Inertia::render('Imballaggi/FormGas', [
-            'lotto'     => $gas,
+            'lotto' => $gas,
             'fornitori' => $this->fornitoriGas(),
         ]);
     }
@@ -209,17 +209,17 @@ class ImballaggioController extends Controller
     private function validateGas(Request $request): array
     {
         return $request->validate([
-            'fornitore_id'    => ['required', 'exists:fornitori,id'],
-            'componente'      => ['required', 'string', 'max:200'],
+            'fornitore_id' => ['required', 'exists:fornitori,id'],
+            'componente' => ['required', 'string', 'max:200'],
             'codice_articolo' => ['nullable', 'string', 'max:50'],
-            'um'              => ['nullable', 'string', 'max:10'],
-            'quantita'        => ['nullable', 'numeric', 'min:0'],
-            'lotto'           => ['nullable', 'string', 'max:100'],
-            'scadenza'        => ['nullable', 'date'],
-            'numero_ddt'      => ['nullable', 'string', 'max:50'],
-            'data_in'         => ['required', 'date'],
-            'data_out'        => ['nullable', 'date', 'after_or_equal:data_in'],
-            'note'            => ['nullable', 'string'],
+            'um' => ['nullable', 'string', 'max:10'],
+            'quantita' => ['nullable', 'numeric', 'min:0'],
+            'lotto' => ['nullable', 'string', 'max:100'],
+            'scadenza' => ['nullable', 'date'],
+            'numero_ddt' => ['nullable', 'string', 'max:50'],
+            'data_in' => ['required', 'date'],
+            'data_out' => ['nullable', 'date', 'after_or_equal:data_in'],
+            'note' => ['nullable', 'string'],
         ]);
     }
 
@@ -242,33 +242,33 @@ class ImballaggioController extends Controller
     private function validatePrimario(Request $request): array
     {
         return $request->validate([
-            'fornitore_id'   => ['required', 'exists:fornitori,id'],
-            'componente'     => ['required', 'string', 'max:200'],
+            'fornitore_id' => ['required', 'exists:fornitori,id'],
+            'componente' => ['required', 'string', 'max:200'],
             'codice_articolo' => ['nullable', 'string', 'max:50'],
-            'um'             => ['nullable', 'string', 'max:10'],
-            'quantita'       => ['nullable', 'numeric', 'min:0'],
-            'lotto'          => ['nullable', 'string', 'max:100'],
-            'numero_ddt'     => ['nullable', 'string', 'max:50'],
-            'data_in'        => ['required', 'date'],
-            'data_out'       => ['nullable', 'date', 'after_or_equal:data_in'],
-            'note'           => ['nullable', 'string'],
+            'um' => ['nullable', 'string', 'max:10'],
+            'quantita' => ['nullable', 'numeric', 'min:0'],
+            'lotto' => ['nullable', 'string', 'max:100'],
+            'numero_ddt' => ['nullable', 'string', 'max:50'],
+            'data_in' => ['required', 'date'],
+            'data_out' => ['nullable', 'date', 'after_or_equal:data_in'],
+            'note' => ['nullable', 'string'],
         ]);
     }
 
     private function validateDetergente(Request $request): array
     {
         return $request->validate([
-            'fornitore_id'   => ['required', 'exists:fornitori,id'],
-            'componente'     => ['required', 'string', 'max:200'],
+            'fornitore_id' => ['required', 'exists:fornitori,id'],
+            'componente' => ['required', 'string', 'max:200'],
             'codice_articolo' => ['nullable', 'string', 'max:50'],
-            'um'             => ['nullable', 'string', 'max:10'],
-            'quantita'       => ['nullable', 'numeric', 'min:0'],
-            'lotto'          => ['nullable', 'string', 'max:100'],
-            'scadenza'       => ['nullable', 'date'],
-            'numero_ddt'     => ['nullable', 'string', 'max:50'],
-            'data_in'        => ['required', 'date'],
-            'data_out'       => ['nullable', 'date', 'after_or_equal:data_in'],
-            'note'           => ['nullable', 'string'],
+            'um' => ['nullable', 'string', 'max:10'],
+            'quantita' => ['nullable', 'numeric', 'min:0'],
+            'lotto' => ['nullable', 'string', 'max:100'],
+            'scadenza' => ['nullable', 'date'],
+            'numero_ddt' => ['nullable', 'string', 'max:50'],
+            'data_in' => ['required', 'date'],
+            'data_out' => ['nullable', 'date', 'after_or_equal:data_in'],
+            'note' => ['nullable', 'string'],
         ]);
     }
 }

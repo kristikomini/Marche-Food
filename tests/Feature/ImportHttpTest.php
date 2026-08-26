@@ -27,7 +27,8 @@ class ImportHttpTest extends TestCase
 
     private function csv(array $lines): UploadedFile
     {
-        $content = implode("\n", array_merge([self::HEADER], $lines)) . "\n";
+        $content = implode("\n", array_merge([self::HEADER], $lines))."\n";
+
         return UploadedFile::fake()->createWithContent('acquisti.csv', $content);
     }
 

@@ -54,8 +54,8 @@ class SearchService
         if ($prodotti->count()) {
             $gruppi[] = ['tipo' => 'Prodotti', 'icona' => 'pi-tag', 'items' => $prodotti->map(fn ($p) => [
                 'label' => $p->nome,
-                'sub'   => $p->varianti->pluck('codice_prodotto')->filter()->implode(', '),
-                'url'   => '/prodotti',
+                'sub' => $p->varianti->pluck('codice_prodotto')->filter()->implode(', '),
+                'url' => '/prodotti',
             ])];
         }
 
@@ -74,8 +74,8 @@ class SearchService
         if ($produzioni->count()) {
             $gruppi[] = ['tipo' => 'Lotti di produzione', 'icona' => 'pi-cog', 'items' => $produzioni->map(fn ($p) => [
                 'label' => $p->lotto_produzione,
-                'sub'   => $p->scheda?->prodotto?->nome,
-                'url'   => '/tracciabilita?q=' . urlencode($p->lotto_produzione),
+                'sub' => $p->scheda?->prodotto?->nome,
+                'url' => '/tracciabilita?q='.urlencode($p->lotto_produzione),
             ])];
         }
 
@@ -89,7 +89,8 @@ class SearchService
         if ($lottiAcquisto->count()) {
             $gruppi[] = ['tipo' => 'Lotti di acquisto', 'icona' => 'pi-download', 'items' => $lottiAcquisto->map(function ($r) {
                 $lot = $r->lotto ?: $r->lotto_esterno;
-                return ['label' => $lot, 'sub' => $r->nome_prodotto, 'url' => '/tracciabilita?q=' . urlencode($lot)];
+
+                return ['label' => $lot, 'sub' => $r->nome_prodotto, 'url' => '/tracciabilita?q='.urlencode($lot)];
             })];
         }
 
